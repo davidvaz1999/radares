@@ -3,78 +3,142 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mapa de Radares</title>
+  <title>Gestión de Radares</title>
+
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
-    html, body {
+    body {
+      font-family: Arial, sans-serif;
       margin: 0;
       padding: 0;
-      height: 100%;
-      overflow: hidden;
+      background-color: #f7f7f7;
     }
 
     #map {
-      height: 100%;
       width: 100%;
+      height: 100vh;
     }
 
-    #addRadarButton, #helpButton {
+    .map-button {
       position: absolute;
       bottom: 20px;
+      font-size: 20px;
       width: 60px;
       height: 60px;
-      background-color: #007bff;
-      color: white;
       border: none;
       border-radius: 50%;
-      font-size: 24px;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
       cursor: pointer;
       z-index: 1000;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    #addRadarButton:hover, #helpButton:hover {
+    .map-button:hover {
       transform: scale(1.1);
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+      box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.3);
     }
 
     #addRadarButton {
-      right: 20px;
       background-color: #007bff;
+      color: white;
+      right: 20px;
     }
 
-    #helpButton {
-      right: 100px;
+    #addRadarButton.active {
       background-color: #28a745;
     }
 
-    @media (max-width: 600px) {
-      #addRadarButton, #helpButton {
-        width: 50px;
-        height: 50px;
-        font-size: 18px;
-        bottom: 15px;
-      }
+    #radarForm {
+      position: absolute;
+      top: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.2);
+      z-index: 1001;
+      width: 90%;
+      max-width: 400px;
+      font-size: 16px;
+      display: none;
+    }
 
-      #helpButton {
-        right: 80px;
-      }
+    #radarForm label {
+      font-weight: bold;
+      margin-bottom: 5px;
+      display: block;
+    }
+
+    #radarForm input,
+    #radarForm select {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+
+    #radarForm button {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    #radarForm .cancel {
+      background-color: #ff4d4d;
+      color: white;
+    }
+
+    #radarForm .save {
+      background-color: #007bff;
+      color: white;
+    }
+
+    .popup-delete-button {
+      background-color: #ff4d4d;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
   <div id="map"></div>
-  <button id="addRadarButton">+</button>
-  <button id="helpButton">?</button>
+  <button id="addRadarButton" class="map-button">+</button>
+
+  <div id="radarForm">
+    <label for="radarType">Tipo de Radar</label>
+    <select id="radarType">
+      <option value="" disabled selected>Selecciona...</option>
+      <option value="Remolque">Remolque</option>
+      <option value="Fijo">Fijo</option>
+      <option value="Móvil">Móvil</option>
+      <option value="Tramo">Tramo</option>
+    </select>
+    <label for="road">Carretera/Autopista</label>
+    <input type="text" id="road" placeholder="Ej. AP-7" />
+    <label for="direction">Dirección</label>
+    <input type="text" id="direction" placeholder="Ej. Sentido Tarragona" />
+    <label for="speed">Velocidad (km/h)</label>
+    <input type="number" id="speed" placeholder="Ej. 120" />
+    <button id="saveRadarButton" class="save">Guardar Radar</button>
+    <button id="cancelRadarButton" class="cancel">Cancelar</button>
+  </div>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
   <script>
     // Configuración de Firebase
     const firebaseConfig = {
@@ -87,122 +151,96 @@
       appId: "1:892778900332:web:f3c5353d981dda7b4ba149",
       measurementId: "G-C1GT8Q96ZJ",
     };
+
     firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
+    const db = firebase.database();
 
-    // Inicializar el mapa
-    const map = L.map('map', { attributionControl: false }).setView([41.3784, 2.1924], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    const map = L.map("map").setView([41.3784, 2.1924], 13);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 
-    const addRadarButton = document.getElementById('addRadarButton');
-    const helpButton = document.getElementById('helpButton');
-    let addingRadar = false;
+    const addRadarButton = document.getElementById("addRadarButton");
+    const radarForm = document.getElementById("radarForm");
+    const saveRadarButton = document.getElementById("saveRadarButton");
+    const cancelRadarButton = document.getElementById("cancelRadarButton");
 
-    // Función para añadir radar
-    addRadarButton.addEventListener('click', () => {
-      addingRadar = !addingRadar;
-      if (addingRadar) {
-        alert('Haz clic en el mapa para añadir un radar.');
-        addRadarButton.style.backgroundColor = '#28a745';
-        addRadarButton.innerText = '✔';
-      } else {
-        addRadarButton.style.backgroundColor = '#007bff';
-        addRadarButton.innerText = '+';
-      }
-    });
+    let tempMarker = null;
 
-    // Función de ayuda
-    helpButton.addEventListener('click', () => {
-      alert('Haz clic en el botón "+" para activar el modo de añadir radares. Luego, haz clic en el mapa y proporciona la información solicitada.');
-    });
-
-    // Crear ícono personalizado para un radar basado en su velocidad
-    const createRadarIcon = (velocidad) => {
+    function getIconBySpeed(speed) {
       return L.icon({
-        iconUrl: `https://davidvazguijarro.es/velocidades/${velocidad}.png`,
+        iconUrl: `https://davidvazguijarro.es/velocidades/${speed}.png`,
         iconSize: [32, 32],
-        iconAnchor: [16, 32],
-        popupAnchor: [0, -32],
       });
-    };
+    }
 
-    // Cargar radares desde Firebase
-    const loadRadares = () => {
-      database.ref('radares').once('value', (snapshot) => {
-        const radares = snapshot.val();
-        if (radares) {
-          Object.keys(radares).forEach((key) => {
-            const radar = radares[key];
-            const marker = L.marker([radar.lat, radar.lng], { icon: createRadarIcon(radar.velocidad) }).addTo(map);
-
-            // Mostrar información del radar en el popup
-            marker.bindPopup(`
-              <div>
-                <p><strong>Velocidad:</strong> ${radar.velocidad} km/h</p>
-                <p><strong>Carretera:</strong> ${radar.carretera}</p>
-                <p><strong>Dirección:</strong> ${radar.direccion}</p>
-                <p><strong>Tipo de radar:</strong> ${radar.tipo}</p>
-                <button onclick="deleteRadar('${key}', ${radar.lat}, ${radar.lng})" style="background-color: red; color: white; border: none; padding: 5px; border-radius: 5px; cursor: pointer;">Eliminar</button>
-              </div>
-            `);
-          });
-        }
-      });
-    };
-
-    // Eliminar radar
-    const deleteRadar = (key, lat, lng) => {
-      if (confirm('¿Estás seguro de que deseas eliminar este radar?')) {
-        database.ref('radares/' + key).remove();
+    function loadRadars() {
+      db.ref("radares").on("value", (snapshot) => {
         map.eachLayer((layer) => {
           if (layer instanceof L.Marker) {
-            const { lat: markerLat, lng: markerLng } = layer.getLatLng();
-            if (markerLat === lat && markerLng === lng) {
-              map.removeLayer(layer);
-            }
+            map.removeLayer(layer);
           }
         });
-        alert('Radar eliminado correctamente.');
+
+        snapshot.forEach((childSnapshot) => {
+          const data = childSnapshot.val();
+          const marker = L.marker([data.lat, data.lng], { icon: getIconBySpeed(data.speed) }).addTo(map);
+
+          marker.bindPopup(`
+            <b>${data.radarType}</b><br>
+            Carretera: ${data.road}<br>
+            Dirección: ${data.direction}<br>
+            Velocidad: ${data.speed} km/h
+            <br><button class="popup-delete-button" onclick="deleteRadar('${childSnapshot.key}')">Eliminar</button>
+          `);
+        });
+      });
+    }
+
+    function deleteRadar(id) {
+      if (confirm("¿Estás seguro de que deseas eliminar este radar?")) {
+        db.ref("radares/" + id).remove();
+        alert("Radar eliminado.");
       }
-    };
+    }
 
-    // Añadir radar al mapa y guardarlo en Firebase
-    map.on('click', (e) => {
-      if (addingRadar) {
-        const lat = e.latlng.lat;
-        const lng = e.latlng.lng;
+    addRadarButton.addEventListener("click", () => {
+      addRadarButton.classList.toggle("active");
+      addRadarButton.textContent = addRadarButton.classList.contains("active") ? "✔" : "+";
+    });
 
-        const tipo = prompt("¿Qué tipo de radar es? (remolque, fijo, móvil, tramo):");
-        const carretera = prompt("Introduce la carretera o autopista donde se encuentra el radar:");
-        const direccion = prompt("Introduce la dirección:");
-        const velocidad = prompt("Introduce la velocidad máxima del radar (km/h):");
-
-        if (!tipo || !carretera || !direccion || !velocidad || isNaN(velocidad)) {
-          alert('Información no válida. Radar no añadido.');
-          return;
-        }
-
-        const radar = { lat, lng, velocidad: parseInt(velocidad), tipo, carretera, direccion };
-        database.ref('radares').push(radar);
-
-        L.marker([lat, lng], { icon: createRadarIcon(velocidad) }).addTo(map).bindPopup(`
-          <div>
-            <p><strong>Velocidad:</strong> ${velocidad} km/h</p>
-            <p><strong>Carretera:</strong> ${carretera}</p>
-            <p><strong>Dirección:</strong> ${direccion}</p>
-            <p><strong>Tipo de radar:</strong> ${tipo}</p>
-            <button onclick="deleteRadar('${key}', ${lat}, ${lng})" style="background-color: red; color: white; border: none; padding: 5px; border-radius: 5px; cursor: pointer;">Eliminar</button>
-          </div>
-        `);
-        alert('Radar añadido correctamente.');
-        addingRadar = false;
-        addRadarButton.style.backgroundColor = '#007bff';
-        addRadarButton.innerText = '+';
+    map.on("click", (e) => {
+      if (addRadarButton.classList.contains("active")) {
+        radarForm.style.display = "block";
+        if (tempMarker) map.removeLayer(tempMarker);
+        tempMarker = L.marker(e.latlng).addTo(map);
       }
     });
 
-    // Cargar los radares al cargar la página
-    loadRadares();
+    saveRadarButton.addEventListener("click", () => {
+      const radarType = document.getElementById("radarType").value;
+      const road = document.getElementById("road").value;
+      const direction = document.getElementById("direction").value;
+      const speed = document.getElementById("speed").value;
+
+      if (radarType && road && direction && speed && tempMarker) {
+        const { lat, lng } = tempMarker.getLatLng();
+        const newRadar = db.ref("radares").push();
+        newRadar.set({ radarType, road, direction, speed, lat, lng });
+        alert("Radar añadido correctamente.");
+        radarForm.style.display = "none";
+        map.removeLayer(tempMarker);
+        tempMarker = null;
+      } else {
+        alert("Por favor, completa todos los campos.");
+      }
+    });
+
+    cancelRadarButton.addEventListener("click", () => {
+      radarForm.style.display = "none";
+      if (tempMarker) map.removeLayer(tempMarker);
+      tempMarker = null;
+    });
+
+    loadRadars();
   </script>
 </body>
 </html>
