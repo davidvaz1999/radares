@@ -38,6 +38,29 @@
       background-color: #0056b3;
     }
 
+    #infoButton {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      padding: 10px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      z-index: 1000;
+    }
+
+    #infoButton:hover {
+      background-color: #218838;
+    }
+
+    /* Estilo para el popup */
+    .popup-info {
+      max-width: 400px;
+    }
+
     #radarForm {
       position: absolute;
       top: 100px;
@@ -84,30 +107,13 @@
       border-radius: 5px;
       box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
     }
-
-    /* Estilo para el botón "Eliminar Radar" */
-    .delete-radar-button {
-      display: block;
-      margin-top: 10px;
-      background-color: #ff4d4d;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      padding: 5px 10px;
-      font-size: 14px;
-      text-align: center;
-      cursor: pointer;
-      width: 100%;
-    }
-
-    .delete-radar-button:hover {
-      background-color: #cc0000;
-    }
   </style>
 </head>
 <body>
 
   <button id="addRadarButton">Añadir Radar</button>
+  <button id="infoButton">Información</button>
+  
   <div id="map"></div>
 
   <div id="radarForm">
@@ -212,50 +218,26 @@
         direction: document.getElementById('direction').value
       };
 
-      // Guardar en Firebase
-      var newRadarRef = firebase.database().ref('radars/' + Date.now());
-      newRadarRef.set(radarData);
-
-      // Añadir el radar al mapa inmediatamente
-      const radarIcon = getRadarIcon(radarData.speedLimit);
-      const marker = L.marker([radarData.lat, radarData.lng], { icon: radarIcon })
-        .addTo(map)
-        .bindPopup(`
-          <b>Radar de velocidad:</b> ${radarData.speedLimit} km/h<br>
-          <b>Tipo:</b> ${radarData.radarType}<br>
-          <b>Carretera:</b> ${radarData.road}<br>
-          <b>Dirección:</b> ${radarData.direction}<br>
-          <button class="delete-radar-button" onclick="deleteRadar('${newRadarRef.key}', this)">Eliminar Radar</button>
-        `);
-
-      marker.radarId = newRadarRef.key; // Asignar el ID del radar para referencia
-
-      // Ocultar el formulario
+      firebase.database().ref('radars/' + Date.now()).set(radarData);
+      alert("Radar guardado.");
       document.getElementById('radarForm').style.display = 'none';
-
-      alert("Radar guardado y añadido al mapa.");
     };
 
     document.getElementById('cancelRadarButton').onclick = function() {
       document.getElementById('radarForm').style.display = 'none';
     };
 
-    window.deleteRadar = function(id, button) {
-      if (confirm("¿Estás seguro de que deseas eliminar este radar?")) {
-        firebase.database().ref('radars/' + id).remove();
-        map.eachLayer(function(layer) {
-          if (layer.radarId === id) {
-            map.removeLayer(layer);
-          }
-        });
-        button.closest(".leaflet-popup").style.display = "none"; // Ocultar el popup
-        alert("Radar eliminado.");
-      }
-    };
-
-    // Cargar radares de Firebase al cargar la página
     function loadRadarsFromFirebase() {
+      const loadingMessage = L.control({ position: 'topleft' });
+      loadingMessage.onAdd = function () {
+        const div = L.DomUtil.create('div', 'loading-message');
+        div.innerHTML = 'Cargando radares...';
+        return div;
+      };
+      loadingMessage.addTo(map);
+
       firebase.database().ref('radars').once('value', function(snapshot) {
+        map.removeControl(loadingMessage);
         const radars = snapshot.val();
         if (radars) {
           for (const id in radars) {
@@ -270,12 +252,44 @@
                 <b>Dirección:</b> ${radar.direction}<br>
                 <button class="delete-radar-button" onclick="deleteRadar('${id}', this)">Eliminar Radar</button>
               `);
+
+            marker.radarId = id; // Asignar ID para referencia
           }
         }
       });
     }
 
-    loadRadarsFromFirebase(); // Cargar radares al inicio
+    window.deleteRadar = function(id, button) {
+      if (confirm("¿Estás seguro de que deseas eliminar este radar?")) {
+        firebase.database().ref('radars/' + id).remove();
+        map.eachLayer(function(layer) {
+          if (layer.radarId === id) {
+            map.removeLayer(layer);
+          }
+        });
+        button.closest(".leaflet-popup").style.display = "none"; // Ocultar el popup
+        alert("Radar eliminado.");
+      }
+    };
+
+    loadRadarsFromFirebase();
+
+    // Código para abrir el popup de información
+    var infoButton = document.getElementById("infoButton");
+
+    infoButton.onclick = function() {
+      var popupContent = `
+        <b>Cómo Funciona:</b> Esta aplicación permite añadir, eliminar y visualizar radares de velocidad en un mapa interactivo. Los radares se almacenan en una base de datos de Firebase y se muestran en tiempo real.<br><br>
+        <b>Contacto:</b> Para más información, puedes contactar con el desarrollador en <a href="mailto:contacto@tuemail.com">contacto@tuemail.com</a>.<br><br>
+        <b>Copyright:</b> &copy; 2025 TuNombre. Todos los derechos reservados.<br><br>
+        <b>Última Actualización:</b> Enero 2025
+      `;
+      
+      var popup = L.popup()
+        .setLatLng(map.getCenter())
+        .setContent(popupContent)
+        .openOn(map);
+    };
   </script>
 </body>
 </html>
