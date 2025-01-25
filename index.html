@@ -232,9 +232,29 @@
         direction: document.getElementById('direction').value
       };
 
-      firebase.database().ref('radars/' + Date.now()).set(radarData);
-      alert("Radar guardado.");
-      document.getElementById('radarForm').style.display = 'none';
+      // Guardar en Firebase
+      var newRadarRef = firebase.database().ref('radars').push();
+      newRadarRef.set(radarData)
+        .then(function() {
+          // Crear el marcador del radar de inmediato sin necesidad de recargar la página
+          const radarIcon = getRadarIcon(+radarData.speedLimit);
+          const marker = L.marker([radarData.lat, radarData.lng], { icon: radarIcon })
+            .addTo(map)
+            .bindPopup(`
+              <b>Radar de velocidad:</b> ${radarData.speedLimit} km/h<br>
+              <b>Tipo:</b> ${radarData.radarType}<br>
+              <b>Carretera:</b> ${radarData.road}<br>
+              <b>Dirección:</b> ${radarData.direction}<br>
+              <button class="delete-radar-button" onclick="deleteRadar('${newRadarRef.key}', this)">Eliminar Radar</button>
+            `);
+
+          marker.radarId = newRadarRef.key; // Asignar ID para referencia
+          alert("Radar guardado y mostrado en el mapa.");
+          document.getElementById('radarForm').style.display = 'none';
+        })
+        .catch(function(error) {
+          alert("Error al guardar el radar: " + error.message);
+        });
     };
 
     document.getElementById('cancelRadarButton').onclick = function() {
