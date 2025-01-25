@@ -102,14 +102,23 @@
       color: white;
     }
 
-    .popup-delete-button {
-      background-color: #ff4d4d;
-      color: white;
-      border: none;
+    .popup-button {
+      margin-top: 10px;
       padding: 5px 10px;
+      font-size: 14px;
+      border: none;
       border-radius: 5px;
       cursor: pointer;
-      margin-top: 10px;
+    }
+
+    .popup-button.active {
+      background-color: #28a745;
+      color: white;
+    }
+
+    .popup-button.inactive {
+      background-color: #ff4d4d;
+      color: white;
     }
   </style>
 </head>
@@ -165,46 +174,16 @@
 
     let tempMarker = null;
 
-    function getIconBySpeed(speed) {
-      return L.icon({
-        iconUrl: `https://davidvazguijarro.es/velocidades/${speed}.png`,
-        iconSize: [32, 32],
-      });
-    }
-
-    function loadRadars() {
-      db.ref("radares").on("value", (snapshot) => {
-        map.eachLayer((layer) => {
-          if (layer instanceof L.Marker) {
-            map.removeLayer(layer);
-          }
-        });
-
-        snapshot.forEach((childSnapshot) => {
-          const data = childSnapshot.val();
-          const marker = L.marker([data.lat, data.lng], { icon: getIconBySpeed(data.speed) }).addTo(map);
-
-          marker.bindPopup(`
-            <b>${data.radarType}</b><br>
-            Carretera: ${data.road}<br>
-            Dirección: ${data.direction}<br>
-            Velocidad: ${data.speed} km/h
-            <br><button class="popup-delete-button" onclick="deleteRadar('${childSnapshot.key}')">Eliminar</button>
-          `);
-        });
-      });
-    }
-
-    function deleteRadar(id) {
-      if (confirm("¿Estás seguro de que deseas eliminar este radar?")) {
-        db.ref("radares/" + id).remove();
-        alert("Radar eliminado.");
-      }
-    }
-
     addRadarButton.addEventListener("click", () => {
       addRadarButton.classList.toggle("active");
-      addRadarButton.textContent = addRadarButton.classList.contains("active") ? "✔" : "+";
+      if (addRadarButton.classList.contains("active")) {
+        addRadarButton.textContent = "✔"; // Cambia el ícono a ✔
+      } else {
+        addRadarButton.textContent = "+"; // Vuelve a +
+        radarForm.style.display = "none";
+        if (tempMarker) map.removeLayer(tempMarker);
+        tempMarker = null;
+      }
     });
 
     map.on("click", (e) => {
@@ -224,10 +203,19 @@
       if (radarType && road && direction && speed && tempMarker) {
         const { lat, lng } = tempMarker.getLatLng();
         const newRadar = db.ref("radares").push();
-        newRadar.set({ radarType, road, direction, speed, lat, lng });
+        newRadar.set({
+          radarType,
+          road,
+          direction,
+          speed,
+          lat,
+          lng,
+          status: "active", // Estado inicial activo
+        });
+
         alert("Radar añadido correctamente.");
         radarForm.style.display = "none";
-        map.removeLayer(tempMarker);
+        if (tempMarker) map.removeLayer(tempMarker);
         tempMarker = null;
       } else {
         alert("Por favor, completa todos los campos.");
@@ -239,6 +227,50 @@
       if (tempMarker) map.removeLayer(tempMarker);
       tempMarker = null;
     });
+
+    function loadRadars() {
+      db.ref("radares").on("value", (snapshot) => {
+        map.eachLayer((layer) => {
+          if (layer instanceof L.Marker) {
+            map.removeLayer(layer);
+          }
+        });
+
+        snapshot.forEach((childSnapshot) => {
+          const data = childSnapshot.val();
+          const marker = L.marker([data.lat, data.lng], { icon: getIconByRadar(data) }).addTo(map);
+
+          marker.bindPopup(`
+            <b>${data.radarType}</b><br>
+            Carretera: ${data.road}<br>
+            Dirección: ${data.direction}<br>
+            Velocidad: ${data.speed} km/h<br>
+            Estado: <b>${data.status === "active" ? "Activo" : "Inactivo"}</b><br>
+            <button class="popup-button ${data.status === "active" ? "inactive" : "active"}" onclick="toggleRadarStatus('${childSnapshot.key}', '${data.status}')">
+              ${data.status === "active" ? "Inhabilitar" : "Activar"}
+            </button>
+          `);
+        });
+      });
+    }
+
+    function getIconByRadar(radar) {
+      const { speed, status } = radar;
+      const iconUrl = status === "active"
+        ? `https://davidvazguijarro.es/velocidades/${speed}.png`
+        : `https://davidvazguijarro.es/velocidades/no_activo.png`;
+
+      return L.icon({
+        iconUrl,
+        iconSize: [32, 32],
+      });
+    }
+
+    function toggleRadarStatus(id, currentStatus) {
+      const newStatus = currentStatus === "active" ? "inactive" : "active";
+      db.ref("radares/" + id).update({ status: newStatus });
+      alert(`El radar ha sido ${newStatus === "active" ? "activado" : "inhabilitado"}.`);
+    }
 
     loadRadars();
   </script>
