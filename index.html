@@ -3,213 +3,81 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mapa Interactivo con Leaflet y Firebase</title>
-  
+  <title>Mapa de Radares</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-
   <style>
-    body {
-      font-family: 'Poppins', Arial, sans-serif;
+    html, body {
       margin: 0;
       padding: 0;
-      background-color: #f7f7f7;
+      height: 100%;
+      overflow: hidden;
     }
 
     #map {
+      height: 100%;
       width: 100%;
-      height: 100vh;
     }
 
-    #addRadarButton, #infoButton {
+    #addRadarButton, #helpButton {
       position: absolute;
-      padding: 12px;
-      font-size: 16px;
+      bottom: 20px;
+      width: 60px;
+      height: 60px;
+      background-color: #007bff;
+      color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 50%;
+      font-size: 24px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
       cursor: pointer;
       z-index: 1000;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
-      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
     }
 
-    #addRadarButton:hover, #infoButton:hover {
+    #addRadarButton:hover, #helpButton:hover {
       transform: scale(1.1);
-      box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
     }
 
     #addRadarButton {
-      bottom: 20px;
       right: 20px;
       background-color: #007bff;
-      color: white;
     }
 
-    #addRadarButton:hover {
-      background-color: #0056b3;
-    }
-
-    #infoButton {
-      bottom: 20px;
-      left: 20px;
+    #helpButton {
+      right: 100px;
       background-color: #28a745;
-      color: white;
     }
 
-    #infoButton:hover {
-      background-color: #218838;
-    }
-
-    #radarForm {
-      position: absolute;
-      top: 10%;
-      left: 5%;
-      background-color: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
-      display: none;
-      z-index: 1001;
-      width: 90%;
-      max-width: 350px;
-    }
-
-    #radarForm input, #radarForm textarea {
-      width: 100%;
-      margin-bottom: 12px;
-      padding: 2px;
-      font-size: 14px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-
-    #radarForm button {
-      background-color: #007bff;
-      color: white;
-      padding: 12px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 16px;
-      width: 100%;
-    }
-
-    #radarForm button:hover {
-      background-color: #0056b3;
-    }
-
-    #infoPopup {
-      display: none;
-      position: fixed;
-      top: 20%;
-      left: 10%;
-      background-color: rgba(255, 255, 255, 0.9);
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
-      z-index: 1002;
-      width: 80%;
-      max-width: 400px;
-      backdrop-filter: blur(8px);
-    }
-
-    #infoPopup h4 {
-      margin-top: 0;
-    }
-
-    #infoPopup button {
-      background-color: #dc3545;
-      color: white;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 14px;
-      width: 100%;
-    }
-
-    #infoPopup button:hover {
-      background-color: #c82333;
-    }
-
-    .loading-message {
-      background-color: white;
-      padding: 10px;
-      border-radius: 6px;
-      box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
-    }
-
-    .delete-radar-button {
-      background-color: #ff4d4d;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 8px;
-      font-size: 14px;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-
-    .delete-radar-button:hover {
-      background-color: #cc0000;
-    }
-
-    /* Diseño responsive */
-    @media (max-width: 768px) {
-      #radarForm {
-        top: 15%;
-        width: 90%;
-        max-width: 320px;
+    @media (max-width: 600px) {
+      #addRadarButton, #helpButton {
+        width: 50px;
+        height: 50px;
+        font-size: 18px;
+        bottom: 15px;
       }
 
-      #radarForm input, #radarForm textarea, #radarForm button {
-        padding: 12px;
-        font-size: 16px;
-      }
-
-      #addRadarButton, #infoButton {
-        font-size: 14px;
-        padding: 15px;
+      #helpButton {
+        right: 80px;
       }
     }
   </style>
 </head>
 <body>
-
-  <button id="addRadarButton">Añadir Radar</button>
-  <button id="infoButton">Información</button>
   <div id="map"></div>
-
-  <div id="radarForm">
-    <h4>Detalles del Radar</h4>
-    <label for="speedLimit">Vel. Máxima (km/h):</label>
-    <input type="number" id="speedLimit" placeholder="Ej. 80" min="10" max="120" required />
-    <label for="radarType">Tipo:</label>
-    <input type="text" id="radarType" placeholder="Ej. REMOLQUE" required />
-    <label for="road">Carretera:</label>
-    <input type="text" id="road" placeholder="Ej. AP-7" required />
-    <label for="direction">Dirección:</label>
-    <textarea id="direction" placeholder="Ej. Sentido Tarragona" required></textarea>
-    <button id="saveRadarButton">Guardar Radar</button>
-    <button id="cancelRadarButton">Cancelar</button>
-  </div>
-
-  <div id="infoPopup">
-    <h4>Información sobre la aplicación</h4>
-    <p><strong>Instrucciones de uso:</strong><br>Haz clic en el mapa para agregar un radar, luego ingresa los detalles del radar y guarda.</p>
-    <p><strong>Contacto:</strong><br>Email: contacto@radarapp.com</p>
-    <p><strong>Copyright:</strong><br>&copy; 2025 RadarApp</p>
-    <p><strong>Última actualización:</strong><br>Enero 2025</p>
-    <button onclick="closeInfoPopup()">Cerrar</button>
-  </div>
+  <button id="addRadarButton">+</button>
+  <button id="helpButton">?</button>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
   <script>
-    // Firebase Config y Lógica existente
-    var firebaseConfig = {
+    // Configuración de Firebase
+    const firebaseConfig = {
       apiKey: "AIzaSyDNCBnqAAcdV3kqx8hN-uMyqSkzIzV4DXc",
       authDomain: "radares-bcn.firebaseapp.com",
       databaseURL: "https://radares-bcn-default-rtdb.europe-west1.firebasedatabase.app",
@@ -217,122 +85,124 @@
       storageBucket: "radares-bcn.appspot.com",
       messagingSenderId: "892778900332",
       appId: "1:892778900332:web:f3c5353d981dda7b4ba149",
-      measurementId: "G-C1GT8Q96ZJ"
+      measurementId: "G-C1GT8Q96ZJ",
     };
-
     firebase.initializeApp(firebaseConfig);
-    var database = firebase.database();
+    const database = firebase.database();
 
-    // Configuración inicial del mapa
-    var map = L.map('map').setView([41.3784, 2.1924], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+    // Inicializar el mapa
+    const map = L.map('map', { attributionControl: false }).setView([41.3784, 2.1924], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-    // Nueva función: Mostrar spinner al cargar
-    function mostrarCargando() {
-      const spinner = L.control({ position: 'topleft' });
-      spinner.onAdd = function () {
-        const div = L.DomUtil.create('div', 'loading-message');
-        div.innerHTML = 'Cargando radares...';
-        return div;
-      };
-      spinner.addTo(map);
-      return spinner;
-    }
+    const addRadarButton = document.getElementById('addRadarButton');
+    const helpButton = document.getElementById('helpButton');
+    let addingRadar = false;
 
-    // Mejoras al formulario y validación
-    function validateForm() {
-      let isValid = true;
-      ['speedLimit', 'radarType', 'road', 'direction'].forEach(id => {
-        const field = document.getElementById(id);
-        if (!field.value.trim()) {
-          field.style.border = '2px solid red';
-          isValid = false;
-        } else {
-          field.style.border = '';
-        }
-      });
-      return isValid;
-    }
-    
-    // Referencias a elementos
-const addRadarButton = document.getElementById("addRadarButton");
-const infoButton = document.getElementById("infoButton");
-const radarForm = document.getElementById("radarForm");
-const saveRadarButton = document.getElementById("saveRadarButton");
-const cancelRadarButton = document.getElementById("cancelRadarButton");
-const infoPopup = document.getElementById("infoPopup");
-
-// Función para mostrar el formulario de radar
-function openRadarForm(lat, lng) {
-  radarForm.style.display = "block";
-
-  // Almacena las coordenadas donde se hizo clic
-  radarForm.dataset.lat = lat;
-  radarForm.dataset.lng = lng;
-}
-
-// Función para cerrar el formulario de radar
-function closeRadarForm() {
-  radarForm.style.display = "none";
-}
-
-// Función para mostrar la información de la aplicación
-function openInfoPopup() {
-  infoPopup.style.display = "block";
-}
-
-// Función para cerrar el popup de información
-function closeInfoPopup() {
-  infoPopup.style.display = "none";
-}
-
-// Evento para abrir el formulario de radar
-addRadarButton.addEventListener("click", function () {
-  alert("Haz clic en el mapa para añadir un radar.");
-});
-
-// Evento para mostrar la información
-infoButton.addEventListener("click", openInfoPopup);
-
-// Botón de cancelar en el formulario
-cancelRadarButton.addEventListener("click", closeRadarForm);
-
-// Botón de guardar radar
-saveRadarButton.addEventListener("click", function () {
-  if (validateForm()) {
-    const lat = radarForm.dataset.lat;
-    const lng = radarForm.dataset.lng;
-    const speedLimit = document.getElementById("speedLimit").value.trim();
-    const radarType = document.getElementById("radarType").value.trim();
-    const road = document.getElementById("road").value.trim();
-    const direction = document.getElementById("direction").value.trim();
-
-    // Guarda los datos en Firebase
-    database.ref("radares").push({
-      lat: parseFloat(lat),
-      lng: parseFloat(lng),
-      speedLimit: parseInt(speedLimit),
-      radarType: radarType,
-      road: road,
-      direction: direction,
+    // Función para añadir radar
+    addRadarButton.addEventListener('click', () => {
+      addingRadar = !addingRadar;
+      if (addingRadar) {
+        alert('Haz clic en el mapa para añadir un radar.');
+        addRadarButton.style.backgroundColor = '#28a745';
+        addRadarButton.innerText = '✔';
+      } else {
+        addRadarButton.style.backgroundColor = '#007bff';
+        addRadarButton.innerText = '+';
+      }
     });
 
-    alert("Radar añadido correctamente.");
-    closeRadarForm();
-  } else {
-    alert("Por favor, completa todos los campos correctamente.");
-  }
-});
+    // Función de ayuda
+    helpButton.addEventListener('click', () => {
+      alert('Haz clic en el botón "+" para activar el modo de añadir radares. Luego, haz clic en el mapa y proporciona la información solicitada.');
+    });
 
-// Manejador de clics en el mapa para añadir un radar
-map.on("click", function (e) {
-  const { lat, lng } = e.latlng;
-  openRadarForm(lat, lng);
-});
+    // Crear ícono personalizado para un radar basado en su velocidad
+    const createRadarIcon = (velocidad) => {
+      return L.icon({
+        iconUrl: `https://davidvazguijarro.es/velocidades/${velocidad}.png`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 32],
+        popupAnchor: [0, -32],
+      });
+    };
 
-    
+    // Cargar radares desde Firebase
+    const loadRadares = () => {
+      database.ref('radares').once('value', (snapshot) => {
+        const radares = snapshot.val();
+        if (radares) {
+          Object.keys(radares).forEach((key) => {
+            const radar = radares[key];
+            const marker = L.marker([radar.lat, radar.lng], { icon: createRadarIcon(radar.velocidad) }).addTo(map);
+
+            // Mostrar información del radar en el popup
+            marker.bindPopup(`
+              <div>
+                <p><strong>Velocidad:</strong> ${radar.velocidad} km/h</p>
+                <p><strong>Carretera:</strong> ${radar.carretera}</p>
+                <p><strong>Dirección:</strong> ${radar.direccion}</p>
+                <p><strong>Tipo de radar:</strong> ${radar.tipo}</p>
+                <button onclick="deleteRadar('${key}', ${radar.lat}, ${radar.lng})" style="background-color: red; color: white; border: none; padding: 5px; border-radius: 5px; cursor: pointer;">Eliminar</button>
+              </div>
+            `);
+          });
+        }
+      });
+    };
+
+    // Eliminar radar
+    const deleteRadar = (key, lat, lng) => {
+      if (confirm('¿Estás seguro de que deseas eliminar este radar?')) {
+        database.ref('radares/' + key).remove();
+        map.eachLayer((layer) => {
+          if (layer instanceof L.Marker) {
+            const { lat: markerLat, lng: markerLng } = layer.getLatLng();
+            if (markerLat === lat && markerLng === lng) {
+              map.removeLayer(layer);
+            }
+          }
+        });
+        alert('Radar eliminado correctamente.');
+      }
+    };
+
+    // Añadir radar al mapa y guardarlo en Firebase
+    map.on('click', (e) => {
+      if (addingRadar) {
+        const lat = e.latlng.lat;
+        const lng = e.latlng.lng;
+
+        const tipo = prompt("¿Qué tipo de radar es? (remolque, fijo, móvil, tramo):");
+        const carretera = prompt("Introduce la carretera o autopista donde se encuentra el radar:");
+        const direccion = prompt("Introduce la dirección:");
+        const velocidad = prompt("Introduce la velocidad máxima del radar (km/h):");
+
+        if (!tipo || !carretera || !direccion || !velocidad || isNaN(velocidad)) {
+          alert('Información no válida. Radar no añadido.');
+          return;
+        }
+
+        const radar = { lat, lng, velocidad: parseInt(velocidad), tipo, carretera, direccion };
+        database.ref('radares').push(radar);
+
+        L.marker([lat, lng], { icon: createRadarIcon(velocidad) }).addTo(map).bindPopup(`
+          <div>
+            <p><strong>Velocidad:</strong> ${velocidad} km/h</p>
+            <p><strong>Carretera:</strong> ${carretera}</p>
+            <p><strong>Dirección:</strong> ${direccion}</p>
+            <p><strong>Tipo de radar:</strong> ${tipo}</p>
+            <button onclick="deleteRadar('${key}', ${lat}, ${lng})" style="background-color: red; color: white; border: none; padding: 5px; border-radius: 5px; cursor: pointer;">Eliminar</button>
+          </div>
+        `);
+        alert('Radar añadido correctamente.');
+        addingRadar = false;
+        addRadarButton.style.backgroundColor = '#007bff';
+        addRadarButton.innerText = '+';
+      }
+    });
+
+    // Cargar los radares al cargar la página
+    loadRadares();
   </script>
 </body>
 </html>
