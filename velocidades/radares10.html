@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapa de Radares en Barcelona</title>
+
+  <!-- Estilos de Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+    }
+
+    #map {
+      width: 100%;
+      height: 100vh;
+    }
+
+    #addRadarPopup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 255, 255, 0.95);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+      max-width: 400px;
+      width: 90%;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div id="map"></div>
+
+  <!-- Popup para añadir radar -->
+  <div id="addRadarPopup">
+    <h3>Añadir Radar</h3>
+    <label for="radarType">Tipo de Radar:</label>
+    <select id="radarType">
+      <option value="fijo">Fijo</option>
+      <option value="móvil">Móvil</option>
+    </select>
+
+    <label for="radarSpeed">Velocidad (km/h):</label>
+    <input type="number" id="radarSpeed" placeholder="Ejemplo: 60" />
+
+    <label for="radarDirection">Dirección:</label>
+    <input type="text" id="radarDirection" placeholder="Ejemplo: Norte a Sur" />
+
+    <button onclick="addRadar()">Guardar Radar</button>
+    <button onclick="toggleAddRadarPopup()">Cancelar</button>
+  </div>
+
+  <!-- Librerías necesarias -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+  <script>
+    // Configuración de Firebase
+    const firebaseConfig = {
+      apiKey: "tu-api-key-aqui",
+      authDomain: "tu-dominio.firebaseapp.com",
+      databaseURL: "https://tu-database.firebaseio.com",
+      projectId: "tu-proyecto-id",
+      storageBucket: "tu-bucket.appspot.com",
+      messagingSenderId: "tu-id-mensajes",
+      appId: "tu-app-id",
+      measurementId: "tu-id-medicion"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    // Inicializar el mapa
+    const map = L.map('map').setView([41.3784, 2.1924], 13); // Coordenadas de Barcelona
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+
+    // Función para cargar los radares desde Firebase
+    function loadRadars() {
+      const radarsRef = database.ref('radars');
+      radarsRef.on('value', snapshot => {
+        // Limpiar el mapa
+        map.eachLayer(layer => {
+          if (layer instanceof L.Marker) {
+            map.removeLayer(layer);
+          }
+        });
+
+        // Agregar los radares al mapa
+        snapshot.forEach(childSnapshot => {
+          const radar = childSnapshot.val();
+          const lat = radar.lat;
+          const lng = radar.lng;
+          const radarType = radar.type;
+          const radarSpeed = radar.speed;
+          const radarDirection = radar.direction;
+
+          const radarIcon = L.divIcon({
+            className: 'radar-icon',
+            html: `<div style="background-color: #007BFF; color: white; padding: 5px; border-radius: 50%">${radarSpeed} km/h</div>`
+          });
+
+          L.marker([lat, lng], { icon: radarIcon })
+            .addTo(map)
+            .bindPopup(`Radar ${radarType}<br>Velocidad: ${radarSpeed} km/h<br>Dirección: ${radarDirection}`);
+        });
+      });
+    }
+
+    // Función para abrir y cerrar el popup de añadir radar
+    function toggleAddRadarPopup() {
+      const popup = document.getElementById('addRadarPopup');
+      popup.style.display = (popup.style.display === 'block') ? 'none' : 'block';
+    }
+
+    // Función para añadir radar
+    function addRadar() {
+      const radarType = document.getElementById('radarType').value;
+      const radarSpeed = document.getElementById('radarSpeed').value;
+      const radarDirection = document.getElementById('radarDirection').value;
+
+      if (!radarType || !radarSpeed || !radarDirection) {
+        alert('Por favor, rellena todos los campos.');
+        return;
+      }
+
+      map.once('click', event => {
+        const { lat, lng } = event.latlng;
+
+        const newRadar = {
+          type: radarType,
+          speed: radarSpeed,
+          direction: radarDirection,
+          lat: lat,
+          lng: lng
+        };
+
+        // Guardar el radar en Firebase
+        database.ref('radars').push(newRadar)
+          .then(() => {
+            alert('Radar añadido correctamente.');
+            toggleAddRadarPopup(); // Cerrar el popup
+            loadRadars(); // Recargar los radares en el mapa
+          })
+          .catch(error => {
+            console.error('Error al guardar el radar:', error);
+          });
+      });
+
+      alert('Haz clic en el mapa para seleccionar la ubicación del radar.');
+    }
+
+    // Cargar los radares al inicio
+    loadRadars();
+  </script>
+</body>
+</html>

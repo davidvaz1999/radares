@@ -3,10 +3,107 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestión de Radares</title>
+  <title>AHORRA UNA MULTA</title>
+  
+  <!-- Meta descripción -->
+  <meta name="description" content="Descubre la ubicación de los radares de tráfico en Cataluña. Evita multas con información actualizada sobre radares fijos, móviles y de tramo.">
+  
+  <!-- Meta keywords (menos relevante, pero opcional) -->
+  <meta name="keywords" content="radares en Cataluña, localizador de radares, radares de tráfico, radares fijos, radares móviles, radares de tramo, tráfico Cataluña, evitar multas">
+  
+  <!-- Vista responsive -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Canonical -->
+  <link rel="canonical" href="https://ahorraunamulta.com/localizador-radares-cataluna">
+
+  <!-- Open Graph (SEO para redes sociales) -->
+  <meta property="og:title" content="Localizador de Radares en Cataluña | Ahorra Multas de Tráfico">
+  <meta property="og:description" content="Consulta en tiempo real los radares de tráfico en Cataluña y evita multas innecesarias.">
+  <meta property="og:image" content="https://ahorraunamulta.com/imagen-radares-cataluna.jpg">
+  <meta property="og:url" content="https://ahorraunamulta.com">
+  <meta property="og:type" content="website">
+
+  <!-- Twitter Cards -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Localizador de Radares en Cataluña">
+  <meta name="twitter:description" content="Descubre dónde están los radares en Cataluña y ahorra en multas. Información actualizada de radares fijos, móviles y de tramo.">
+  <meta name="twitter:image" content="https://ahorraunamulta.com/imagen-radares-cataluna.jpg">
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+
+  <!-- Schema Markup para posicionamiento local -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Website",
+    "name": "AhorraUnaMulta",
+    "url": "https://ahorraunamulta.com",
+    "description": "Encuentra los radares de tráfico en Cataluña y evita multas. Mapa interactivo con información actualizada.",
+    "publisher": {
+      "@type": "Organization",
+      "name": "AhorraUnaMulta",
+      "logo": "https://ahorraunamulta.com/logo.png"
+    }
+  }
+  </script>
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
+  
+  body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      overflow: hidden; /* Evita el scroll mientras aparece la pantalla de carga */
+    }
+
+    /* Estilo de la pantalla de carga */
+    #preloader {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #007bff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      flex-direction: column;
+      transition: opacity 8.0s ease, visibility 8.0s ease;
+    }
+
+    #preloader img {
+      width: 100px;
+      height: auto;
+      margin-bottom: 20px;
+      animation: fadeIn 1.5s infinite ease-in-out;
+    }
+
+    #preloader h1 {
+      color: white;
+      font-size: 24px;
+      margin: 0;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes fadeIn {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    /* Cuando el preloader esté oculto */
+    .hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+  
     body {
       font-family: Arial, sans-serif;
       margin: 0;
@@ -123,6 +220,30 @@
   </style>
 </head>
 <body>
+
+<div id="preloader">
+    <img src="https://ahorraunamulta.com/velocidades/120.png" alt="Logotipo">
+    <h2>AHORRA UNA MULTA</h2><BR>
+    <h1>Cargando...</h1>
+  </div>
+  
+   <script>
+    // Espera a que la página esté completamente cargada
+    window.addEventListener("load", function () {
+      const preloader = document.getElementById("preloader");
+      const content = document.getElementById("content");
+
+      // Añade la clase "hidden" al preloader para que se desvanezca
+      preloader.classList.add("hidden");
+
+      // Después de la transición (0.5s), oculta el preloader completamente
+      setTimeout(() => {
+        preloader.style.display = "none";
+        content.style.display = "block"; // Muestra el contenido principal
+      }, 2000); // Debe coincidir con el tiempo de transición
+    });
+  </script>
+
   <div id="map"></div>
   <button id="addRadarButton" class="map-button">+</button>
 
@@ -257,8 +378,8 @@
     function getIconByRadar(radar) {
       const { speed, status } = radar;
       const iconUrl = status === "active"
-        ? `https://davidvazguijarro.es/velocidades/${speed}.png`
-        : `https://davidvazguijarro.es/velocidades/no_activo.png`;
+        ? `https://ahorraunamulta.com/velocidades/${speed}.png`
+        : `https://ahorraunamulta.com/velocidades/no_activo.png`;
 
       return L.icon({
         iconUrl,
