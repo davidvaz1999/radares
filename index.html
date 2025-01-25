@@ -24,7 +24,7 @@
       position: absolute;
       bottom: 20px;
       right: 20px;
-      padding: 10px;
+      padding: 12px;
       background-color: #007bff;
       color: white;
       border: none;
@@ -42,7 +42,7 @@
       position: absolute;
       bottom: 20px;
       left: 20px;
-      padding: 10px;
+      padding: 12px;
       background-color: #28a745;
       color: white;
       border: none;
@@ -56,28 +56,24 @@
       background-color: #218838;
     }
 
-    /* Estilo para el popup */
-    .popup-info {
-      max-width: 400px;
-    }
-
     #radarForm {
       position: absolute;
-      top: 100px;
-      left: 20px;
+      top: 10%;
+      left: 5%;
       background-color: white;
-      padding: 30px;
+      padding: 20px;
       border-radius: 8px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
       display: none;
       z-index: 1001;
-      width: 300px;
+      width: 90%;
+      max-width: 300px;
     }
 
     #radarForm input, #radarForm textarea {
       width: 100%;
       margin-bottom: 8px;
-      padding: 6px;
+      padding: 8px;
       font-size: 14px;
       border: 1px solid #ccc;
       border-radius: 4px;
@@ -86,11 +82,12 @@
     #radarForm button {
       background-color: #007bff;
       color: white;
-      padding: 8px;
+      padding: 10px;
       border: none;
       border-radius: 5px;
       cursor: pointer;
       font-size: 14px;
+      width: 100%;
     }
 
     #radarForm button:hover {
@@ -98,7 +95,7 @@
     }
 
     textarea {
-      height: 50px;
+      height: 60px;
     }
 
     .loading-message {
@@ -109,17 +106,92 @@
     }
 
     .delete-radar-button {
-      background-color: red;
+      display: block;
+      margin-top: 10px;
+      background-color: #ff4d4d;
       color: white;
-      padding: 6px 10px;
       border: none;
       border-radius: 5px;
-      cursor: pointer;
+      padding: 5px 10px;
       font-size: 14px;
+      text-align: center;
+      cursor: pointer;
+      width: 100%;
     }
 
     .delete-radar-button:hover {
-      background-color: darkred;
+      background-color: #cc0000;
+    }
+
+    #infoPopup {
+      display: none;
+      position: fixed;
+      top: 20%;
+      left: 10%;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      z-index: 1002;
+      width: 80%;
+      max-width: 400px;
+    }
+
+    #infoPopup h4 {
+      margin-top: 0;
+    }
+
+    #infoPopup button {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 10px;
+      width: 100%;
+    }
+
+    #infoPopup button:hover {
+      background-color: #c82333;
+    }
+
+    /* Diseño responsive */
+    @media (max-width: 768px) {
+      #addRadarButton {
+        padding: 15px;
+        font-size: 14px;
+      }
+
+      #radarForm {
+        top: 15%;
+        width: 90%;
+        max-width: 280px;
+      }
+
+      #radarForm input, #radarForm textarea, #radarForm button {
+        padding: 10px;
+        font-size: 16px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      #addRadarButton {
+        font-size: 12px;
+      }
+
+      #radarForm {
+        top: 10%;
+        left: 10%;
+        width: 80%;
+        max-width: 280px;
+      }
+
+      #radarForm input, #radarForm textarea, #radarForm button {
+        padding: 12px;
+        font-size: 14px;
+      }
     }
   </style>
 </head>
@@ -127,7 +199,6 @@
 
   <button id="addRadarButton">Añadir Radar</button>
   <button id="infoButton">Información</button>
-  
   <div id="map"></div>
 
   <div id="radarForm">
@@ -142,6 +213,15 @@
     <textarea id="direction" placeholder="Ej. Sentido Tarragona" required></textarea>
     <button id="saveRadarButton">Guardar Radar</button>
     <button id="cancelRadarButton">Cancelar</button>
+  </div>
+
+  <div id="infoPopup">
+    <h4>Información sobre la aplicación</h4>
+    <p><strong>Instrucciones de uso:</strong><br>Haz clic en el mapa para agregar un radar, luego ingresa los detalles del radar y guarda.</p>
+    <p><strong>Contacto:</strong><br>Email: contacto@radarapp.com</p>
+    <p><strong>Copyright:</strong><br>&copy; 2025 RadarApp</p>
+    <p><strong>Última actualización:</strong><br>Enero 2025</p>
+    <button onclick="closeInfoPopup()">Cerrar</button>
   </div>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -196,6 +276,14 @@
       alert(addingRadar ? "Haz clic en el mapa para añadir un radar." : "Modo de añadir radar desactivado.");
     };
 
+    document.getElementById('infoButton').onclick = function() {
+      document.getElementById('infoPopup').style.display = 'block';
+    };
+
+    function closeInfoPopup() {
+      document.getElementById('infoPopup').style.display = 'none';
+    }
+
     map.on('click', function(e) {
       if (addingRadar) {
         currentLatLng = e.latlng;
@@ -232,34 +320,28 @@
         direction: document.getElementById('direction').value
       };
 
-      // Guardar en Firebase
-      var newRadarRef = firebase.database().ref('radars').push();
-      newRadarRef.set(radarData)
-        .then(function() {
-          // Crear el marcador del radar de inmediato sin necesidad de recargar la página
-          const radarIcon = getRadarIcon(+radarData.speedLimit);
-          const marker = L.marker([radarData.lat, radarData.lng], { icon: radarIcon })
-            .addTo(map)
-            .bindPopup(`
-              <b>Radar de velocidad:</b> ${radarData.speedLimit} km/h<br>
-              <b>Tipo:</b> ${radarData.radarType}<br>
-              <b>Carretera:</b> ${radarData.road}<br>
-              <b>Dirección:</b> ${radarData.direction}<br>
-              <button class="delete-radar-button" onclick="deleteRadar('${newRadarRef.key}', this)">Eliminar Radar</button>
-            `);
-
-          marker.radarId = newRadarRef.key; // Asignar ID para referencia
-          alert("Radar guardado y mostrado en el mapa.");
-          document.getElementById('radarForm').style.display = 'none';
-        })
-        .catch(function(error) {
-          alert("Error al guardar el radar: " + error.message);
-        });
+      firebase.database().ref('radars/' + Date.now()).set(radarData);
+      alert("Radar guardado.");
+      document.getElementById('radarForm').style.display = 'none';
+      addRadarToMap(radarData);
     };
 
     document.getElementById('cancelRadarButton').onclick = function() {
       document.getElementById('radarForm').style.display = 'none';
     };
+
+    function addRadarToMap(radar) {
+      const radarIcon = getRadarIcon(+radar.speedLimit);
+      const marker = L.marker([radar.lat, radar.lng], { icon: radarIcon })
+        .addTo(map)
+        .bindPopup(`
+          <b>Radar de velocidad:</b> ${radar.speedLimit} km/h<br>
+          <b>Tipo:</b> ${radar.radarType}<br>
+          <b>Carretera:</b> ${radar.road}<br>
+          <b>Dirección:</b> ${radar.direction}<br>
+          <button class="delete-radar-button" onclick="deleteRadar('${radar.id}', this)">Eliminar Radar</button>
+        `);
+    }
 
     function loadRadarsFromFirebase() {
       const loadingMessage = L.control({ position: 'topleft' });
@@ -276,18 +358,8 @@
         if (radars) {
           for (const id in radars) {
             const radar = radars[id];
-            const radarIcon = getRadarIcon(+radar.speedLimit);
-            const marker = L.marker([radar.lat, radar.lng], { icon: radarIcon })
-              .addTo(map)
-              .bindPopup(`
-                <b>Radar de velocidad:</b> ${radar.speedLimit} km/h<br>
-                <b>Tipo:</b> ${radar.radarType}<br>
-                <b>Carretera:</b> ${radar.road}<br>
-                <b>Dirección:</b> ${radar.direction}<br>
-                <button class="delete-radar-button" onclick="deleteRadar('${id}', this)">Eliminar Radar</button>
-              `);
-
-            marker.radarId = id; // Asignar ID para referencia
+            radar.id = id;
+            addRadarToMap(radar);
           }
         }
       });
@@ -301,29 +373,12 @@
             map.removeLayer(layer);
           }
         });
-        button.closest(".leaflet-popup").style.display = "none"; // Ocultar el popup
+        button.closest(".leaflet-popup").style.display = "none"; 
         alert("Radar eliminado.");
       }
     };
 
     loadRadarsFromFirebase();
-
-    // Código para abrir el popup de información
-    var infoButton = document.getElementById("infoButton");
-
-    infoButton.onclick = function() {
-      var popupContent = `
-        <b>Cómo Funciona:</b> Esta aplicación permite añadir, eliminar y visualizar radares de velocidad en un mapa interactivo. Los radares se almacenan en una base de datos de Firebase y se muestran en tiempo real.<br><br>
-        <b>Contacto:</b> Para más información, puedes contactar con el desarrollador en <a href="mailto:contacto@tuemail.com">contacto@tuemail.com</a>.<br><br>
-        <b>Copyright:</b> &copy; 2025 TuNombre. Todos los derechos reservados.<br><br>
-        <b>Última Actualización:</b> Enero 2025
-      `;
-      
-      var popup = L.popup()
-        .setLatLng(map.getCenter())
-        .setContent(popupContent)
-        .openOn(map);
-    };
   </script>
 </body>
 </html>
