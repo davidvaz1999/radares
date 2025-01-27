@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -337,6 +336,27 @@
     .toggle-button:hover {
       background-color: #0056b3;
     }
+    
+    .radar-section {
+    margin-top: 10px;
+    display: block; /* Mostrar por defecto */
+  }
+
+  .toggle-button-section {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-bottom: 10px;
+    transition: background-color 0.2s;
+  }
+
+  .toggle-button-section:hover {
+    background-color: #0056b3;
+  }
   </style>
 </head>
 <body>
@@ -351,9 +371,22 @@
   
   <button class="toggle-button" id="toggle-button">Mostrar radares en listado</button>
   <div class="list-container" id="list-container">
-    <h2>LISTADO DE RADARES</h2>
-    <div id="list"></div>
+  <h2>LISTADO DE RADARES</h2>
+  <div>
+    <button class="toggle-button-section" id="toggle-active">Mostrar/Ocultar Radares Activos</button>
+    <div id="active-list" class="radar-section">
+      <h3>Radares Activos</h3>
+      <!-- Contenido dinámico de radares activos -->
+    </div>
   </div>
+  <div>
+    <button class="toggle-button-section" id="toggle-inactive">Mostrar/Ocultar Radares Inactivos</button>
+    <div id="inactive-list" class="radar-section" style="display: none;">
+      <h3>Radares Inactivos</h3>
+      <!-- Contenido dinámico de radares inactivos -->
+    </div>
+  </div>
+</div>
   
    <script>
     // Espera a que la página esté completamente cargada
@@ -367,7 +400,6 @@
       // Después de la transición (0.5s), oculta el preloader completamente
       setTimeout(() => {
         preloader.style.display = "none";
-        content.style.display = "block"; // Muestra el contenido principal
       }, 2000); // Debe coincidir con el tiempo de transición
     });
   </script>
@@ -402,33 +434,59 @@
     // Referencia a la base de datos
     const dbRef = ref(database, 'radares'); // Ruta 'radares' en tu base de datos
 
-    // Obtener los datos y mostrarlos en la lista
-    const listContainer = document.getElementById('list');
     onValue(dbRef, (snapshot) => {
-      const data = snapshot.val();
-      listContainer.innerHTML = ''; // Limpiar contenido previo
+  const data = snapshot.val();
 
-      for (const key in data) {
-        const radar = data[key];
+  const activeListContainer = document.getElementById("active-list");
+  const inactiveListContainer = document.getElementById("inactive-list");
 
-        // Crear un elemento para cada radar
-        const item = document.createElement('div');
-        item.className = 'list-item';
+  activeListContainer.innerHTML = ""; // Limpiar contenido previo de activos
+  inactiveListContainer.innerHTML = ""; // Limpiar contenido previo de inactivos
 
-        // Mostrar la información del radar
-        item.innerHTML = `
-          <h3>Radar: ${radar.radarType || 'Desconocido'}</h3>
-          <p><strong>Latitud:</strong> ${radar.lat || 'N/A'}</p>
-          <p><strong>Longitud:</strong> ${radar.lng || 'N/A'}</p>
-          <p><strong>Carretera:</strong> ${radar.road || 'N/A'}</p>
-          <p><strong>Dirección:</strong> ${radar.direction || 'N/A'}</p>
-          <p><strong>Velocidad:</strong> ${radar.speed || 'N/A'} km/h</p>
-          <p><strong>Estado:</strong> ${radar.status === 'active' ? 'Activo' : 'Inactivo'}</p>
-        `;
+  for (const key in data) {
+    const radar = data[key];
 
-        listContainer.appendChild(item);
-      }
-    });
+    // Crear un elemento para cada radar
+    const item = document.createElement("div");
+    item.className = "list-item";
+
+    // Mostrar la información del radar
+    item.innerHTML = `
+      <h3>Radar: ${radar.radarType || "Desconocido"}</h3>
+      <p><strong>Latitud:</strong> ${radar.lat || "N/A"}</p>
+      <p><strong>Longitud:</strong> ${radar.lng || "N/A"}</p>
+      <p><strong>Carretera:</strong> ${radar.road || "N/A"}</p>
+      <p><strong>Dirección:</strong> ${radar.direction || "N/A"}</p>
+      <p><strong>Velocidad:</strong> ${radar.speed || "N/A"} km/h</p>
+      <p><strong>Estado:</strong> ${
+        radar.status === "active" ? "Activo" : "Inactivo"
+      }</p>
+    `;
+
+    // Añadir al contenedor correspondiente
+    if (radar.status === "active") {
+      activeListContainer.appendChild(item);
+    } else {
+      inactiveListContainer.appendChild(item);
+    }
+  }
+});
+
+// Funcionalidad para mostrar/ocultar secciones
+const toggleActive = document.getElementById("toggle-active");
+const toggleInactive = document.getElementById("toggle-inactive");
+
+toggleActive.addEventListener("click", () => {
+  const activeSection = document.getElementById("active-list");
+  activeSection.style.display =
+    activeSection.style.display === "none" ? "block" : "none";
+});
+
+toggleInactive.addEventListener("click", () => {
+  const inactiveSection = document.getElementById("inactive-list");
+  inactiveSection.style.display =
+    inactiveSection.style.display === "none" ? "block" : "none";
+});
 
     // Funcionalidad para mostrar/ocultar el listado
     const toggleButton = document.getElementById('toggle-button');
