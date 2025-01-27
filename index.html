@@ -489,7 +489,7 @@
   <script type="module">
     // Importar las funciones necesarias
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-database.js";
+    import { getDatabase, ref, get, onValue } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-database.js";
 
     // Configuración de Firebase
     const firebaseConfig = {
@@ -537,6 +537,7 @@
       <p><strong>Estado:</strong> ${
         radar.status === "active" ? "Activo" : "Inactivo"
       }</p>
+       <p><b>Última modificación:</b> <span id="last-modified"></span></p>
     `;
 
     // Añadir al contenedor correspondiente
@@ -751,6 +752,7 @@ toggleInactive.addEventListener("click", () => {
             <button class="popup-button ${data.status === "active" ? "inactive" : "active"}" onclick="toggleRadarStatus('${childSnapshot.key}', '${data.status}')">
               ${data.status === "active" ? "Inhabilitar" : "Activar"}
             </button>
+             <p><b>Última modificación:</b> <span id="last-modified"></span></p>
           `);
         });
       });
