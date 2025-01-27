@@ -405,6 +405,74 @@
     .popup button:hover {
       background-color: #0056b3;
     }
+    
+    /* Contenedor general del filtro */
+.filter-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Etiquetas y selectores */
+.filter-container label {
+  font-weight: bold;
+  color: #333;
+}
+
+.filter-container select {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #fff;
+  font-size: 1rem;
+  color: #333;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.filter-container select:hover {
+  border-color: #007bff;
+  box-shadow: 0 0 4px rgba(0, 123, 255, 0.3);
+}
+
+.filter-container select:focus {
+  border-color: #0056b3;
+  outline: none;
+  box-shadow: 0 0 4px rgba(0, 86, 179, 0.5);
+}
+
+/* Botones o checkboxes (si los añades más tarde) */
+.filter-container button,
+.filter-container input[type="checkbox"] {
+  cursor: pointer;
+}
+
+/* Contenedores de listas de radares */
+#active-list,
+#inactive-list {
+  margin-top: 1.5rem;
+}
+
+.list-item {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+.list-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
   
   </style>
 </head>
@@ -425,15 +493,18 @@
   
   <!-- Filtro por tipo de radar -->
   <div class="filter-container">
-  <label for="radar-type-filter">Filtrar por tipo:</label>
-  <select id="radar-type-filter">
-    <option value="">Todos</option>
-    <option value="Movil">Móvil</option>
-    <option value="Fijo">Fijo</option>
-    <option value="Tramo">Tramo</option>
-    <option value="Remolque">Remolque</option>
-  </select>
+  <div>
+    <label for="radar-type-filter">Filtrar por tipo de radar:</label>
+    <select id="radar-type-filter">
+      <option value="">Todos</option>
+      <option value="Móvil">Móvil</option>
+      <option value="Fijo">Fijo</option>
+      <option value="Tramo">Tramo</option>
+      <option value="Remolque">Remolque</option>
+    </select>
+  </div>
 </div>
+
   
     <button class="toggle-button-section" id="toggle-active">Mostrar/Ocultar Radares Activos</button>
     <div id="active-list" class="radar-section">
