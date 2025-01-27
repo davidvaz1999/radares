@@ -718,16 +718,31 @@ toggleInactive.addEventListener("click", () => {
       last_updated: new Date().toISOString(), // Fecha actual
     });
 
+    // Muestra un mensaje de éxito
     alert("Radar guardado con éxito");
+
+    // Cierra el formulario y resetea valores
+    radarForm.style.display = "none";
+    if (tempMarker) map.removeLayer(tempMarker); // Elimina el marcador temporal del mapa
+    tempMarker = null;
+
+    // Limpia los campos del formulario
+    document.getElementById("radarType").value = "";
+    document.getElementById("road").value = "";
+    document.getElementById("direction").value = "";
+    document.getElementById("speed").value = "";
   } else {
     alert("Por favor, completa todos los campos y selecciona una ubicación.");
   }
 });
-    cancelRadarButton.addEventListener("click", () => {
-      radarForm.style.display = "none";
-      if (tempMarker) map.removeLayer(tempMarker);
-      tempMarker = null;
-    });
+
+// Lógica para el botón "Cancelar"
+cancelRadarButton.addEventListener("click", () => {
+  radarForm.style.display = "none"; // Oculta el formulario
+  if (tempMarker) map.removeLayer(tempMarker); // Elimina el marcador temporal
+  tempMarker = null;
+});
+
 
     function loadRadars() {
       db.ref("radares").on("value", (snapshot) => {
