@@ -81,9 +81,9 @@
 
             // Usamos la función formatDate para formatear las fechas
             const lastUpdated = radar.last_updated ? formatDate(radar.last_updated) : 'N/A';
-            
+            //temporalmente inhabilitado el radar.id
             row.innerHTML = `
-              <td>${radar.id}</td>
+              <!--<td>${radar.id}</td>--> 
               <td>${radar.direction}</td>
               <td>${radar.speed} km/h</td>
               <td>${radar.status}</td>
@@ -244,14 +244,14 @@ window.logout = logout;
   <table>
     <thead>
       <tr>
-        <th>ID</th>
-        <th>Dirección</th>
-        <th>Velocidad</th>
-        <th>Estado</th>
-        <th>Via</th>
-        <th>Última actualización</th>
-        <th>Tipo de radar</th>
-        <th>Acciones</th>
+        <!--<th>ID</th>--> <!-- //temporalmente inhabilitado-->
+        <th>DIRECCIÓN</th>
+        <th>VELOCIDAD MÁXIMA</th>
+        <th>ESTADO</th>
+        <th>VIA</th>
+        <th>ÚLTIMA MODIFICACIÓN</th>
+        <th>TIPO RADAR</th>
+        <th>ACCIÓN</th>
       </tr>
     </thead>
     <tbody id="radares-table-body"></tbody>
