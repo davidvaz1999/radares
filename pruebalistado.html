@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Listado de Radares</title>
+  <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-database.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .list-container {
+      position: fixed;
+      right: 0;
+      top: 0;
+      width: 300px;
+      height: 100vh;
+      background-color: #f9f9f9;
+      border-left: 2px solid #ccc;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .list-container h2 {
+      margin-top: 0;
+      font-size: 1.5rem;
+      text-align: center;
+    }
+    .list-item {
+      padding: 10px;
+      margin: 10px 0;
+      background: #e6e6e6;
+      border-radius: 5px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .list-item h3 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+    .list-item p {
+      margin: 5px 0;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="list-container">
+    <h2>Listado de Radares</h2>
+    <div id="list"></div>
+  </div>
+
+  <script type="module">
+    // Importar las funciones necesarias
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-database.js";
+
+    // Configuración de Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDNCBnqAAcdV3kqx8hN-uMyqSkzIzV4DXc",
+      authDomain: "radares-bcn.firebaseapp.com",
+      databaseURL: "https://radares-bcn-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "radares-bcn",
+      storageBucket: "radares-bcn.appspot.com",
+      messagingSenderId: "892778900332",
+      appId: "1:892778900332:web:f3c5353d981dda7b4ba149",
+      measurementId: "G-C1GT8Q96ZJ",
+    };
+
+    // Inicializar Firebase
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    // Referencia a la base de datos
+    const dbRef = ref(database, 'radares'); // Ruta 'radares' en tu base de datos
+
+    // Obtener los datos y mostrarlos en la lista
+    const listContainer = document.getElementById('list');
+    onValue(dbRef, (snapshot) => {
+      const data = snapshot.val();
+      listContainer.innerHTML = ''; // Limpiar contenido previo
+
+      for (const key in data) {
+        const radar = data[key];
+
+        // Crear un elemento para cada radar
+        const item = document.createElement('div');
+        item.className = 'list-item';
+
+        // Mostrar la información del radar
+        item.innerHTML = `
+          <h3>Radar: ${radar.radarType || 'Desconocido'}</h3>
+          <p><strong>Latitud:</strong> ${radar.lat || 'N/A'}</p>
+          <p><strong>Longitud:</strong> ${radar.lng || 'N/A'}</p>
+          <p><strong>Carretera:</strong> ${radar.road || 'N/A'}</p>
+          <p><strong>Dirección:</strong> ${radar.direction || 'N/A'}</p>
+          <p><strong>Velocidad:</strong> ${radar.speed || 'N/A'} km/h</p>
+          <p><strong>Estado:</strong> ${radar.status === 'active' ? 'Activo' : 'Inactivo'}</p>
+        `;
+
+        listContainer.appendChild(item);
+      }
+    });
+  </script>
+</body>
+</html>

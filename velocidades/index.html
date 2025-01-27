@@ -31,7 +31,7 @@
   <meta name="twitter:image" content="https://ahorraunamulta.com/imagen-radares-cataluna.jpg">
 
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="https://ahorraunamulta.com/favicon.png" />
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
 
   <!-- Schema Markup para posicionamiento local -->
   <script type="application/ld+json">
@@ -141,7 +141,7 @@
     #addRadarButton {
       background-color: #007bff;
       color: white;
-      left: 100px;
+      right: 20px;
     }
 
     #addRadarButton.active {
@@ -217,142 +217,14 @@
       background-color: #ff4d4d;
       color: white;
     }
-    
-    button2 {
-      background-color: #ff4d4d;
-      color: white;
-      border: none;
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      position: fixed;
-      bottom: 20px;
-      left: 20px;
-      cursor: pointer;
-      font-size: 16px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-      z-index: 1000;
-    }
-
-    button2:hover {
-      background-color: #fc2828;
-    }
-
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
-      justify-content: center;
-      align-items: center;
-      z-index: 999;
-    }
-
-    .modal-content {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      width: 90%;
-      max-width: 400px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-      text-align: center;
-    }
-
-    .modal-content h2 {
-      margin: 0 0 10px;
-    }
-
-    .modal-content p {
-      margin: 10px 0;
-    }
-
-    .close {
-      background: #ff4d4d;
-      color: white;
-      border: none;
-      padding: 5px 10px;
-      border-radius: 50%;
-      font-size: 16px;
-      cursor: pointer;
-      float: right;
-    }
-
-    .close:hover {
-      background: #cc0000;
-    }
-    
-    .list-container {
-      position: fixed;
-      right: 0;
-      top: 0;
-      width: 300px;
-      height: 100vh;
-      background-color: #f9f9f9;
-      border-left: 2px solid #ccc;
-      padding: 20px;
-      overflow-y: auto;
-      display: none; /* Ocultamos el listado por defecto */
-      flex-direction: column;
-      z-index: 1000;
-    }
-    .list-container h2 {
-      margin-top: 0;
-      font-size: 1.5rem;
-      text-align: center;
-    }
-    .list-item {
-      padding: 10px;
-      margin: 10px 0;
-      background: #e6e6e6;
-      border-radius: 5px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    }
-    .list-item h3 {
-      margin: 0;
-      font-size: 1.2rem;
-    }
-    .list-item p {
-      margin: 5px 0;
-      font-size: 0.9rem;
-    }
-    .toggle-button {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 10px 20px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 1rem;
-      z-index: 1001;
-    }
-    .toggle-button:hover {
-      background-color: #0056b3;
-    }
   </style>
 </head>
 <body>
-
-
 
 <div id="preloader">
     <img src="https://ahorraunamulta.com/velocidades/120.png" alt="Logotipo">
     <h2>AHORRA UNA MULTA</h2><BR>
     <h1>Cargando...</h1>
-  </div>
-  
-  <button class="toggle-button" id="toggle-button">Mostrar radares en listado</button>
-  <div class="list-container" id="list-container">
-    <h2>LISTADO DE RADARES</h2>
-    <div id="list"></div>
   </div>
   
    <script>
@@ -371,79 +243,9 @@
       }, 2000); // Debe coincidir con el tiempo de transición
     });
   </script>
-  
-  <button2 id="helpButton2">?</button2>
 
   <div id="map"></div>
-  
   <button id="addRadarButton" class="map-button">+</button>
-  
-  <script type="module">
-    // Importar las funciones necesarias
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-database.js";
-
-    // Configuración de Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyDNCBnqAAcdV3kqx8hN-uMyqSkzIzV4DXc",
-      authDomain: "radares-bcn.firebaseapp.com",
-      databaseURL: "https://radares-bcn-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "radares-bcn",
-      storageBucket: "radares-bcn.appspot.com",
-      messagingSenderId: "892778900332",
-      appId: "1:892778900332:web:f3c5353d981dda7b4ba149",
-      measurementId: "G-C1GT8Q96ZJ",
-    };
-
-    // Inicializar Firebase
-    const app = initializeApp(firebaseConfig);
-    const database = getDatabase(app);
-
-    // Referencia a la base de datos
-    const dbRef = ref(database, 'radares'); // Ruta 'radares' en tu base de datos
-
-    // Obtener los datos y mostrarlos en la lista
-    const listContainer = document.getElementById('list');
-    onValue(dbRef, (snapshot) => {
-      const data = snapshot.val();
-      listContainer.innerHTML = ''; // Limpiar contenido previo
-
-      for (const key in data) {
-        const radar = data[key];
-
-        // Crear un elemento para cada radar
-        const item = document.createElement('div');
-        item.className = 'list-item';
-
-        // Mostrar la información del radar
-        item.innerHTML = `
-          <h3>Radar: ${radar.radarType || 'Desconocido'}</h3>
-          <p><strong>Latitud:</strong> ${radar.lat || 'N/A'}</p>
-          <p><strong>Longitud:</strong> ${radar.lng || 'N/A'}</p>
-          <p><strong>Carretera:</strong> ${radar.road || 'N/A'}</p>
-          <p><strong>Dirección:</strong> ${radar.direction || 'N/A'}</p>
-          <p><strong>Velocidad:</strong> ${radar.speed || 'N/A'} km/h</p>
-          <p><strong>Estado:</strong> ${radar.status === 'active' ? 'Activo' : 'Inactivo'}</p>
-        `;
-
-        listContainer.appendChild(item);
-      }
-    });
-
-    // Funcionalidad para mostrar/ocultar el listado
-    const toggleButton = document.getElementById('toggle-button');
-    const listDiv = document.getElementById('list-container');
-
-    toggleButton.addEventListener('click', () => {
-      if (listDiv.style.display === 'none' || listDiv.style.display === '') {
-        listDiv.style.display = 'flex';
-        toggleButton.textContent = 'Ocultar listado';
-      } else {
-        listDiv.style.display = 'none';
-        toggleButton.textContent = 'Mostrar listado';
-      }
-    });
-  </script>
 
   <div id="radarForm">
     <label for="radarType">Tipo de Radar</label>
@@ -463,46 +265,10 @@
     <button id="saveRadarButton" class="save">Guardar Radar</button>
     <button id="cancelRadarButton" class="cancel">Cancelar</button>
   </div>
-  
-  <div class="modal" id="helpModal">
-    <div class="modal-content">
-      <button class="close" id="closeModal">&times;</button>
-      <h2>Ayuda</h2>
-      <p>AhorraUnaMulta.com es una herramienta intuitiva que te ayuda a identificar radares de tráfico en tu zona y conocer las velocidades permitidas, permitiéndote evitar multas de tránsito de manera eficaz.</p>
-      <p>Presionando el botón +, puedes añadir nuevos radares</p>
-      <p>Presionando sobre los radares, puedes inhabilitarlos.</p>
-      <p>Esto permite saber que ese radar se encuentra en ese momento averiado o ha sido reubicado en otra ubicación.</p>
-      <p>Si necesitas ayuda, puedes contactarnos <a href="mailto:aum@davidvazguijarro.es">aquí</a></p>
-      <br>
-      <p><strong>Última actualización:</strong> Enero de 2025</p>
-    </div>
-  </div>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-  
-  <script>
-    const helpButton = document.getElementById('helpButton2');
-    const helpModal = document.getElementById('helpModal');
-    const closeModal = document.getElementById('closeModal');
-
-    helpButton.addEventListener('click', () => {
-      helpModal.style.display = 'flex';
-    });
-
-    closeModal.addEventListener('click', () => {
-      helpModal.style.display = 'none';
-    });
-
-    window.addEventListener('click', (event) => {
-      if (event.target === helpModal) {
-        helpModal.style.display = 'none';
-      }
-    });
-  </script>
-  
   <script>
     // Configuración de Firebase
     const firebaseConfig = {
@@ -628,31 +394,6 @@
     }
 
     loadRadars();
-    
-    // Intentar obtener la ubicación del usuario
-    //if (navigator.geolocation) {
-      //navigator.geolocation.getCurrentPosition(
-        //(position) => {
-          //const { latitude, longitude } = position.coords;
-
-          // Centrar el mapa en la ubicación del usuario
-          //map.setView([latitude, longitude], 15);
-
-          // Añadir un marcador para mostrar la ubicación actual
-          //const marker = L.marker([latitude, longitude]).addTo(map);
-
-          // Popup en el marcador
-          //marker.bindPopup("<b>Estás aquí</b>").openPopup();
-        //},
-        //(error) => {
-          //alert("No se pudo obtener tu ubicación: " + error.message);
-        //}
-      //);
-    //} else {
-     //alert("La geolocalización no es compatible con este navegador.");
-    //}
-    
   </script>
-  
 </body>
 </html>
