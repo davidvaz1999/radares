@@ -976,9 +976,9 @@ cancelRadarButton.addEventListener("click", () => {
         Dirección: ${data.direction}<br>
         Velocidad: ${data.speed} km/h<br>
         Estado: <b>${data.status === "active" ? "Activo" : "Inactivo"}</b><br>
-        <button class="popup-button ${data.status === "active" ? "inactive" : "active"}" onclick="toggleRadarStatus('${childSnapshot.key}', '${data.status}')">
+        <!--<button class="popup-button ${data.status === "active" ? "inactive" : "active"}" onclick="toggleRadarStatus('${childSnapshot.key}', '${data.status}')">
           ${data.status === "active" ? "Desactivar" : "Activar"}
-        </button>
+        </button>-->
         <p><b>Última modificación:</b> ${lastUpdatedFormatted}</p>
       `);
     });
