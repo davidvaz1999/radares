@@ -138,7 +138,7 @@
     }
 
     #addRadarButton {
-      background-color: #007bff;
+      background-color: #ffe800;
       color: white;
       left: 100px;
     }
@@ -456,7 +456,7 @@
   <div class="popup-overlay" id="popup-overlay">
   <div class="popup">
     <h2>Descargo de responsabilidad</h2>
-    <p><b>AHORRA UNA MULTA</b> no se hace responsable de posibles errores en la información presentada en esta página.</p>
+    <p><b>Ahorra una multa</b> no se hace responsable de posibles errores en la información presentada en esta página.</p>
     <button onclick="closePopup()">Entendido</button>
   </div>
 </div>
@@ -471,15 +471,15 @@
   window.addEventListener('load', () => {
     setTimeout(() => {
       document.getElementById('popup-overlay').style.display = 'flex';
-    }, 4000);
+    }, 2500);
   });
 </script>
   
-  <button2 id="helpButton2">?</button2>
+  <button2 id="helpButton2">❔</button2>
 
   <div id="map"></div>
   
-  <button id="addRadarButton" class="map-button">+</button>
+  <button id="addRadarButton" class="map-button">➕</button>
   
   <script type="module">
     // Importar las funciones necesarias
@@ -658,7 +658,7 @@ toggleInactive.addEventListener("click", () => {
 
     let tempMarker = null;
 
-    addRadarButton.addEventListener("click", () => {
+   /* addRadarButton.addEventListener("click", () => {
       addRadarButton.classList.toggle("active");
       if (addRadarButton.classList.contains("active")) {
         addRadarButton.textContent = "✔"; // Cambia el ícono a ✔
@@ -668,7 +668,20 @@ toggleInactive.addEventListener("click", () => {
         if (tempMarker) map.removeLayer(tempMarker);
         tempMarker = null;
       }
-    });
+    }); *///ANULADO TEMPORALMENTE
+    
+    addRadarButton.addEventListener("click", () => {
+  addRadarButton.classList.toggle("active");
+  if (addRadarButton.classList.contains("active")) {
+    addRadarButton.textContent = "🚨"; // Cambia el ícono a 🚨
+  } else {
+    addRadarButton.textContent = "➕"; // Cambia el ícono a ➕
+    radarForm.style.display = "none";
+    if (tempMarker) map.removeLayer(tempMarker);
+    tempMarker = null;
+  }
+});
+
 
     map.on("click", (e) => {
       if (addRadarButton.classList.contains("active")) {
