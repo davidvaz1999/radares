@@ -507,10 +507,10 @@
     const app = initializeApp(firebaseConfig);
     const database = getDatabase(app);
 
-    // Referencia a la base de datos
-    const dbRef = ref(database, 'radares'); // Ruta 'radares' en tu base de datos
+   // Referencia a la base de datos
+const dbRef = ref(database, "radares"); // Ruta 'radares' en tu base de datos
 
-   onValue(dbRef, (snapshot) => {
+onValue(dbRef, (snapshot) => {
   const data = snapshot.val();
 
   const activeListContainer = document.getElementById("active-list");
@@ -519,9 +519,21 @@
   activeListContainer.innerHTML = ""; // Limpiar contenido previo de activos
   inactiveListContainer.innerHTML = ""; // Limpiar contenido previo de inactivos
 
-  for (const key in data) {
-    const radar = data[key];
+  // Convertir el objeto en un array para ordenarlo
+  const radarsArray = Object.keys(data).map((key) => ({
+    ...data[key],
+    key, // Incluye la clave si la necesitas
+  }));
 
+  // Ordenar por fecha de modificación (descendente)
+  radarsArray.sort((a, b) => {
+    const dateA = a.last_updated ? new Date(a.last_updated) : 0;
+    const dateB = b.last_updated ? new Date(b.last_updated) : 0;
+    return dateB - dateA; // Más reciente primero
+  });
+
+  // Iterar por los radares ordenados
+  radarsArray.forEach((radar) => {
     // Crear un elemento para cada radar
     const item = document.createElement("div");
     item.className = "list-item";
@@ -551,8 +563,9 @@
     } else {
       inactiveListContainer.appendChild(item);
     }
-  }
+  });
 });
+
 
 
 // Funcionalidad para mostrar/ocultar secciones
