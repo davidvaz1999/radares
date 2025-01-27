@@ -422,6 +422,19 @@
   <div class="list-container" id="list-container">
   <h2>LISTADO DE RADARES</h2>
   <div>
+  
+  <!-- Filtro por tipo de radar -->
+  <div class="filter-container">
+  <label for="radar-type-filter">Filtrar por tipo:</label>
+  <select id="radar-type-filter">
+    <option value="">Todos</option>
+    <option value="Movil">Móvil</option>
+    <option value="Fijo">Fijo</option>
+    <option value="Tramo">Tramo</option>
+    <option value="Remolque">Remolque</option>
+  </select>
+</div>
+  
     <button class="toggle-button-section" id="toggle-active">Mostrar/Ocultar Radares Activos</button>
     <div id="active-list" class="radar-section">
       <h3>Radares Activos</h3>
@@ -490,6 +503,9 @@
     // Importar las funciones necesarias
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
     import { getDatabase, ref, get, onValue } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-database.js";
+    
+    
+   // 
 
     // Configuración de Firebase
     const firebaseConfig = {
@@ -504,68 +520,87 @@
     };
 
     // Inicializar Firebase
-    const app = initializeApp(firebaseConfig);
-    const database = getDatabase(app);
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
 
-   // Referencia a la base de datos
+// Referencia a la base de datos
 const dbRef = ref(database, "radares"); // Ruta 'radares' en tu base de datos
 
-onValue(dbRef, (snapshot) => {
-  const data = snapshot.val();
+// Seleccionar los contenedores y el filtro
+const activeListContainer = document.getElementById("active-list");
+const inactiveListContainer = document.getElementById("inactive-list");
+const typeFilter = document.getElementById("radar-type-filter");
 
-  const activeListContainer = document.getElementById("active-list");
-  const inactiveListContainer = document.getElementById("inactive-list");
+// Estado para el filtro de tipo
+let selectedType = ""; // Todos por defecto
 
-  activeListContainer.innerHTML = ""; // Limpiar contenido previo de activos
-  inactiveListContainer.innerHTML = ""; // Limpiar contenido previo de inactivos
-
-  // Convertir el objeto en un array para ordenarlo
-  const radarsArray = Object.keys(data).map((key) => ({
-    ...data[key],
-    key, // Incluye la clave si la necesitas
-  }));
-
-  // Ordenar por fecha de modificación (descendente)
-  radarsArray.sort((a, b) => {
-    const dateA = a.last_updated ? new Date(a.last_updated) : 0;
-    const dateB = b.last_updated ? new Date(b.last_updated) : 0;
-    return dateB - dateA; // Más reciente primero
-  });
-
-  // Iterar por los radares ordenados
-  radarsArray.forEach((radar) => {
-    // Crear un elemento para cada radar
-    const item = document.createElement("div");
-    item.className = "list-item";
-
-    // Convertir la fecha a un formato legible
-    const lastUpdatedFormatted = radar.last_updated
-      ? new Date(radar.last_updated).toLocaleString() // Formato legible
-      : "No disponible";
-
-    // Mostrar la información del radar
-    item.innerHTML = `
-      <h3>Radar: ${radar.radarType || "Desconocido"}</h3>
-      <p><strong>Latitud:</strong> ${radar.lat || "N/A"}</p>
-      <p><strong>Longitud:</strong> ${radar.lng || "N/A"}</p>
-      <p><strong>Carretera:</strong> ${radar.road || "N/A"}</p>
-      <p><strong>Dirección:</strong> ${radar.direction || "N/A"}</p>
-      <p><strong>Velocidad:</strong> ${radar.speed || "N/A"} km/h</p>
-      <p><strong>Estado:</strong> ${
-        radar.status === "active" ? "Activo" : "Inactivo"
-      }</p>
-      <p><b>Última modificación:</b> ${lastUpdatedFormatted}</p>
-    `;
-
-    // Añadir al contenedor correspondiente
-    if (radar.status === "active") {
-      activeListContainer.appendChild(item);
-    } else {
-      inactiveListContainer.appendChild(item);
-    }
-  });
+// Actualizar el filtro de tipo cuando cambie el select
+typeFilter.addEventListener("change", (event) => {
+  selectedType = event.target.value;
+  renderRadars(); // Renderizar nuevamente los radares
 });
 
+// Función para renderizar radares
+const renderRadars = () => {
+  onValue(dbRef, (snapshot) => {
+    const data = snapshot.val();
+
+    activeListContainer.innerHTML = ""; // Limpiar contenido previo de activos
+    inactiveListContainer.innerHTML = ""; // Limpiar contenido previo de inactivos
+
+    // Convertir el objeto en un array para ordenarlo
+    const radarsArray = Object.keys(data).map((key) => ({
+      ...data[key],
+      key, // Incluye la clave si la necesitas
+    }));
+
+    // Ordenar por fecha de modificación (descendente)
+    radarsArray.sort((a, b) => {
+      const dateA = a.last_updated ? new Date(a.last_updated) : 0;
+      const dateB = b.last_updated ? new Date(b.last_updated) : 0;
+      return dateB - dateA; // Más reciente primero
+    });
+
+    // Filtrar y renderizar los radares
+    radarsArray.forEach((radar) => {
+      // Aplicar filtro de tipo si está definido
+      if (selectedType && radar.radarType !== selectedType) return;
+
+      // Crear un elemento para cada radar
+      const item = document.createElement("div");
+      item.className = "list-item";
+
+      // Convertir la fecha a un formato legible
+      const lastUpdatedFormatted = radar.last_updated
+        ? new Date(radar.last_updated).toLocaleString() // Formato legible
+        : "No disponible";
+
+      // Mostrar la información del radar
+      item.innerHTML = `
+        <h3>Radar: ${radar.radarType || "Desconocido"}</h3>
+        <p><strong>Latitud:</strong> ${radar.lat || "N/A"}</p>
+        <p><strong>Longitud:</strong> ${radar.lng || "N/A"}</p>
+        <p><strong>Carretera:</strong> ${radar.road || "N/A"}</p>
+        <p><strong>Dirección:</strong> ${radar.direction || "N/A"}</p>
+        <p><strong>Velocidad:</strong> ${radar.speed || "N/A"} km/h</p>
+        <p><strong>Estado:</strong> ${
+          radar.status === "active" ? "Activo" : "Inactivo"
+        }</p>
+        <p><b>Última modificación:</b> ${lastUpdatedFormatted}</p>
+      `;
+
+      // Añadir al contenedor correspondiente
+      if (radar.status === "active") {
+        activeListContainer.appendChild(item);
+      } else {
+        inactiveListContainer.appendChild(item);
+      }
+    });
+  });
+};
+
+// Inicializar la visualización de los radares
+renderRadars();
 
 
 // Funcionalidad para mostrar/ocultar secciones
