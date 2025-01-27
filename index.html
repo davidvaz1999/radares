@@ -453,7 +453,7 @@
     });
   </script>
   
-  <div class="popup-overlay" id="popup-overlay">
+ <div class="popup-overlay" id="popup-overlay" style="display: none;">
   <div class="popup">
     <h2>Descargo de responsabilidad</h2>
     <p><b>Ahorra una multa</b> no se hace responsable de posibles errores en la información presentada en esta página.</p>
@@ -465,15 +465,20 @@
   function closePopup() {
     const popupOverlay = document.getElementById('popup-overlay');
     popupOverlay.style.display = 'none';
+    // Guardar en localStorage que el popup ya fue visto
+    localStorage.setItem('popupSeen', 'true');
   }
 
-  // Mostrar el popup 4 segundos después de que la página haya cargado completamente
   window.addEventListener('load', () => {
-    setTimeout(() => {
-      document.getElementById('popup-overlay').style.display = 'flex';
-    }, 2500);
+    // Mostrar el popup solo si no se ha visto antes
+    if (!localStorage.getItem('popupSeen')) {
+      setTimeout(() => {
+        document.getElementById('popup-overlay').style.display = 'flex';
+      }, 2500); // Mostrar después de 2.5 segundos
+    }
   });
 </script>
+
   
   <button2 id="helpButton2">❔</button2>
 
