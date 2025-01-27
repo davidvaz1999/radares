@@ -5,16 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panel de Administración</title>
   
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-
   <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-auth.js";
     import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js";
-
-    // Configuración para la base de datos de login
+    
+    // Configuración para la base de datos de login (Firebase Authentication)
     const firebaseConfigLogin = {
       apiKey: "AIzaSyAX4uy3ON91cwK3Tt9r5Eqpucyf4sfv0No",
       authDomain: "login-radares.firebaseapp.com",
@@ -25,7 +22,7 @@
       measurementId: "G-S2ZCB85HX1"
     };
 
-    // Configuración para la base de datos de radares
+    // Configuración para la base de datos de radares (Firebase Realtime Database)
     const firebaseConfigRadares = {
       apiKey: "AIzaSyDNCBnqAAcdV3kqx8hN-uMyqSkzIzV4DXc",
       authDomain: "radares-bcn.firebaseapp.com",
@@ -38,21 +35,23 @@
     };
 
     // Inicializar Firebase
-    const appLogin = initializeApp(firebaseConfigLogin);
-    const appRadares = initializeApp(firebaseConfigRadares, "radares");
+    const appLogin = initializeApp(firebaseConfigLogin); // Base de datos de login
+    const appRadares = initializeApp(firebaseConfigRadares, "radares"); // Base de datos de radares
 
-    const auth = getAuth(appLogin);
-    const database = getDatabase(appRadares);
+    const auth = getAuth(appLogin); // Autenticación
+    const database = getDatabase(appRadares); // Base de datos de radares
 
+    // Verificar si el usuario está autenticado
     onAuthStateChanged(auth, (user) => {
       if (!user) {
-        window.location.href = 'login.html';
+        window.location.href = 'login.html'; // Redirige a la página de login si no está autenticado
       } else {
         document.getElementById('userInfo').innerText = `Bienvenido, ${user.email}`;
-        fetchRadares();
+        fetchRadares(); // Cargar radares después de autenticarse
       }
     });
 
+    // Función para obtener los radares desde la base de datos
     const fetchRadares = () => {
       const radaresRef = ref(database, 'radares');
       onValue(radaresRef, (snapshot) => {
@@ -61,21 +60,36 @@
         radaresTableBody.innerHTML = '';
 
         if (data) {
-          const radaresArray = Object.keys(data).map((key) => ({ id: key, ...data[key] }));
-          radaresArray.sort((a, b) => (b.last_updated || 0) - (a.last_updated || 0));
+          // Convertir los datos en un array y ordenar por last_updated
+          const radaresArray = Object.keys(data).map((key) => {
+            return { id: key, ...data[key] };
+          });
 
+          // Asegurarse de que last_updated sea un número (milisegundos)
+          radaresArray.forEach((radar) => {
+            if (radar.last_updated) {
+              radar.last_updated = new Date(radar.last_updated).getTime(); // Convertir a milisegundos
+            }
+          });
+
+          // Ordenar los radares por last_updated en orden descendente
+          radaresArray.sort((a, b) => b.last_updated - a.last_updated);
+
+          // Mostrar los radares ordenados en la tabla
           radaresArray.forEach((radar) => {
             const row = document.createElement('tr');
+
+            // Usamos la función formatDate para formatear las fechas
             const lastUpdated = radar.last_updated ? formatDate(radar.last_updated) : 'N/A';
             
             row.innerHTML = `
               <td>${radar.id}</td>
-              <td>${radar.direction || 'N/A'}</td>
-              <td>${radar.speed || '0'} km/h</td>
-              <td>${radar.status || 'unknown'}</td>
-              <td>${radar.road || 'N/A'}</td>
+              <td>${radar.direction}</td>
+              <td>${radar.speed} km/h</td>
+              <td>${radar.status}</td>
+              <td>${radar.road}</td>
               <td>${lastUpdated}</td>
-              <td>${radar.radarType || 'N/A'}</td>
+              <td>${radar.radarType}</td>
               <td>
                 ${radar.status !== 'active' ? `<button class="approve-btn" data-id="${radar.id}">Activar</button>` : ''}
                 ${radar.status !== 'inactive' ? `<button class="reject-btn" data-id="${radar.id}">Desactivar</button>` : ''}
@@ -85,97 +99,100 @@
             radaresTableBody.appendChild(row);
           });
 
+          // Activar radar
           document.querySelectorAll('.approve-btn').forEach((btn) => {
-            btn.addEventListener('click', () => toggleRadarStatus(btn.dataset.id, 'active'));
+            btn.addEventListener('click', () => {
+              const id = btn.dataset.id;
+              const radarRef = ref(database, `radares/${id}`);
+              update(radarRef, {
+                status: 'active',
+                last_updated: Date.now() // Actualizamos la fecha de la última actualización
+              })
+                .then(() => showNotification(`Radar con ID ${id} activado.`))
+                .catch((error) => showNotification(`Error: ${error.message}`));
+            });
           });
 
+          // Desactivar radar
           document.querySelectorAll('.reject-btn').forEach((btn) => {
-            btn.addEventListener('click', () => toggleRadarStatus(btn.dataset.id, 'inactive'));
+            btn.addEventListener('click', () => {
+              const id = btn.dataset.id;
+              const radarRef = ref(database, `radares/${id}`);
+              update(radarRef, {
+                status: 'inactive',
+                last_updated: Date.now() // Actualizamos la fecha de la última actualización
+              })
+                .then(() => showNotification(`Radar con ID ${id} desactivado.`))
+                .catch((error) => showNotification(`Error: ${error.message}`));
+            });
           });
         }
       });
     };
 
-    const toggleRadarStatus = (id, status) => {
-      const radarRef = ref(database, `radares/${id}`);
-      update(radarRef, { status, last_updated: Date.now() })
-        .then(() => showNotification(`Radar con ID ${id} cambiado a ${status}.`))
-        .catch((error) => showNotification(`Error: ${error.message}`));
-    };
+    // Función para formatear la fecha
+    function formatDate(isoDate) {
+      const date = new Date(isoDate);
+      
+      const day = String(date.getDate()).padStart(2, '0'); // Día con 2 dígitos
+      const month = String(date.getMonth() + 1).padStart(2, '0'); // Mes con 2 dígitos
+      const year = date.getFullYear(); // Año
+      const hours = String(date.getHours()).padStart(2, '0'); // Hora con 2 dígitos
+      const minutes = String(date.getMinutes()).padStart(2, '0'); // Minutos con 2 dígitos
 
-    const formatDate = (timestamp) => {
-      const date = new Date(timestamp);
-      return `${date.getDate().toString().padStart(2, '0')}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getFullYear()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
-    };
+      // Devuelve la fecha en el formato deseado
+      return `${day}-${month}-${year} ${hours}:${minutes}`;
+    }
 
+    // Función para mostrar notificaciones
     const showNotification = (message) => {
       const notification = document.getElementById('notification');
       notification.textContent = message;
       notification.style.display = 'block';
-      setTimeout(() => (notification.style.display = 'none'), 3000);
+      setTimeout(() => {
+        notification.style.display = 'none';
+      }, 3000);
     };
 
+    // Función para cerrar sesión
     const logout = () => {
-  signOut(auth)
-    .then(() => (window.location.href = 'login.html'))
-    .catch((error) => console.error("Error al cerrar sesión:", error));
-};
-
-// Exponer logout al ámbito global
-window.logout = logout;
+      signOut(auth) // Cierra sesión correctamente
+        .then(() => {
+          window.location.href = 'login.html'; // Redirige al login después de cerrar sesión
+        })
+        .catch((error) => {
+          console.error("Error al cerrar sesión:", error);
+        });
+    };
   </script>
 
   <style>
     body {
-      font-family: 'Roboto', sans-serif;
+      font-family: Arial, sans-serif;
       margin: 20px;
-      background-color: #f9f9f9;
-      color: #333;
-    }
-
-    h1, h2 {
-      text-align: center;
-    }
-
-    #notification {
-      display: none;
-      margin: 20px auto;
-      padding: 10px;
-      max-width: 400px;
-      background-color: #4CAF50;
-      color: white;
-      border-radius: 5px;
-      text-align: center;
     }
 
     table {
       width: 100%;
-      margin-top: 20px;
       border-collapse: collapse;
-      background-color: white;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
     th, td {
-      padding: 10px;
+      border: 1px solid #ccc;
+      padding: 8px;
       text-align: center;
-      border-bottom: 1px solid #ddd;
     }
 
     th {
       background-color: #f4f4f4;
-      color: #555;
     }
 
     button {
-      padding: 8px 12px;
-      margin: 4px;
+      padding: 5px 10px;
+      margin: 0 2px;
       border: none;
-      border-radius: 5px;
       color: white;
-      font-size: 14px;
+      border-radius: 4px;
       cursor: pointer;
     }
 
@@ -187,18 +204,26 @@ window.logout = logout;
       background-color: #F44336;
     }
 
-    .logout-btn {
-      display: block;
-      margin: 20px auto;
-      padding: 10px 20px;
-      font-size: 16px;
+    #notification {
+      display: none;
+      margin-bottom: 20px;
+      padding: 10px;
+      background-color: #4CAF50;
       color: white;
+      border-radius: 4px;
+    }
+
+    /* Estilo independiente para el botón de Cerrar Sesión */
+    .logout-btn {
+      padding: 12px 24px;
       background-color: #2196F3;
-      border: none;
       border-radius: 5px;
+      color: white;
+      font-size: 16px;
       cursor: pointer;
-      text-align: center;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
       transition: background-color 0.3s ease;
+      margin-top: 10px;
     }
 
     .logout-btn:hover {
@@ -208,10 +233,15 @@ window.logout = logout;
     .logout-btn:focus {
       outline: none;
     }
+
+    .logout-btn:active {
+      background-color: #1565C0;
+    }
   </style>
 </head>
 <body>
   <h1>Panel de Administración</h1>
+
   <h2 id="userInfo">Cargando...</h2>
   <div id="notification"></div>
   <table>
@@ -221,7 +251,7 @@ window.logout = logout;
         <th>Dirección</th>
         <th>Velocidad</th>
         <th>Estado</th>
-        <th>Carrera</th>
+        <th>Via</th>
         <th>Última actualización</th>
         <th>Tipo de radar</th>
         <th>Acciones</th>
@@ -229,6 +259,5 @@ window.logout = logout;
     </thead>
     <tbody id="radares-table-body"></tbody>
   </table>
-  <button class="logout-btn" onclick="logout()">CERRAR SESIÓN</button>
 </body>
 </html>
