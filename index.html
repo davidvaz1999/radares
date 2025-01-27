@@ -698,33 +698,31 @@ toggleInactive.addEventListener("click", () => {
     });
 
     saveRadarButton.addEventListener("click", () => {
-      const radarType = document.getElementById("radarType").value;
-      const road = document.getElementById("road").value;
-      const direction = document.getElementById("direction").value;
-      const speed = document.getElementById("speed").value;
+  const radarType = document.getElementById("radarType").value;
+  const road = document.getElementById("road").value;
+  const direction = document.getElementById("direction").value;
+  const speed = document.getElementById("speed").value;
 
-      if (radarType && road && direction && speed && tempMarker) {
-        const { lat, lng } = tempMarker.getLatLng();
-        const newRadar = db.ref("radares").push();
-        newRadar.set({
-          radarType,
-          road,
-          direction,
-          speed,
-          lat,
-          lng,
-          status: "active", // Estado inicial activo
-        });
+  if (radarType && road && direction && speed && tempMarker) {
+    const { lat, lng } = tempMarker.getLatLng();
+    const newRadar = db.ref("radares").push();
 
-        alert("Radar añadido correctamente.");
-        radarForm.style.display = "none";
-        if (tempMarker) map.removeLayer(tempMarker);
-        tempMarker = null;
-      } else {
-        alert("Por favor, completa todos los campos.");
-      }
+    newRadar.set({
+      radarType,
+      road,
+      direction,
+      speed,
+      lat,
+      lng,
+      status: "active", // Estado inicial activo
+      last_updated: new Date().toISOString(), // Fecha actual
     });
 
+    alert("Radar guardado con éxito");
+  } else {
+    alert("Por favor, completa todos los campos y selecciona una ubicación.");
+  }
+});
     cancelRadarButton.addEventListener("click", () => {
       radarForm.style.display = "none";
       if (tempMarker) map.removeLayer(tempMarker);
