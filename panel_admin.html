@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Panel de Administración</title>
+  <title>PANEL DE ADMINISTRACIÓN</title>
   
   <!-- Firebase SDK -->
   <script type="module">
@@ -156,14 +156,13 @@
 
     // Función para cerrar sesión
     const logout = () => {
-      signOut(auth) // Cierra sesión correctamente
-        .then(() => {
-          window.location.href = 'login.html'; // Redirige al login después de cerrar sesión
-        })
-        .catch((error) => {
-          console.error("Error al cerrar sesión:", error);
-        });
-    };
+  signOut(auth)
+    .then(() => (window.location.href = 'login.html'))
+    .catch((error) => console.error("Error al cerrar sesión:", error));
+};
+
+// Exponer logout al ámbito global
+window.logout = logout;
   </script>
 
   <style>
@@ -215,15 +214,17 @@
 
     /* Estilo independiente para el botón de Cerrar Sesión */
     .logout-btn {
-      padding: 12px 24px;
-      background-color: #2196F3;
-      border-radius: 5px;
-      color: white;
+      display: block;
+      margin: 20px auto;
+      padding: 10px 20px;
       font-size: 16px;
+      color: white;
+      background-color: #2196F3;
+      border: none;
+      border-radius: 5px;
       cursor: pointer;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      text-align: center;
       transition: background-color 0.3s ease;
-      margin-top: 10px;
     }
 
     .logout-btn:hover {
@@ -233,14 +234,10 @@
     .logout-btn:focus {
       outline: none;
     }
-
-    .logout-btn:active {
-      background-color: #1565C0;
-    }
   </style>
 </head>
 <body>
-  <h1>Panel de Administración</h1>
+  <h1>PANEL DE ADMINISTRACIÓN</h1>
 
   <h2 id="userInfo">Cargando...</h2>
   <div id="notification"></div>
@@ -259,5 +256,6 @@
     </thead>
     <tbody id="radares-table-body"></tbody>
   </table>
+  <button class="logout-btn" onclick="logout()">CERRAR SESIÓN</button>
 </body>
 </html>
