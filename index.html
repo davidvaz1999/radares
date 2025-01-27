@@ -510,7 +510,7 @@
     // Referencia a la base de datos
     const dbRef = ref(database, 'radares'); // Ruta 'radares' en tu base de datos
 
-    onValue(dbRef, (snapshot) => {
+   onValue(dbRef, (snapshot) => {
   const data = snapshot.val();
 
   const activeListContainer = document.getElementById("active-list");
@@ -526,6 +526,11 @@
     const item = document.createElement("div");
     item.className = "list-item";
 
+    // Convertir la fecha a un formato legible
+    const lastUpdatedFormatted = radar.last_updated
+      ? new Date(radar.last_updated).toLocaleString() // Formato legible
+      : "No disponible";
+
     // Mostrar la información del radar
     item.innerHTML = `
       <h3>Radar: ${radar.radarType || "Desconocido"}</h3>
@@ -537,7 +542,7 @@
       <p><strong>Estado:</strong> ${
         radar.status === "active" ? "Activo" : "Inactivo"
       }</p>
-       <p><b>Última modificación:</b> <span id="last-modified"></span></p>
+      <p><b>Última modificación:</b> ${lastUpdatedFormatted}</p>
     `;
 
     // Añadir al contenedor correspondiente
@@ -548,6 +553,7 @@
     }
   }
 });
+
 
 // Funcionalidad para mostrar/ocultar secciones
 const toggleActive = document.getElementById("toggle-active");
@@ -605,7 +611,7 @@ toggleInactive.addEventListener("click", () => {
       <h2>Ayuda</h2>
       <p>AhorraUnaMulta.com es una herramienta intuitiva que te ayuda a identificar radares de tráfico en tu zona y conocer las velocidades permitidas, permitiéndote evitar multas de tránsito de manera eficaz.</p>
       <p>Presionando el botón +, puedes añadir nuevos radares</p>
-      <p>Presionando sobre los radares, puedes inhabilitarlos.</p>
+      <p>Presionando sobre los radares, puedes desactivarlos.</p>
       <p>Esto permite saber que ese radar se encuentra en ese momento averiado o ha sido reubicado en otra ubicación.</p>
       <p>Si necesitas ayuda, puedes contactarnos <a href="mailto:aum@davidvazguijarro.es">aquí</a></p>
       <br>
@@ -745,31 +751,42 @@ cancelRadarButton.addEventListener("click", () => {
 
 
     function loadRadars() {
-      db.ref("radares").on("value", (snapshot) => {
-        map.eachLayer((layer) => {
-          if (layer instanceof L.Marker) {
-            map.removeLayer(layer);
-          }
-        });
+  db.ref("radares").on("value", (snapshot) => {
+    // Limpiar los marcadores existentes
+    map.eachLayer((layer) => {
+      if (layer instanceof L.Marker) {
+        map.removeLayer(layer);
+      }
+    });
 
-        snapshot.forEach((childSnapshot) => {
-          const data = childSnapshot.val();
-          const marker = L.marker([data.lat, data.lng], { icon: getIconByRadar(data) }).addTo(map);
+    // Recorrer los radares de Firebase
+    snapshot.forEach((childSnapshot) => {
+      const data = childSnapshot.val();
+      
+      // Formatear la fecha de última modificación
+      const lastUpdatedFormatted = data.last_updated
+        ? new Date(data.last_updated).toLocaleString() // Fecha legible
+        : "No disponible";
 
-          marker.bindPopup(`
-            <b>${data.radarType}</b><br>
-            Carretera: ${data.road}<br>
-            Dirección: ${data.direction}<br>
-            Velocidad: ${data.speed} km/h<br>
-            Estado: <b>${data.status === "active" ? "Activo" : "Inactivo"}</b><br>
-            <button class="popup-button ${data.status === "active" ? "inactive" : "active"}" onclick="toggleRadarStatus('${childSnapshot.key}', '${data.status}')">
-              ${data.status === "active" ? "Inhabilitar" : "Activar"}
-            </button>
-             <p><b>Última modificación:</b> <span id="last-modified"></span></p>
-          `);
-        });
-      });
-    }
+      // Crear el marcador
+      const marker = L.marker([data.lat, data.lng], { icon: getIconByRadar(data) }).addTo(map);
+
+      // Añadir el popup con la información del radar
+      marker.bindPopup(`
+        <b>${data.radarType}</b><br>
+        Carretera: ${data.road}<br>
+        Dirección: ${data.direction}<br>
+        Velocidad: ${data.speed} km/h<br>
+        Estado: <b>${data.status === "active" ? "Activo" : "Inactivo"}</b><br>
+        <button class="popup-button ${data.status === "active" ? "inactive" : "active"}" onclick="toggleRadarStatus('${childSnapshot.key}', '${data.status}')">
+          ${data.status === "active" ? "Desactivar" : "Activar"}
+        </button>
+        <p><b>Última modificación:</b> ${lastUpdatedFormatted}</p>
+      `);
+    });
+  });
+}
+
 
     function getIconByRadar(radar) {
       const { speed, status } = radar;
@@ -784,36 +801,19 @@ cancelRadarButton.addEventListener("click", () => {
     }
 
     function toggleRadarStatus(id, currentStatus) {
-      const newStatus = currentStatus === "active" ? "inactive" : "active";
-      db.ref("radares/" + id).update({ status: newStatus });
-      alert(`El radar ha sido ${newStatus === "active" ? "activado" : "inhabilitado"}.`);
-    }
+  const newStatus = currentStatus === "active" ? "inactive" : "active";
+
+  // Actualizar estado y fecha en Firebase
+  db.ref("radares/" + id).update({ 
+    status: newStatus, 
+    last_updated: new Date().toISOString() // Fecha actual
+  });
+
+  // Mostrar alerta con el cambio de estado
+  alert(`El radar ha sido ${newStatus === "active" ? "activado" : "inhabilitado"}.`);
+}
 
     loadRadars();
-    
-    // Intentar obtener la ubicación del usuario
-    //if (navigator.geolocation) {
-      //navigator.geolocation.getCurrentPosition(
-        //(position) => {
-          //const { latitude, longitude } = position.coords;
-
-          // Centrar el mapa en la ubicación del usuario
-          //map.setView([latitude, longitude], 15);
-
-          // Añadir un marcador para mostrar la ubicación actual
-          //const marker = L.marker([latitude, longitude]).addTo(map);
-
-          // Popup en el marcador
-          //marker.bindPopup("<b>Estás aquí</b>").openPopup();
-        //},
-        //(error) => {
-          //alert("No se pudo obtener tu ubicación: " + error.message);
-        //}
-      //);
-    //} else {
-     //alert("La geolocalización no es compatible con este navegador.");
-    //}
-    
   </script>
   
 </body>
