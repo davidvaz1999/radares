@@ -1,4 +1,4 @@
-<html lang="es">
+<html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -473,6 +473,69 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
+/* Botón para mostrar/ocultar la leyenda */
+#legend-button {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.3s ease;
+  z-index: 1000;
+}
+
+#legend-button:hover {
+  background-color: #0056b3;
+}
+
+/* Panel de la leyenda */
+.legend-panel {
+  position: absolute;
+  bottom: 70px; /* Asegura que no se superponga con el botón */
+  right: 20px;
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  font-size: 14px;
+  line-height: 1.5;
+  z-index: 1000;
+  width: 220px;
+}
+
+
+.legend-panel h4 {
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.legend-panel ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.legend-panel li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.legend-icon {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
   
   </style>
 </head>
@@ -481,7 +544,7 @@
 
 
 <div id="preloader">
-    <img src="https://ahorraunamulta.com/velocidades/120.png" alt="Logotipo">
+    <img src="https://ahorraunamulta.com/velocidades/default/120.png" alt="Logotipo">
     <h2>AHORRA UNA MULTA</h2><BR>
     <h1>Cargando...</h1>
   </div>
@@ -504,7 +567,6 @@
     </select>
   </div>
 </div>
-
   
     <button class="toggle-button-section" id="toggle-active">Mostrar/Ocultar Radares Activos</button>
     <div id="active-list" class="radar-section">
@@ -704,6 +766,22 @@ toggleInactive.addEventListener("click", () => {
       }
     });
   </script>
+  
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+  const legendButton = document.getElementById("legend-button");
+  const legendPanel = document.getElementById("legend-panel");
+
+  // Alternar visibilidad del panel
+  legendButton.addEventListener("click", () => {
+    if (legendPanel.style.display === "none" || legendPanel.style.display === "") {
+      legendPanel.style.display = "block";
+    } else {
+      legendPanel.style.display = "none";
+    }
+  });
+});
+  </script>
 
   <div id="radarForm">
     <label for="radarType">Tipo de Radar</label>
@@ -781,7 +859,7 @@ toggleInactive.addEventListener("click", () => {
 
     const map = L.map("map").setView([41.3784, 2.1924], 13);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
-
+    
     const addRadarButton = document.getElementById("addRadarButton");
     const radarForm = document.getElementById("radarForm");
     const saveRadarButton = document.getElementById("saveRadarButton");
@@ -905,19 +983,29 @@ cancelRadarButton.addEventListener("click", () => {
     });
   });
 }
-
-
+    
     function getIconByRadar(radar) {
-      const { speed, status } = radar;
-      const iconUrl = status === "active"
-        ? `https://ahorraunamulta.com/velocidades/${speed}.png`
-        : `https://ahorraunamulta.com/velocidades/no_activo.png`;
+  const { speed, status, radarType } = radar;
+  
+   // Log para verificar los datos
+  console.log("Radar recibido:", radar);
 
-      return L.icon({
-        iconUrl,
-        iconSize: [32, 32],
-      });
-    }
+  // Validar el tipo de radar y la velocidad
+  const validRadarTypes = ["Fijo", "Móvil", "Tramo", "Remolque"]; // Tipos válidos
+  const validRadarType = validRadarTypes.includes(radarType) ? radarType : "default";
+  const validSpeed = speed && speed >= 10 && speed <= 140 ? speed : "default";
+
+  // Construir la URL del ícono
+  const iconUrl = status === "active"
+    ? `https://ahorraunamulta.com/velocidades/${validRadarType}/${validSpeed}.png`
+    : `https://ahorraunamulta.com/velocidades/${validRadarType}/no_activo.png`;
+
+  // Crear y devolver el ícono
+  return L.icon({
+    iconUrl,
+    iconSize: [32, 32], // Ajustar tamaño si es necesario
+  });
+}
 
     function toggleRadarStatus(id, currentStatus) {
   const newStatus = currentStatus === "active" ? "inactive" : "active";
@@ -934,6 +1022,23 @@ cancelRadarButton.addEventListener("click", () => {
 
     loadRadars();
   </script>
+  
+  <!-- Botón para mostrar/ocultar la leyenda -->
+<button id="legend-button" style="position: absolute; right: 10px; z-index: 1000;">
+  Leyenda
+</button>
+
+<!-- Panel de la leyenda -->
+<div id="legend-panel" class="legend-panel" style="display: none;">
+  <h4>Tipos de Radares</h4>
+  <ul>
+    <li><span class="legend-icon" style="background-color: #12e408;"></span> Radar Fijo</li>
+    <li><span class="legend-icon" style="background-color: #ffb400;"></span> Radar de Tramo</li>
+    <li><span class="legend-icon" style="background-color: #150aec;"></span> Radar Móvil</li>
+    <li><span class="legend-icon" style="background-color: red;"></span> Radar Remolque</li>
+    <li><span class="legend-icon" style="background-color: white; border: 1px solid #000;"></span> Radar Desactivado</li>
+  </ul>
+</div>
   
 </body>
 </html>
