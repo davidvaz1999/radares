@@ -99,3 +99,6 @@ Incorporación de un sistema de navegación intuitivo para acceder rápidamente 
 Corrección de errores iniciales:
 Solución de fallos relacionados con la visualización de datos en tablas del panel.
 Ajuste en las consultas al cargar grandes volúmenes de datos para evitar tiempos de espera elevados.
+
+Visualización:
+Añadida vista satélite
