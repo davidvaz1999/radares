@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PANEL DE ADMINISTRACIÓN</title>
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="https://ahorraunamulta.com/favicon.png" />
+  
+  <title>PANEL DE ADMINISTRACIÓN - AHORRA UNA MULTA</title>
   
   <!-- Firebase SDK -->
   <script type="module">
@@ -157,7 +160,7 @@
     // Función para cerrar sesión
     const logout = () => {
   signOut(auth)
-    .then(() => (window.location.href = 'login.html'))
+    .then(() => (window.location.href = 'login'))
     .catch((error) => console.error("Error al cerrar sesión:", error));
 };
 
