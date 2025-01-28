@@ -693,7 +693,8 @@
   
   <button2 id="helpButton2">❔</button2>
 
-  <div id="map"></div>
+  <!-- Mapa -->
+<div id="map"></div>
   
   <button id="addRadarButton" class="map-button">➕</button>
   <a href="/login" class="buttonLogin">ADMIN</a>
@@ -934,7 +935,7 @@ toggleInactive.addEventListener("click", () => {
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const map = L.map("map").setView([41.3784, 2.1924], 13);
+    const map = L.map("map").setView([41.3784, 2.1927], 10); // Coordenadas de Barcelona y un nivel de zoom adecuado
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
     
     const addRadarButton = document.getElementById("addRadarButton");
