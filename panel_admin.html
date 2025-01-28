@@ -86,7 +86,7 @@
             const lastUpdated = radar.last_updated ? formatDate(radar.last_updated) : 'N/A';
             //temporalmente inhabilitado el radar.id
             row.innerHTML = `
-              <!--<td>${radar.id}</td>--> 
+              <td>${radar.id}</td> 
               <td>${radar.direction}</td>
               <td>${radar.speed} km/h</td>
               <td>${radar.status}</td>
@@ -247,7 +247,7 @@ window.logout = logout;
   <table>
     <thead>
       <tr>
-        <!--<th>ID</th>--> <!-- //temporalmente inhabilitado-->
+        <th>ID</th>
         <th>DIRECCIÓN</th>
         <th>VELOCIDAD MÁXIMA</th>
         <th>ESTADO</th>

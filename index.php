@@ -1102,7 +1102,7 @@ cancelRadarButton.addEventListener("click", () => {
   // Crear y devolver el ícono
   return L.icon({
     iconUrl,
-    iconSize: [32, 32], // Ajustar tamaño si es necesario
+    iconSize: [25, 25], // Ajustar tamaño logo velocidad radar si es necesario
   });
 }
 
