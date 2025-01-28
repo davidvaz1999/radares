@@ -56,7 +56,7 @@
       font-family: Arial, sans-serif;
       overflow: hidden; /* Evita el scroll mientras aparece la pantalla de carga */
     }
-
+    
     /* Estilo de la pantalla de carga */
     #preloader {
       position: fixed;
@@ -605,7 +605,7 @@
 
   /* Ajustar el control de capas un poco más abajo y a la izquierda */
   .leaflet-control-layers {
-    bottom: 40px !important; /* Mueve el control 40px hacia arriba desde la parte inferior */
+    bottom: 180px !important; /* Mueve el control 40px hacia arriba desde la parte inferior */
     right: 01px !important;  /* Mueve el control 20px hacia la izquierda desde la parte derecha */
   }
   </style>
