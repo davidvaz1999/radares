@@ -1,5 +1,5 @@
 <?php
-// Mostrar errores para depuración
+// Mostrar errores para depuración (esto es opcional, puedes desactivarlo para no mostrar errores)
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -40,21 +40,16 @@ if (file_exists($log_file)) {
     }
 
     if ($ip_exists) {
-        echo "<p>La IP ya está registrada. No se guardará nuevamente.</p>";
-        exit;
+        exit; // Si la IP ya está registrada, simplemente salimos sin hacer nada
     }
 }
 
 // Si la IP no existe, registrar los datos
 try {
     // Guardar en el archivo
-    if (file_put_contents($log_file, $log_entry . "\n", FILE_APPEND | LOCK_EX) === false) {
-        throw new Exception("No se pudo escribir en el archivo $log_file.");
-    } else {
-        echo "<p>IP, dispositivo y navegador registrados correctamente.</p>";
-    }
+    file_put_contents($log_file, $log_entry . "\n", FILE_APPEND | LOCK_EX);
 } catch (Exception $e) {
-    // Mostrar error si algo falla
-    echo "<p>Error: " . $e->getMessage() . "</p>";
+    // Si hay algún error al guardar, no hacemos nada
+    // Puedes logearlo si lo deseas, pero no mostrar mensajes al usuario
 }
 ?>

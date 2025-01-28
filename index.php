@@ -601,7 +601,13 @@
   font-weight: bold;
   color: #007bff;
   margin: 10px 0;
-}   
+}  
+
+  /* Ajustar el control de capas un poco más abajo y a la izquierda */
+  .leaflet-control-layers {
+    bottom: 40px !important; /* Mueve el control 40px hacia arriba desde la parte inferior */
+    right: 01px !important;  /* Mueve el control 20px hacia la izquierda desde la parte derecha */
+  }
   </style>
 </head>
 <body>
@@ -936,7 +942,22 @@ toggleInactive.addEventListener("click", () => {
     const db = firebase.database();
 
     const map = L.map("map").setView([41.3784, 2.1927], 10); // Coordenadas de Barcelona y un nivel de zoom adecuado
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+    // Capa base de OpenStreetMap
+  const osmLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png");
+    
+    // Capa satelital de Esri (World Imagery)
+  const satelliteLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+    attribution: '&copy; <a href="https://www.esri.com/">ESRI</a>',
+  }); 
+  
+  // Añadir la capa de OpenStreetMap por defecto
+  osmLayer.addTo(map);
+  
+  // Añadir un control de capas para permitir cambiar entre las vistas
+  L.control.layers({
+    "Mapa estándar": osmLayer,
+    "Vista satélite": satelliteLayer
+  }, {}, {position: 'bottomright'}).addTo(map);
     
     const addRadarButton = document.getElementById("addRadarButton");
     const radarForm = document.getElementById("radarForm");
