@@ -537,6 +537,39 @@
   border-radius: 4px;
   border: 1px solid #ccc;
 }
+
+/* BOTON LOGIN */
+
+.buttonLogin {
+      display: inline-block;
+      width: 80px; /* Ancho del botón */
+      height: 50px; /* Alto del botón */
+      line-height: 50px; /* Centrado del texto vertical */
+      border-radius: 100px; /* Bordes ligeramente redondeados */
+      background-color: #007bff; /* Color de fondo */
+      color: white; /* Color del texto */
+      text-align: center;
+      text-decoration: none;
+      font-size: 16px; /* Tamaño del texto */
+      font-weight: bold; /* Texto en negrita */
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* Sombra */
+      transition: all 0.3s ease;
+      position: fixed; /* Fijo en la pantalla */
+      top: 50%; /* Centrado vertical */
+      right: 20px; /* Margen derecho */
+      transform: translateY(-50%); /* Ajuste para centrar perfectamente */
+      z-index: 999; /* Siempre por encima de otros elementos */
+    }
+
+    .buttonLogin:hover {
+      background-color: #0056b3; /* Color al pasar el ratón */
+      transform: translateY(-50%) scale(1.1); /* Escalado en hover */
+    }
+
+    .buttonLogin:active {
+      background-color: #004085; /* Color al hacer clic */
+      transform: translateY(-50%) scale(0.95); /* Efecto al pulsar */
+    }
   
   </style>
 </head>
@@ -632,6 +665,7 @@
   <div id="map"></div>
   
   <button id="addRadarButton" class="map-button">➕</button>
+  <a href="/login" class="buttonLogin">ADMIN</a>
   
   <script type="module">
     // Importar las funciones necesarias
