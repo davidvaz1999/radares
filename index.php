@@ -608,6 +608,26 @@
     bottom: 180px !important; /* Mueve el control 40px hacia arriba desde la parte inferior */
     right: 01px !important;  /* Mueve el control 20px hacia la izquierda desde la parte derecha */
   }
+  
+  #toggleInactiveRadarsButton {
+  background-color: #4CAF50; /* Color de fondo verde */
+  color: white; /* Texto en blanco */
+  border: none; /* Eliminar el borde */
+  border-radius: 5px; /* Bordes redondeados */
+  padding: 10px 20px; /* Espaciado interno */
+  font-size: 16px; /* Tamaño de texto */
+  cursor: pointer; /* Cambia el cursor al pasar sobre el botón */
+  transition: background-color 0.3s ease, transform 0.2s ease; /* Animación para cambios de color y al presionar */
+}
+
+#toggleInactiveRadarsButton:hover {
+  background-color: #45a049; /* Color de fondo más oscuro al pasar el cursor */
+}
+
+#toggleInactiveRadarsButton:active {
+  transform: scale(0.98); /* Efecto de presionar el botón */
+}
+
   </style>
 </head>
 <body>
@@ -1046,7 +1066,15 @@ cancelRadarButton.addEventListener("click", () => {
 });
 
 
-    function loadRadars() {
+    let showInactiveRadars = false;  // Variable para controlar si los inactivos deben ser mostrados
+
+// Función para alternar la visibilidad de los radares inactivos
+function toggleInactiveRadars() {
+  showInactiveRadars = !showInactiveRadars; // Alterna la visibilidad
+  loadRadars();  // Vuelve a cargar los radares para aplicar el cambio
+}
+
+function loadRadars() {
   db.ref("radares").on("value", (snapshot) => {
     // Limpiar los marcadores existentes
     map.eachLayer((layer) => {
@@ -1055,38 +1083,50 @@ cancelRadarButton.addEventListener("click", () => {
       }
     });
 
-    // Recorrer los radares de Firebase
-    snapshot.forEach((childSnapshot) => {
-      const data = childSnapshot.val();
-      
-      // Formatear la fecha de última modificación
-      const lastUpdatedFormatted = data.last_updated
-        ? new Date(data.last_updated).toLocaleString() // Fecha legible
-        : "No disponible";
+    const radars = snapshot.val();
+    if (!radars) return; // Si no hay datos, salir de la función
 
-      // Crear el marcador
-      const marker = L.marker([data.lat, data.lng], { icon: getIconByRadar(data) }).addTo(map);
+    // Filtrar radares activos
+    Object.values(radars)
+      .filter(radar => radar.status === "active") // Solo radares activos
+      .forEach(radar => addRadarMarker(map, radar)); // Añadir marcadores activos
 
-      // Añadir el popup con la información del radar
-      marker.bindPopup(`
-        <b>${data.radarType}</b><br>
-        Carretera: ${data.road}<br>
-        Dirección: ${data.direction}<br>
-        Velocidad: ${data.speed} km/h<br>
-        Estado: <b>${data.status === "active" ? "Activo" : "Inactivo"}</b><br>
-        <!--<button class="popup-button ${data.status === "active" ? "inactive" : "active"}" onclick="toggleRadarStatus('${childSnapshot.key}', '${data.status}')">
-          ${data.status === "active" ? "Desactivar" : "Activar"}
-        </button>-->
-        <p><b>Última modificación:</b> ${lastUpdatedFormatted}</p>
-      `);
-    });
+    // Si los radares inactivos deben mostrarse, agregarlos
+    if (showInactiveRadars) {
+      Object.values(radars)
+        .filter(radar => radar.status === "inactive") // Solo radares inactivos
+        .forEach(radar => addRadarMarker(map, radar)); // Añadir marcadores inactivos
+    }
   });
+}
+
+function addRadarMarker(map, radar) {
+  // Formatear la fecha de última modificación
+  const lastUpdatedFormatted = radar.last_updated
+    ? new Date(radar.last_updated).toLocaleString() // Fecha legible
+    : "No disponible";
+
+  // Crear el marcador
+  const marker = L.marker([radar.lat, radar.lng], {
+    icon: getIconByRadar(radar),
+    zIndexOffset: radar.status === "active" ? 1000 : 500 // Ajuste de prioridad para activos
+  }).addTo(map);
+
+  // Añadir el popup con la información del radar
+  marker.bindPopup(`
+    <b>${radar.radarType}</b><br>
+    Carretera: ${radar.road}<br>
+    Dirección: ${radar.direction}<br>
+    Velocidad: ${radar.speed} km/h<br>
+    Estado: <b>${radar.status === "active" ? "Activo" : "Inactivo"}</b><br>
+    <p><b>Última modificación:</b> ${lastUpdatedFormatted}</p>
+  `);
 }
     
     function getIconByRadar(radar) {
   const { speed, status, radarType } = radar;
   
-   // Log para verificar los datos
+  // Log para verificar los datos
   console.log("Radar recibido:", radar);
 
   // Validar el tipo de radar y la velocidad
@@ -1099,10 +1139,13 @@ cancelRadarButton.addEventListener("click", () => {
     ? `https://ahorraunamulta.com/velocidades/${validRadarType}/${validSpeed}.png`
     : `https://ahorraunamulta.com/velocidades/${validRadarType}/no_activo.png`;
 
+  // Definir tamaños de iconos
+  const iconSize = status === "active" ? [30, 30] : [25, 25]; // Más grande para activos, más pequeño para inactivos
+
   // Crear y devolver el ícono
   return L.icon({
     iconUrl,
-    iconSize: [25, 25], // Ajustar tamaño logo velocidad radar si es necesario
+    iconSize,
   });
 }
 
@@ -1135,7 +1178,8 @@ cancelRadarButton.addEventListener("click", () => {
     <li><span class="legend-icon" style="background-color: #ffb400;"></span> Radar de Tramo</li>
     <li><span class="legend-icon" style="background-color: #150aec;"></span> Radar Móvil</li>
     <li><span class="legend-icon" style="background-color: red;"></span> Radar Remolque</li>
-    <li><span class="legend-icon" style="background-color: white; border: 1px solid #000;"></span> Radar Desactivado</li>
+    <li><span class="legend-icon" style="background-color: white; border: 1px solid #000;"></span> Radar Inactivo</li>
+    <button id="toggleInactiveRadarsButton" onclick="toggleInactiveRadars()">Mostrar/Ocultar radares inactivos</button>
   </ul>
 </div>
 
