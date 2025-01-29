@@ -8,10 +8,10 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   
   <!-- Meta descripción -->
-  <meta name="description" content="Descubre la ubicación de los radares de tráfico en Cataluña. Evita multas con información actualizada sobre radares fijos, móviles y de tramo.">
-  
+  <meta name="description" content="Ubicación de radares de tráfico en Cataluña: evita multas con información actualizada sobre radares fijos, móviles y de tramo en un mapa interactivo.">
+
   <!-- Meta keywords (menos relevante, pero opcional) -->
-  <meta name="keywords" content="radares en Cataluña, localizador de radares, radares de tráfico, radares fijos, radares móviles, radares de tramo, tráfico Cataluña, evitar multas">
+  <meta name="keywords" content="radares Cataluña, localizador radares tráfico, radares fijos móviles, radares de tramo, radares remolque, evitar multas Cataluña, mapa radares tiempo real">
   
   <!-- Canonical -->
   <link rel="canonical" href="https://ahorraunamulta.com/">
