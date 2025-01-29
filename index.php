@@ -888,6 +888,7 @@ toggleInactive.addEventListener("click", () => {
     </select>
     <label for="road">Carretera/Autopista</label>
     <input type="text" id="road" placeholder="Ej. AP-7" />
+    <label for="pk">PK</label>
     <input type="text" id="pk" placeholder="Ej. 155" />
     <label for="direction">Dirección</label>
     <input type="text" id="direction" placeholder="Ej. Sentido Tarragona" />
@@ -1035,6 +1036,7 @@ toggleInactive.addEventListener("click", () => {
     newRadar.set({
       radarType,
       road,
+      pk,
       direction,
       speed,
       lat,
@@ -1129,7 +1131,7 @@ function addRadarMarker(map, radar) {
 }
     
     function getIconByRadar(radar) {
-  const { speed, status, radarType } = radar;
+  const { speed, status, radarType, pk } = radar;
   
   // Log para verificar los datos
   console.log("Radar recibido:", radar);
