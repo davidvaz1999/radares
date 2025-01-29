@@ -1,8 +1,11 @@
-<html>
+<!DOCTYPE html>
+<html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AHORRA UNA MULTA</title>
+  
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   
   <!-- Meta descripción -->
   <meta name="description" content="Descubre la ubicación de los radares de tráfico en Cataluña. Evita multas con información actualizada sobre radares fijos, móviles y de tramo.">
@@ -10,11 +13,8 @@
   <!-- Meta keywords (menos relevante, pero opcional) -->
   <meta name="keywords" content="radares en Cataluña, localizador de radares, radares de tráfico, radares fijos, radares móviles, radares de tramo, tráfico Cataluña, evitar multas">
   
-  <!-- Vista responsive -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
   <!-- Canonical -->
-  <link rel="canonical" href="https://ahorraunamulta.com/localizador-radares-cataluna">
+  <link rel="canonical" href="https://ahorraunamulta.com/">
 
   <!-- Open Graph (SEO para redes sociales) -->
   <meta property="og:title" content="Localizador de Radares en Cataluña | Ahorra Multas de Tráfico">
