@@ -79,28 +79,142 @@
           radaresArray.sort((a, b) => b.last_updated - a.last_updated);
 
           // Mostrar los radares ordenados en la tabla
-          radaresArray.forEach((radar) => {
-            const row = document.createElement('tr');
+radaresArray.forEach((radar) => {
+  const row = document.createElement('tr');
 
-            // Usamos la función formatDate para formatear las fechas
-            const lastUpdated = radar.last_updated ? formatDate(radar.last_updated) : 'N/A';
-            //temporalmente inhabilitado el radar.id
-            row.innerHTML = `
-              <td>${radar.id}</td> 
-              <td>${radar.direction}</td>
-              <td>${radar.speed} km/h</td>
-              <td>${radar.status}</td>
-              <td>${radar.road}</td>
-              <td>${lastUpdated}</td>
-              <td>${radar.radarType}</td>
-              <td>
-                ${radar.status !== 'active' ? `<button class="approve-btn" data-id="${radar.id}">Activar</button>` : ''}
-                ${radar.status !== 'inactive' ? `<button class="reject-btn" data-id="${radar.id}">Desactivar</button>` : ''}
-              </td>
-            `;
+  // Función para crear un campo editable con botón confirmar
+  const createEditableCell = (value, fieldName) => {
+    return `
+      <td>
+        <input type="text" value="${value}" data-field="${fieldName}" data-id="${radar.id}">
+        <button class="confirm-btn" data-field="${fieldName}" data-id="${radar.id}">Confirmar</button>
+      </td>
+    `;
+  };
 
-            radaresTableBody.appendChild(row);
-          });
+  const lastUpdated = radar.last_updated ? formatDate(radar.last_updated) : 'N/A';
+
+  // Asegurarte de que radar.road se trata como texto
+  const roadValue = radar.road || 'Sin especificar'; // Si está vacío, muestra un texto predeterminado
+
+  row.innerHTML = `
+    <td>
+      <button class="toggle-id-btn" data-id="${radar.id}">Ver ID</button>
+      <span class="radar-id" style="display: none;">${radar.id}</span>
+    </td>
+    ${createEditableCell(radar.direction, 'direction')}
+    ${createEditableCell(radar.speed, 'speed')}
+    ${createEditableCell(radar.status, 'status')}
+    ${createEditableCell(roadValue, 'road')} <!-- Aquí se asegura que "Vía" sea texto -->
+    ${createEditableCell(radar.pk, 'pk')} <!-- Nueva celda editable para radar.pk -->
+    <td>${lastUpdated}</td>
+    ${createEditableCell(radar.radarType, 'radarType')}
+    <td>
+      ${radar.status !== 'active' ? `<button class="approve-btn" data-id="${radar.id}">Activar</button>` : ''}
+      ${radar.status !== 'inactive' ? `<button class="reject-btn" data-id="${radar.id}">Desactivar</button>` : ''}
+    </td>
+  `;
+
+  radaresTableBody.appendChild(row);
+});
+
+// Agregar event listeners para los botones "Ver ID"
+document.querySelectorAll('.toggle-id-btn').forEach((btn) => {
+  btn.addEventListener('click', (e) => {
+    const idSpan = e.target.nextElementSibling; // El <span> con el ID está justo después del botón
+    if (idSpan.style.display === 'none') {
+      idSpan.style.display = 'inline'; // Mostrar el ID
+      e.target.textContent = 'Ocultar ID'; // Cambiar el texto del botón
+    } else {
+      idSpan.style.display = 'none'; // Ocultar el ID
+      e.target.textContent = 'Ver ID'; // Cambiar el texto del botón
+    }
+  });
+});
+
+// Agregar event listeners para los botones "Confirmar"
+// Asegurándonos de que solo los botones "Confirmar" actualicen los datos
+document.querySelectorAll('.confirm-btn').forEach((btn) => {
+  btn.addEventListener('click', (e) => {
+    e.preventDefault(); // Prevenir cualquier acción no deseada en el evento de clic
+
+    const field = e.target.dataset.field;
+    const id = e.target.dataset.id;
+    const input = e.target.previousElementSibling; // El input está antes del botón "Confirmar"
+    const newValue = input.value;
+
+    // Obtener la fecha y hora actuales
+    const currentDate = Date.now(); // Timestamp actual (milisegundos)
+
+    // Actualizar en la base de datos Firebase cuando se confirme el cambio
+    const radarRef = ref(database, `radares/${id}`);
+    const updateData = {
+      [field]: newValue, // Actualizar el campo modificado
+      last_updated: currentDate // Actualizar la fecha de la última modificación
+    };
+
+    update(radarRef, updateData)
+      .then(() => showNotification(`Campo ${field} actualizado a "${newValue}".`))
+      .catch((error) => showNotification(`Error: ${error.message}`));
+  });
+});
+
+// Agregar event listeners para los botones "Confirmar"
+// Asegurándonos de que solo los botones "Confirmar" actualicen los datos
+// Agregar event listeners para los botones "Confirmar"
+document.querySelectorAll('.confirm-btn').forEach((btn) => {
+  btn.addEventListener('click', (e) => {
+    e.preventDefault(); // Prevenir cualquier acción no deseada en el evento de clic
+
+    const field = e.target.dataset.field;
+    const id = e.target.dataset.id;
+    const input = e.target.previousElementSibling; // El input está antes del botón "Confirmar"
+    const newValue = input.value;
+
+    // Obtener la fecha y hora actuales (timestamp)
+    const currentDate = Date.now();
+
+    // Referencia al radar específico
+    const radarRef = ref(database, `radares/${id}`);
+
+    // Crear objeto para los datos que queremos actualizar
+    const updateData = {
+      [field]: newValue, // Actualizar el campo modificado
+      last_updated: currentDate // Actualizar last_updated con la fecha actual
+    };
+
+    // Realizar la actualización en Firebase
+    update(radarRef, updateData)
+      .then(() => {
+        // Notificación de éxito (comentada)
+        // showNotification(`Campo ${field} actualizado y last_updated modificado.`);
+      })
+      .catch((error) => {
+        // Notificación de error (comentada)
+        // showNotification(`Error: ${error.message}`);
+        
+        // O también puedes loguear el error en la consola si prefieres no mostrarlo:
+        console.error(`Error al actualizar el campo ${field}: ${error.message}`);
+      });
+  });
+});
+
+// Agregar event listeners para los campos editables
+document.querySelectorAll('input').forEach(input => {
+  input.addEventListener('blur', (e) => {
+    const value = e.target.value;
+    const field = e.target.dataset.field;
+    const id = e.target.dataset.id;
+    
+    // Actualizar en la base de datos Firebase cuando un campo editable pierde el foco
+    const radarRef = ref(database, `radares/${id}`);
+    const updateData = {};
+    updateData[field] = value;
+    update(radarRef, updateData)
+      .then(() => showNotification(`Campo ${field} actualizado.`))
+      .catch((error) => showNotification(`Error: ${error.message}`));
+  });
+});
 
           // Activar radar
           document.querySelectorAll('.approve-btn').forEach((btn) => {
@@ -237,6 +351,44 @@ window.logout = logout;
     .logout-btn:focus {
       outline: none;
     }
+    
+    .confirm-btn {
+  background-color: #2196F3; /* Azul */
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 5px; /* Espacio entre el input y el botón */
+  transition: background-color 0.3s ease;
+}
+
+.confirm-btn:hover {
+  background-color: #1976D2; /* Azul más oscuro al pasar el ratón */
+}
+
+.confirm-btn:focus {
+  outline: none; /* Elimina el borde cuando está enfocado */
+}
+
+/* Estilo para el botón "Ver ID" */
+.toggle-id-btn {
+  background-color: #FFA500; /* Naranja */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 5px 10px;
+  font-size: 14px;
+}
+
+.toggle-id-btn:hover {
+  background-color: #FF8C00; /* Naranja más oscuro al pasar el ratón */
+}
+
+.toggle-id-btn:focus {
+  outline: none;
+}
   </style>
 </head>
 <body>
@@ -252,6 +404,7 @@ window.logout = logout;
         <th>VELOCIDAD MÁXIMA</th>
         <th>ESTADO</th>
         <th>VIA</th>
+        <th>PK</th>
         <th>ÚLTIMA MODIFICACIÓN</th>
         <th>TIPO RADAR</th>
         <th>ACCIÓN</th>
