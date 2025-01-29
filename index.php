@@ -807,6 +807,7 @@ const renderRadars = () => {
         <p><strong>Latitud:</strong> ${radar.lat || "N/A"}</p>
         <p><strong>Longitud:</strong> ${radar.lng || "N/A"}</p>
         <p><strong>Carretera:</strong> ${radar.road || "N/A"}</p>
+        <p><strong>PK:</strong> ${radar.pk || "N/A"}</p>
         <p><strong>Dirección:</strong> ${radar.direction || "N/A"}</p>
         <p><strong>Velocidad:</strong> ${radar.speed || "N/A"} km/h</p>
         <p><strong>Estado:</strong> ${
@@ -887,6 +888,7 @@ toggleInactive.addEventListener("click", () => {
     </select>
     <label for="road">Carretera/Autopista</label>
     <input type="text" id="road" placeholder="Ej. AP-7" />
+    <input type="text" id="pk" placeholder="Ej. 155" />
     <label for="direction">Dirección</label>
     <input type="text" id="direction" placeholder="Ej. Sentido Tarragona" />
     <label for="speed">Velocidad (km/h)</label>
@@ -1022,6 +1024,7 @@ toggleInactive.addEventListener("click", () => {
     saveRadarButton.addEventListener("click", () => {
   const radarType = document.getElementById("radarType").value;
   const road = document.getElementById("road").value;
+  const road = document.getElementById("pk").value;
   const direction = document.getElementById("direction").value;
   const speed = document.getElementById("speed").value;
 
@@ -1051,6 +1054,7 @@ toggleInactive.addEventListener("click", () => {
     // Limpia los campos del formulario
     document.getElementById("radarType").value = "";
     document.getElementById("road").value = "";
+    document.getElementById("pk").value = "";
     document.getElementById("direction").value = "";
     document.getElementById("speed").value = "";
   } else {
@@ -1116,6 +1120,7 @@ function addRadarMarker(map, radar) {
   marker.bindPopup(`
     <b>${radar.radarType}</b><br>
     Carretera: ${radar.road}<br>
+    PK: ${radar.pk || "No disponible"}<br>
     Dirección: ${radar.direction}<br>
     Velocidad: ${radar.speed} km/h<br>
     Estado: <b>${radar.status === "active" ? "Activo" : "Inactivo"}</b><br>
@@ -1179,6 +1184,7 @@ function addRadarMarker(map, radar) {
     <li><span class="legend-icon" style="background-color: #150aec;"></span> Radar Móvil</li>
     <li><span class="legend-icon" style="background-color: red;"></span> Radar Remolque</li>
     <li><span class="legend-icon" style="background-color: white; border: 1px solid #000;"></span> Radar Inactivo</li>
+    <br>
     <button id="toggleInactiveRadarsButton" onclick="toggleInactiveRadars()">Mostrar/Ocultar radares inactivos</button>
   </ul>
 </div>
