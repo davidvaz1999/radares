@@ -102,3 +102,10 @@ Ajuste en las consultas al cargar grandes volúmenes de datos para evitar tiempo
 
 Visualización:
 Añadida vista satélite
+
+29/01/2025
+
+Añadida función para ocultar/mostrar radares inactivos.
+Añadida funcionalidad para asignar el PK de los radares.
+Añadida opción para editar los campos de dirección, velocidad máxima, vía y PK desde el panel de administración.
+Corregidos varios errores.
