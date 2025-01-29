@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AHORRA UNA MULTA</title>
+  <title>Radares de tráfico en España | Localizador para evitar multas | AHORRA UNA MULTA</title>
   
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   

@@ -1,0 +1,9 @@
+# robots.txt para radares en Cataluña
+
+User-agent: *
+Disallow: /admin/
+Disallow: /login/
+Disallow: /private/
+Allow: / 
+
+Sitemap: https://www.ahorratumulta.com/sitemap.xml
