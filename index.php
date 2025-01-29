@@ -1024,7 +1024,7 @@ toggleInactive.addEventListener("click", () => {
     saveRadarButton.addEventListener("click", () => {
   const radarType = document.getElementById("radarType").value;
   const road = document.getElementById("road").value;
-  const road = document.getElementById("pk").value;
+  const pk = document.getElementById("pk").value;
   const direction = document.getElementById("direction").value;
   const speed = document.getElementById("speed").value;
 
