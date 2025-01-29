@@ -104,11 +104,13 @@ radaresArray.forEach((radar) => {
     </td>
     ${createEditableCell(radar.direction, 'direction')}
     ${createEditableCell(radar.speed, 'speed')}
-    ${createEditableCell(radar.status, 'status')}
+    <!--${createEditableCell(radar.status, 'status')}-->
+    <td><span>${radar.status}</span></td> <!-- Aquí está el campo "estado" como un span (no editable) -->
     ${createEditableCell(roadValue, 'road')} <!-- Aquí se asegura que "Vía" sea texto -->
     ${createEditableCell(radar.pk, 'pk')} <!-- Nueva celda editable para radar.pk -->
     <td>${lastUpdated}</td>
-    ${createEditableCell(radar.radarType, 'radarType')}
+    <!--${createEditableCell(radar.radarType, 'radarType')}-->
+    <td><span>${radar.radarType}</span></td> <!-- Aquí está el campo "tipo radar" como un span (no editable) -->
     <td>
       ${radar.status !== 'active' ? `<button class="approve-btn" data-id="${radar.id}">Activar</button>` : ''}
       ${radar.status !== 'inactive' ? `<button class="reject-btn" data-id="${radar.id}">Desactivar</button>` : ''}
