@@ -84,6 +84,7 @@
   <h1>CONTABILIDAD VOTOS RADARES</h1>
   <p id="userInfo"></p>
   <button id="reset-button">RESTABLECER TODOS LOS VOTOS</button>
+  <button id="export-button">Exportar Radares a .txt</button>
   <div id="radares-container"></div>
   <button onclick="logout()">Cerrar sesión</button>
   
@@ -236,5 +237,66 @@ function loadRadares() {
     };
 };
   </script>
+  
+  <script type="module">
+    
+    // Importa las funciones necesarias de Firebase
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js';
+import { getDatabase, ref, get } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-database.js';
+
+// Configuración de Firebase para radares
+    const firebaseConfigRadares = {
+      apiKey: "AIzaSyDNCBnqAAcdV3kqx8hN-uMyqSkzIzV4DXc",
+      authDomain: "radares-bcn.firebaseapp.com",
+      databaseURL: "https://radares-bcn-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "radares-bcn",
+      storageBucket: "radares-bcn.appspot.com",
+      messagingSenderId: "892778900332",
+      appId: "1:892778900332:web:f3c5353d981dda7b4ba149",
+      measurementId: "G-C1GT8Q96ZJ"
+    };
+
+// Asegúrate de tener la configuración correcta de Firebase
+const appRadares = initializeApp(firebaseConfigRadares, "radares");  // Aquí inicializas la app de Firebase para radares
+const db = getDatabase(appRadares);  // Obtener la referencia a la base de datos
+
+// Función para exportar los radares a un archivo .txt
+function exportRadaresToTxt() {
+  const radaresRef = ref(db, 'radares');  // Uso correcto de 'ref' con 'db'
+  
+  get(radaresRef).then(snapshot => {
+    const radares = snapshot.val();
+    if (radares) {
+      let txtContent = 'Radares de tráfico:\n\n';
+
+      Object.entries(radares).forEach(([id, radar]) => {
+        txtContent += `ID: ${id}\n`;
+        txtContent += `Carretera: ${radar.road}\n`;
+        txtContent += `Dirección: ${radar.direction}\n`;
+        txtContent += `Votos Positivos: ${radar.votos_positivos}\n`;
+        txtContent += `Votos Negativos: ${radar.votos_negativos}\n`;
+        txtContent += '----------------------------\n';
+      });
+
+      const blob = new Blob([txtContent], { type: 'text/plain' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'radares.txt';
+      link.click();
+    } else {
+      alert('No se encontraron radares para exportar.');
+    }
+  }).catch((error) => {
+    console.error('Error al obtener los radares:', error);
+  });
+}
+
+// Asociar la función al botón de exportar
+const exportButton = document.getElementById('export-button');
+exportButton.addEventListener('click', exportRadaresToTxt);
+
+
+  </script>
+  
 </body>
 </html>
