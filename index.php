@@ -628,6 +628,71 @@
   transform: scale(0.98); /* Efecto de presionar el botón */
 }
 
+/* Estilo general para los botones */
+.button-voto {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 5px 10px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 30px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  outline: none;
+  text-align: center;
+  margin: 5px;
+}
+
+/* Estilo para el botón de voto positivo */
+.button-voto-positivo {
+  background-color: #4CAF50; /* verde */
+  color: white;
+}
+
+.button-voto-positivo:hover {
+  background-color: #45a049;
+  transform: translateY(-2px);
+}
+
+.button-voto-positivo:active {
+  background-color: #3e8e41;
+  transform: translateY(0);
+}
+
+.button-voto-positivo:disabled {
+  background-color: #b2d8b6;
+  cursor: not-allowed;
+}
+
+/* Estilo para el botón de voto negativo */
+.button-voto-negativo {
+  background-color: #f44336; /* rojo */
+  color: white;
+}
+
+.button-voto-negativo:hover {
+  background-color: #e53935;
+  transform: translateY(-2px);
+}
+
+.button-voto-negativo:active {
+  background-color: #c62828;
+  transform: translateY(0);
+}
+
+.button-voto-negativo:disabled {
+  background-color: #f1b0b0;
+  cursor: not-allowed;
+}
+
+/* Añadir sombras suaves */
+.button-voto:focus {
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+
   </style>
 </head>
 <body>
@@ -731,9 +796,7 @@
     import { getDatabase, ref, get, onValue } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-database.js";
     
     
-   // 
-
-    // Configuración de Firebase
+   // Configuración de Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyDNCBnqAAcdV3kqx8hN-uMyqSkzIzV4DXc",
       authDomain: "radares-bcn.firebaseapp.com",
@@ -949,7 +1012,7 @@ toggleInactive.addEventListener("click", () => {
   </script>
   
   <script>
-    // Configuración de Firebase
+// Configuración de Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyDNCBnqAAcdV3kqx8hN-uMyqSkzIzV4DXc",
   authDomain: "radares-bcn.firebaseapp.com",
@@ -965,105 +1028,44 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 const map = L.map("map").setView([41.3784, 2.1927], 10);
-const osmLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png");
-const satelliteLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
-  attribution: '&copy; <a href="https://www.esri.com/">ESRI</a>',
-});
+const osmLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+const satelliteLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}");
 
-osmLayer.addTo(map);
 L.control.layers({ "Mapa estándar": osmLayer, "Vista satélite": satelliteLayer }, {}, { position: 'bottomright' }).addTo(map);
 
-const addRadarButton = document.getElementById("addRadarButton");
-const radarForm = document.getElementById("radarForm");
-const saveRadarButton = document.getElementById("saveRadarButton");
-const cancelRadarButton = document.getElementById("cancelRadarButton");
+let showInactiveRadars = false;
 
-let tempMarker = null;
+function toggleInactiveRadars() {
+  showInactiveRadars = !showInactiveRadars;
+  loadRadars();
+}
 
-addRadarButton.addEventListener("click", () => {
-  addRadarButton.classList.toggle("active");
-  addRadarButton.textContent = addRadarButton.classList.contains("active") ? "🚨" : "➕";
-  if (!addRadarButton.classList.contains("active")) {
-    radarForm.style.display = "none";
-    if (tempMarker) map.removeLayer(tempMarker);
-    tempMarker = null;
-  }
-});
-
-map.on("click", (e) => {
-  if (addRadarButton.classList.contains("active")) {
-    radarForm.style.display = "block";
-    if (tempMarker) map.removeLayer(tempMarker);
-    tempMarker = L.marker(e.latlng).addTo(map);
-  }
-});
-
-saveRadarButton.addEventListener("click", () => {
-  const radarType = document.getElementById("radarType").value;
-  const road = document.getElementById("road").value;
-  const pk = document.getElementById("pk").value;
-  const direction = document.getElementById("direction").value;
-  const speed = document.getElementById("speed").value;
-
-  if (radarType && road && direction && speed && tempMarker) {
-    const { lat, lng } = tempMarker.getLatLng();
-    const newRadar = db.ref("radares").push();
-
-    newRadar.set({
-      radarType,
-      road,
-      pk,
-      direction,
-      speed,
-      lat,
-      lng,
-      votos_positivos: 0,
-      votos_negativos: 0,
-      status: "active",
-      last_updated: new Date().toISOString(),
-    });
-
-    alert("Radar guardado con éxito");
-    radarForm.style.display = "none";
-    if (tempMarker) map.removeLayer(tempMarker);
-    tempMarker = null;
-    document.getElementById("radarType").value = "";
-    document.getElementById("road").value = "";
-    document.getElementById("pk").value = "";
-    document.getElementById("direction").value = "";
-    document.getElementById("speed").value = "";
-  } else {
-    alert("Por favor, completa todos los campos y selecciona una ubicación.");
-  }
-});
-
-cancelRadarButton.addEventListener("click", () => {
-  radarForm.style.display = "none";
-  if (tempMarker) map.removeLayer(tempMarker);
-  tempMarker = null;
-});
-
-// Función para cargar radares
 function loadRadars() {
   db.ref("radares").on("value", (snapshot) => {
     map.eachLayer((layer) => {
-      if (layer instanceof L.Marker) map.removeLayer(layer);
+      if (layer instanceof L.Marker) {
+        map.removeLayer(layer);
+      }
     });
 
     const radars = snapshot.val();
     if (!radars) return;
 
-    Object.keys(radars).forEach((id) => {
-      addRadarMarker(map, radars[id], id);
+    Object.entries(radars).forEach(([id, radar]) => {
+      if (radar.status === "active" || showInactiveRadars) {
+        addRadarMarker(map, radar, id);
+      }
     });
   });
 }
 
-// Función para añadir el marcador con votos
 function addRadarMarker(map, radar, radarId) {
+  const votosPositivos = radar.votos_positivos || 0;
+  const votosNegativos = radar.votos_negativos || 0;
+  const userVoted = localStorage.getItem(`voto_${radarId}`);
+
   const marker = L.marker([radar.lat, radar.lng], {
     icon: getIconByRadar(radar),
-    zIndexOffset: radar.status === "active" ? 1000 : 500
   }).addTo(map);
 
   marker.bindPopup(`
@@ -1074,31 +1076,57 @@ function addRadarMarker(map, radar, radarId) {
     Velocidad: ${radar.speed} km/h<br>
     Estado: <b>${radar.status === "active" ? "Activo" : "Inactivo"}</b><br>
     Última modificación: ${new Date(radar.last_updated).toLocaleString()}<br>
-    <button onclick="votar('${radarId}', 'positivo')">👍 <span id="votos_positivos_${radarId}">${radar.votos_positivos}</span></button>
-    <button onclick="votar('${radarId}', 'negativo')">👎 <span id="votos_negativos_${radarId}">${radar.votos_negativos}</span></button>
+    <button id="boton_positivo_${radarId}" class="button-voto button-voto-positivo" onclick="votar('${radarId}', 'positivo')" ${userVoted ? 'disabled' : ''}>
+  👍 <span id="votos_positivo_${radarId}">${votosPositivos}</span>
+</button>
+<button id="boton_negativo_${radarId}" class="button-voto button-voto-negativo" onclick="votar('${radarId}', 'negativo')" ${userVoted ? 'disabled' : ''}>
+  👎 <span id="votos_negativo_${radarId}">${votosNegativos}</span>
+</button>
   `);
 }
 
-// Función para votar
 function votar(radarId, tipo) {
-  const userVoted = localStorage.getItem(`voto_${radarId}`);
-  if (userVoted) {
-    alert("Ya has votado por este radar.");
-    return;
-  }
+  const today = new Date().toISOString().split('T')[0];  // Obtiene la fecha actual en formato YYYY-MM-DD
 
-  const votosRef = db.ref(`radares/${radarId}/${tipo === "positivo" ? "votos_positivos" : "votos_negativos"}`);
+  // Verificar si el usuario ya ha votado hoy en ese tipo
+  const userVoteRef = db.ref(`radares/${radarId}/votos_${tipo}/${today}`);
+  userVoteRef.once('value').then(snapshot => {
+    if (snapshot.exists()) {
+      alert(`Ya has votado ${tipo === 'positivo' ? 'positivo' : 'negativo'} en este radar hoy.`);
+      return;
+    }
 
-  votosRef.transaction((currentVotes) => (currentVotes || 0) + 1)
-    .then(() => {
+    // Realizar la transacción de votos en la base de datos de Firebase
+    const votosRef = db.ref(`radares/${radarId}/${tipo === "positivo" ? "votos_positivos" : "votos_negativos"}`);
+    votosRef.transaction((currentVotes) => {
+      const newVoteCount = (currentVotes || 0) + 1;
+
+      // Si los votos negativos superan los 10, cambiamos el estado del radar a "inactive"
+      if (tipo === "negativo" && newVoteCount > 10) {
+        const radarRef = db.ref(`radares/${radarId}`);
+        // Actualizamos el estado a "inactive" y añadimos la fecha en last_updated
+        radarRef.update({
+          status: "inactive",
+          last_updated: new Date().toISOString()  // Fecha y hora actuales en formato ISO
+        }).then(() => {
+          console.log(`Radar ${radarId} ha sido marcado como inactivo por exceder los 10 votos negativos.`);
+        });
+      }
+
+      return newVoteCount;
+    }).then(() => {
+      // Registrar el voto para este día y tipo en Firebase
+      userVoteRef.set(1);  // Registrar un voto para ese día y tipo
+
+      // Actualizar el conteo de votos en la UI
       document.getElementById(`votos_${tipo}_${radarId}`).innerText++;
-      localStorage.setItem(`voto_${radarId}`, tipo);
-    })
-    .catch((error) => {
-      console.error("Error al votar:", error);
     });
+  });
 }
 
+loadRadars();
+
+// Función para obtener el icono según el estado y tipo de radar
 function getIconByRadar(radar) {
   const validRadarTypes = ["Fijo", "Móvil", "Tramo", "Remolque"];
   const validRadarType = validRadarTypes.includes(radar.radarType) ? radar.radarType : "default";
@@ -1111,9 +1139,24 @@ function getIconByRadar(radar) {
   return L.icon({ iconUrl, iconSize: radar.status === "active" ? [30, 30] : [25, 25] });
 }
 
-// Cargar radares al iniciar
+// Botón en la interfaz para alternar radares inactivos
+const toggleButton = document.createElement("button");
+toggleButton.innerText = "Mostrar/Ocultar Radares Inactivos";
+toggleButton.style.position = "absolute";
+toggleButton.style.top = "10px";
+toggleButton.style.right = "10px";
+toggleButton.style.padding = "10px";
+toggleButton.style.background = "#007bff";
+toggleButton.style.color = "white";
+toggleButton.style.border = "none";
+toggleButton.style.cursor = "pointer";
+toggleButton.addEventListener("click", toggleInactiveRadars);
+
+document.body.appendChild(toggleButton);
+
+// Cargar radares al inicio
 loadRadars();
-  </script>
+</script>
   
   <!-- Botón para mostrar/ocultar la leyenda -->
 <button id="legend-button" style="position: absolute; right: 10px; z-index: 1000;">
