@@ -1170,7 +1170,7 @@ function votar(radarId, tipo) {
       const radarRef = db.ref(`radares/${radarId}`);
       radarRef.update({
         status: "inactive",
-        last_updated: new Date().toISOString()
+        last_updated: new Date().toISOString() // Actualización de la fecha de modificación
       }).then(() => {
         console.log(`Radar ${radarId} ha sido marcado como inactivo por exceder los 10 votos negativos.`);
       });
@@ -1180,6 +1180,14 @@ function votar(radarId, tipo) {
   }).then(() => {
     // Actualizar el conteo de votos en la UI
     document.getElementById(`votos_${tipo}_${radarId}`).innerText++;
+
+    // Actualizar la fecha de modificación en Firebase, siempre que se haya emitido un voto
+    const radarRef = db.ref(`radares/${radarId}`);
+    radarRef.update({
+      last_updated: new Date().toISOString() // Actualización de la fecha de modificación
+    }).then(() => {
+      console.log(`La fecha de modificación de ${radarId} ha sido actualizada.`);
+    });
   });
 }
 
