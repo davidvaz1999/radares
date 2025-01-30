@@ -133,36 +133,45 @@
     });
 
     // Recuperar los radares desde Firebase
-    function loadRadares() {
-      const radaresRef = ref(db, 'radares'); // Uso de 'ref' correctamente
-      get(radaresRef).then(snapshot => {
-        const radares = snapshot.val();
-        const container = document.getElementById('radares-container');
-        container.innerHTML = ''; // Limpiar antes de cargar
-        for (let id in radares) {
-          const radar = radares[id];
-          const radarElement = document.createElement('div');
-          radarElement.classList.add('radar');
-          radarElement.innerHTML = `
-            <h3>${radar.road}<br>(${radar.direction})</h3>
-            <p>Votos Positivos: ${radar.votos_positivos}</p>
-            <p>Votos Negativos: ${radar.votos_negativos}</p>
-            <button class="reset-votos" data-id="${id}">RESTABLECER VOTOS</button>
-            <hr>
-          `;
-          container.appendChild(radarElement);
-        }
+function loadRadares() {
+  const radaresRef = ref(db, 'radares'); // Uso de 'ref' correctamente
+  get(radaresRef).then(snapshot => {
+    const radares = snapshot.val();
+    const container = document.getElementById('radares-container');
+    container.innerHTML = ''; // Limpiar antes de cargar
+
+    // Ordenar los radares por votos (positivos + negativos, de mayor a menor)
+    const radaresOrdenados = Object.entries(radares)
+      .sort(([, radarA], [, radarB]) => {
+        const votosA = radarA.votos_positivos + radarA.votos_negativos;
+        const votosB = radarB.votos_positivos + radarB.votos_negativos;
+        return votosB - votosA; // Ordenar de mayor a menor
+      });
+
+    // Mostrar los radares ordenados
+    radaresOrdenados.forEach(([id, radar]) => {
+      const radarElement = document.createElement('div');
+      radarElement.classList.add('radar');
+      radarElement.innerHTML = `
+        <h3>${radar.road}<br>(${radar.direction})</h3>
+        <p>Votos Positivos: ${radar.votos_positivos}</p>
+        <p>Votos Negativos: ${radar.votos_negativos}</p>
+        <button class="reset-votos" data-id="${id}">RESTABLECER VOTOS</button>
+        <hr>
+      `;
+      container.appendChild(radarElement);
+    });
 
         // Asociamos el evento de click a los botones de restablecer votos
-        const resetButtons = document.querySelectorAll('.reset-votos');
-        resetButtons.forEach(button => {
-          button.addEventListener('click', function() {
-            const id = button.getAttribute('data-id');
-            resetVotos(id);
-          });
-        });
-      }).catch((error) => {
-        console.error('Error al cargar los radares:', error);
+    const resetButtons = document.querySelectorAll('.reset-votos');
+    resetButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const id = button.getAttribute('data-id');
+        resetVotos(id);
+      });
+    });
+  }).catch((error) => {
+    console.error('Error al cargar los radares:', error);
       });
     }
 
