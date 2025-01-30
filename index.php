@@ -950,79 +950,55 @@ toggleInactive.addEventListener("click", () => {
   
   <script>
     // Configuración de Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyDNCBnqAAcdV3kqx8hN-uMyqSkzIzV4DXc",
-      authDomain: "radares-bcn.firebaseapp.com",
-      databaseURL: "https://radares-bcn-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "radares-bcn",
-      storageBucket: "radares-bcn.appspot.com",
-      messagingSenderId: "892778900332",
-      appId: "1:892778900332:web:f3c5353d981dda7b4ba149",
-      measurementId: "G-C1GT8Q96ZJ",
-    };
+const firebaseConfig = {
+  apiKey: "AIzaSyDNCBnqAAcdV3kqx8hN-uMyqSkzIzV4DXc",
+  authDomain: "radares-bcn.firebaseapp.com",
+  databaseURL: "https://radares-bcn-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "radares-bcn",
+  storageBucket: "radares-bcn.appspot.com",
+  messagingSenderId: "892778900332",
+  appId: "1:892778900332:web:f3c5353d981dda7b4ba149",
+  measurementId: "G-C1GT8Q96ZJ",
+};
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-    const map = L.map("map").setView([41.3784, 2.1927], 10); // Coordenadas de Barcelona y un nivel de zoom adecuado
-    // Capa base de OpenStreetMap
-  const osmLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png");
-    
-    // Capa satelital de Esri (World Imagery)
-  const satelliteLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
-    attribution: '&copy; <a href="https://www.esri.com/">ESRI</a>',
-  }); 
-  
-  // Añadir la capa de OpenStreetMap por defecto
-  osmLayer.addTo(map);
-  
-  // Añadir un control de capas para permitir cambiar entre las vistas
-  L.control.layers({
-    "Mapa estándar": osmLayer,
-    "Vista satélite": satelliteLayer
-  }, {}, {position: 'bottomright'}).addTo(map);
-    
-    const addRadarButton = document.getElementById("addRadarButton");
-    const radarForm = document.getElementById("radarForm");
-    const saveRadarButton = document.getElementById("saveRadarButton");
-    const cancelRadarButton = document.getElementById("cancelRadarButton");
+const map = L.map("map").setView([41.3784, 2.1927], 10);
+const osmLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png");
+const satelliteLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+  attribution: '&copy; <a href="https://www.esri.com/">ESRI</a>',
+});
 
-    let tempMarker = null;
+osmLayer.addTo(map);
+L.control.layers({ "Mapa estándar": osmLayer, "Vista satélite": satelliteLayer }, {}, { position: 'bottomright' }).addTo(map);
 
-   /* addRadarButton.addEventListener("click", () => {
-      addRadarButton.classList.toggle("active");
-      if (addRadarButton.classList.contains("active")) {
-        addRadarButton.textContent = "✔"; // Cambia el ícono a ✔
-      } else {
-        addRadarButton.textContent = "+"; // Vuelve a +
-        radarForm.style.display = "none";
-        if (tempMarker) map.removeLayer(tempMarker);
-        tempMarker = null;
-      }
-    }); *///ANULADO TEMPORALMENTE
-    
-    addRadarButton.addEventListener("click", () => {
+const addRadarButton = document.getElementById("addRadarButton");
+const radarForm = document.getElementById("radarForm");
+const saveRadarButton = document.getElementById("saveRadarButton");
+const cancelRadarButton = document.getElementById("cancelRadarButton");
+
+let tempMarker = null;
+
+addRadarButton.addEventListener("click", () => {
   addRadarButton.classList.toggle("active");
-  if (addRadarButton.classList.contains("active")) {
-    addRadarButton.textContent = "🚨"; // Cambia el ícono a 🚨
-  } else {
-    addRadarButton.textContent = "➕"; // Cambia el ícono a ➕
+  addRadarButton.textContent = addRadarButton.classList.contains("active") ? "🚨" : "➕";
+  if (!addRadarButton.classList.contains("active")) {
     radarForm.style.display = "none";
     if (tempMarker) map.removeLayer(tempMarker);
     tempMarker = null;
   }
 });
 
+map.on("click", (e) => {
+  if (addRadarButton.classList.contains("active")) {
+    radarForm.style.display = "block";
+    if (tempMarker) map.removeLayer(tempMarker);
+    tempMarker = L.marker(e.latlng).addTo(map);
+  }
+});
 
-    map.on("click", (e) => {
-      if (addRadarButton.classList.contains("active")) {
-        radarForm.style.display = "block";
-        if (tempMarker) map.removeLayer(tempMarker);
-        tempMarker = L.marker(e.latlng).addTo(map);
-      }
-    });
-
-    saveRadarButton.addEventListener("click", () => {
+saveRadarButton.addEventListener("click", () => {
   const radarType = document.getElementById("radarType").value;
   const road = document.getElementById("road").value;
   const pk = document.getElementById("pk").value;
@@ -1041,19 +1017,16 @@ toggleInactive.addEventListener("click", () => {
       speed,
       lat,
       lng,
-      status: "active", // Estado inicial activo
-      last_updated: new Date().toISOString(), // Fecha actual
+      votos_positivos: 0,
+      votos_negativos: 0,
+      status: "active",
+      last_updated: new Date().toISOString(),
     });
 
-    // Muestra un mensaje de éxito
     alert("Radar guardado con éxito");
-
-    // Cierra el formulario y resetea valores
     radarForm.style.display = "none";
-    if (tempMarker) map.removeLayer(tempMarker); // Elimina el marcador temporal del mapa
+    if (tempMarker) map.removeLayer(tempMarker);
     tempMarker = null;
-
-    // Limpia los campos del formulario
     document.getElementById("radarType").value = "";
     document.getElementById("road").value = "";
     document.getElementById("pk").value = "";
@@ -1064,61 +1037,35 @@ toggleInactive.addEventListener("click", () => {
   }
 });
 
-// Lógica para el botón "Cancelar"
 cancelRadarButton.addEventListener("click", () => {
-  radarForm.style.display = "none"; // Oculta el formulario
-  if (tempMarker) map.removeLayer(tempMarker); // Elimina el marcador temporal
+  radarForm.style.display = "none";
+  if (tempMarker) map.removeLayer(tempMarker);
   tempMarker = null;
 });
 
-
-    let showInactiveRadars = false;  // Variable para controlar si los inactivos deben ser mostrados
-
-// Función para alternar la visibilidad de los radares inactivos
-function toggleInactiveRadars() {
-  showInactiveRadars = !showInactiveRadars; // Alterna la visibilidad
-  loadRadars();  // Vuelve a cargar los radares para aplicar el cambio
-}
-
+// Función para cargar radares
 function loadRadars() {
   db.ref("radares").on("value", (snapshot) => {
-    // Limpiar los marcadores existentes
     map.eachLayer((layer) => {
-      if (layer instanceof L.Marker) {
-        map.removeLayer(layer);
-      }
+      if (layer instanceof L.Marker) map.removeLayer(layer);
     });
 
     const radars = snapshot.val();
-    if (!radars) return; // Si no hay datos, salir de la función
+    if (!radars) return;
 
-    // Filtrar radares activos
-    Object.values(radars)
-      .filter(radar => radar.status === "active") // Solo radares activos
-      .forEach(radar => addRadarMarker(map, radar)); // Añadir marcadores activos
-
-    // Si los radares inactivos deben mostrarse, agregarlos
-    if (showInactiveRadars) {
-      Object.values(radars)
-        .filter(radar => radar.status === "inactive") // Solo radares inactivos
-        .forEach(radar => addRadarMarker(map, radar)); // Añadir marcadores inactivos
-    }
+    Object.keys(radars).forEach((id) => {
+      addRadarMarker(map, radars[id], id);
+    });
   });
 }
 
-function addRadarMarker(map, radar) {
-  // Formatear la fecha de última modificación
-  const lastUpdatedFormatted = radar.last_updated
-    ? new Date(radar.last_updated).toLocaleString() // Fecha legible
-    : "No disponible";
-
-  // Crear el marcador
+// Función para añadir el marcador con votos
+function addRadarMarker(map, radar, radarId) {
   const marker = L.marker([radar.lat, radar.lng], {
     icon: getIconByRadar(radar),
-    zIndexOffset: radar.status === "active" ? 1000 : 500 // Ajuste de prioridad para activos
+    zIndexOffset: radar.status === "active" ? 1000 : 500
   }).addTo(map);
 
-  // Añadir el popup con la información del radar
   marker.bindPopup(`
     <b>${radar.radarType}</b><br>
     Carretera: ${radar.road}<br>
@@ -1126,50 +1073,46 @@ function addRadarMarker(map, radar) {
     Dirección: ${radar.direction}<br>
     Velocidad: ${radar.speed} km/h<br>
     Estado: <b>${radar.status === "active" ? "Activo" : "Inactivo"}</b><br>
-    <p><b>Última modificación:</b> ${lastUpdatedFormatted}</p>
+    Última modificación: ${new Date(radar.last_updated).toLocaleString()}<br>
+    <button onclick="votar('${radarId}', 'positivo')">👍 <span id="votos_positivos_${radarId}">${radar.votos_positivos}</span></button>
+    <button onclick="votar('${radarId}', 'negativo')">👎 <span id="votos_negativos_${radarId}">${radar.votos_negativos}</span></button>
   `);
 }
-    
-    function getIconByRadar(radar) {
-  const { speed, status, radarType, pk } = radar;
-  
-  // Log para verificar los datos
-  console.log("Radar recibido:", radar);
 
-  // Validar el tipo de radar y la velocidad
-  const validRadarTypes = ["Fijo", "Móvil", "Tramo", "Remolque"]; // Tipos válidos
-  const validRadarType = validRadarTypes.includes(radarType) ? radarType : "default";
-  const validSpeed = speed && speed >= 10 && speed <= 140 ? speed : "default";
+// Función para votar
+function votar(radarId, tipo) {
+  const userVoted = localStorage.getItem(`voto_${radarId}`);
+  if (userVoted) {
+    alert("Ya has votado por este radar.");
+    return;
+  }
 
-  // Construir la URL del ícono
-  const iconUrl = status === "active"
+  const votosRef = db.ref(`radares/${radarId}/${tipo === "positivo" ? "votos_positivos" : "votos_negativos"}`);
+
+  votosRef.transaction((currentVotes) => (currentVotes || 0) + 1)
+    .then(() => {
+      document.getElementById(`votos_${tipo}_${radarId}`).innerText++;
+      localStorage.setItem(`voto_${radarId}`, tipo);
+    })
+    .catch((error) => {
+      console.error("Error al votar:", error);
+    });
+}
+
+function getIconByRadar(radar) {
+  const validRadarTypes = ["Fijo", "Móvil", "Tramo", "Remolque"];
+  const validRadarType = validRadarTypes.includes(radar.radarType) ? radar.radarType : "default";
+  const validSpeed = radar.speed && radar.speed >= 10 && radar.speed <= 140 ? radar.speed : "default";
+
+  const iconUrl = radar.status === "active"
     ? `https://ahorraunamulta.com/velocidades/${validRadarType}/${validSpeed}.png`
     : `https://ahorraunamulta.com/velocidades/${validRadarType}/no_activo.png`;
 
-  // Definir tamaños de iconos
-  const iconSize = status === "active" ? [30, 30] : [25, 25]; // Más grande para activos, más pequeño para inactivos
-
-  // Crear y devolver el ícono
-  return L.icon({
-    iconUrl,
-    iconSize,
-  });
+  return L.icon({ iconUrl, iconSize: radar.status === "active" ? [30, 30] : [25, 25] });
 }
 
-    function toggleRadarStatus(id, currentStatus) {
-  const newStatus = currentStatus === "active" ? "inactive" : "active";
-
-  // Actualizar estado y fecha en Firebase
-  db.ref("radares/" + id).update({ 
-    status: newStatus, 
-    last_updated: new Date().toISOString() // Fecha actual
-  });
-
-  // Mostrar alerta con el cambio de estado
-  alert(`El radar ha sido ${newStatus === "active" ? "activado" : "inhabilitado"}.`);
-}
-
-    loadRadars();
+// Cargar radares al iniciar
+loadRadars();
   </script>
   
   <!-- Botón para mostrar/ocultar la leyenda -->
