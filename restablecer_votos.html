@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Restablecer Votos de Radares</title>
+  <script src="https://www.gstatic.com/firebasejs/9.8.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.8.1/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.8.1/firebase-auth.js"></script>
+</head>
+<body>
+  <h1>Restablecer Votos de los Radares</h1>
+  <div id="radares-container"></div>
+  
+  <script>
+   // Configuración para la base de datos de radares (Firebase Realtime Database)
+    const firebaseConfigRadares = {
+      apiKey: "AIzaSyDNCBnqAAcdV3kqx8hN-uMyqSkzIzV4DXc",
+      authDomain: "radares-bcn.firebaseapp.com",
+      databaseURL: "https://radares-bcn-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "radares-bcn",
+      storageBucket: "radares-bcn.appspot.com",
+      messagingSenderId: "892778900332",
+      appId: "1:892778900332:web:f3c5353d981dda7b4ba149",
+      measurementId: "G-C1GT8Q96ZJ"
+    };
+
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.database(app);
+
+    // Recuperar los radares desde Firebase
+    function loadRadares() {
+      const radaresRef = db.ref('radares');
+      radaresRef.once('value').then(snapshot => {
+        const radares = snapshot.val();
+        const container = document.getElementById('radares-container');
+        container.innerHTML = ''; // Limpiar antes de cargar
+        for (let id in radares) {
+          const radar = radares[id];
+          const radarElement = document.createElement('div');
+          radarElement.classList.add('radar');
+          radarElement.innerHTML = `
+            <h3>${radar.id} (${radar.direction})</h3>
+            <p>Votos Positivos: ${radar.votos_positivos}</p>
+            <p>Votos Negativos: ${radar.votos_negativos}</p>
+            <button onclick="resetVotos('${id}')">Restablecer Votos</button>
+            <hr>
+          `;
+          container.appendChild(radarElement);
+        }
+      });
+    }
+
+    // Restablecer los votos de un radar
+    function resetVotos(id) {
+      const radarRef = db.ref('radares/' + id);
+      radarRef.update({
+        votos_positivos: 0,
+        votos_negativos: 0
+      }).then(() => {
+        alert('Votos restablecidos con éxito.');
+        loadRadares(); // Recargar los radares después de restablecer
+      }).catch((error) => {
+        console.error('Error al restablecer los votos:', error);
+        alert('Hubo un error al restablecer los votos.');
+      });
+    }
+
+    // Cargar los radares al iniciar la página
+    loadRadares();
+  </script>
+</body>
+</html>

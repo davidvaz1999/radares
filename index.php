@@ -1035,6 +1035,64 @@ L.control.layers({ "Mapa estándar": osmLayer, "Vista satélite": satelliteLayer
 
 let showInactiveRadars = false;
 
+let tempMarker = null;
+addRadarButton.addEventListener("click", () => {
+  addRadarButton.classList.toggle("active");
+  addRadarButton.textContent = addRadarButton.classList.contains("active") ? "🚨" : "➕";
+  if (!addRadarButton.classList.contains("active")) {
+    radarForm.style.display = "none";
+    if (tempMarker) map.removeLayer(tempMarker);
+    tempMarker = null;
+  }
+});
+map.on("click", (e) => {
+  if (addRadarButton.classList.contains("active")) {
+    radarForm.style.display = "block";
+    if (tempMarker) map.removeLayer(tempMarker);
+    tempMarker = L.marker(e.latlng).addTo(map);
+  }
+});
+saveRadarButton.addEventListener("click", () => {
+  const radarType = document.getElementById("radarType").value;
+  const road = document.getElementById("road").value;
+  const pk = document.getElementById("pk").value;
+  const direction = document.getElementById("direction").value;
+  const speed = document.getElementById("speed").value;
+  if (radarType && road && direction && speed && tempMarker) {
+    const { lat, lng } = tempMarker.getLatLng();
+    const newRadar = db.ref("radares").push();
+    newRadar.set({
+      radarType,
+      road,
+      pk,
+      direction,
+      speed,
+      lat,
+      lng,
+      votos_positivos: 0,
+      votos_negativos: 0,
+      status: "active",
+      last_updated: new Date().toISOString(),
+    });
+    alert("Radar guardado con éxito");
+    radarForm.style.display = "none";
+    if (tempMarker) map.removeLayer(tempMarker);
+    tempMarker = null;
+    document.getElementById("radarType").value = "";
+    document.getElementById("road").value = "";
+    document.getElementById("pk").value = "";
+    document.getElementById("direction").value = "";
+    document.getElementById("speed").value = "";
+  } else {
+    alert("Por favor, completa todos los campos y selecciona una ubicación.");
+  }
+});
+cancelRadarButton.addEventListener("click", () => {
+  radarForm.style.display = "none";
+  if (tempMarker) map.removeLayer(tempMarker);
+  tempMarker = null;
+});
+
 function toggleInactiveRadars() {
   showInactiveRadars = !showInactiveRadars;
   loadRadars();
@@ -1116,7 +1174,7 @@ function votar(radarId, tipo) {
       return newVoteCount;
     }).then(() => {
       // Registrar el voto para este día y tipo en Firebase
-      userVoteRef.set(1);  // Registrar un voto para ese día y tipo
+      //userVoteRef.set(1);  // Registrar un voto para ese día y tipo
 
       // Actualizar el conteo de votos en la UI
       document.getElementById(`votos_${tipo}_${radarId}`).innerText++;
