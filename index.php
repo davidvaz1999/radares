@@ -1134,51 +1134,52 @@ function addRadarMarker(map, radar, radarId) {
     Velocidad: ${radar.speed} km/h<br>
     Estado: <b>${radar.status === "active" ? "Activo" : "Inactivo"}</b><br>
     Última modificación: ${new Date(radar.last_updated).toLocaleString()}<br>
-    <button id="boton_positivo_${radarId}" class="button-voto button-voto-positivo" onclick="votar('${radarId}', 'positivo')" ${userVoted ? 'disabled' : ''}>
+    <button id="boton_positivo_${radarId}" class="button-voto button-voto-positivo" onclick="votar('${radarId}', 'positivo')" ${userVoted ? '#' : ''}>
   👍 <span id="votos_positivo_${radarId}">${votosPositivos}</span>
 </button>
-<button id="boton_negativo_${radarId}" class="button-voto button-voto-negativo" onclick="votar('${radarId}', 'negativo')" ${userVoted ? 'disabled' : ''}>
+<button id="boton_negativo_${radarId}" class="button-voto button-voto-negativo" onclick="votar('${radarId}', 'negativo')" ${userVoted ? '#' : ''}>
   👎 <span id="votos_negativo_${radarId}">${votosNegativos}</span>
 </button>
   `);
 }
 
 function votar(radarId, tipo) {
-  const today = new Date().toISOString().split('T')[0];  // Obtiene la fecha actual en formato YYYY-MM-DD
+  const today = new Date().toISOString().split('T')[0]; // Fecha actual en formato YYYY-MM-DD
+  const votoKey = `voto_${radarId}`; // Clave única para cada radar
 
-  // Verificar si el usuario ya ha votado hoy en ese tipo
-  const userVoteRef = db.ref(`radares/${radarId}/votos_${tipo}/${today}`);
-  userVoteRef.once('value').then(snapshot => {
-    if (snapshot.exists()) {
-      alert(`Ya has votado ${tipo === 'positivo' ? 'positivo' : 'negativo'} en este radar hoy.`);
+  // Verificar si el usuario ya votó hoy en este radar
+  const votoGuardado = localStorage.getItem(votoKey);
+  if (votoGuardado) {
+    const { fecha, tipo: votoAnterior } = JSON.parse(votoGuardado);
+    if (fecha === today) {
+      alert(`Ya has votado en este radar hoy.`);
       return;
     }
+  }
 
-    // Realizar la transacción de votos en la base de datos de Firebase
-    const votosRef = db.ref(`radares/${radarId}/${tipo === "positivo" ? "votos_positivos" : "votos_negativos"}`);
-    votosRef.transaction((currentVotes) => {
-      const newVoteCount = (currentVotes || 0) + 1;
+  // Registrar el voto en localStorage para evitar más votos hoy
+  localStorage.setItem(votoKey, JSON.stringify({ fecha: today, tipo }));
 
-      // Si los votos negativos superan los 10, cambiamos el estado del radar a "inactive"
-      if (tipo === "negativo" && newVoteCount > 10) {
-        const radarRef = db.ref(`radares/${radarId}`);
-        // Actualizamos el estado a "inactive" y añadimos la fecha en last_updated
-        radarRef.update({
-          status: "inactive",
-          last_updated: new Date().toISOString()  // Fecha y hora actuales en formato ISO
-        }).then(() => {
-          console.log(`Radar ${radarId} ha sido marcado como inactivo por exceder los 10 votos negativos.`);
-        });
-      }
+  // Realizar la transacción de votos en Firebase
+  const votosRef = db.ref(`radares/${radarId}/${tipo === "positivo" ? "votos_positivos" : "votos_negativos"}`);
+  votosRef.transaction((currentVotes) => {
+    const newVoteCount = (currentVotes || 0) + 1;
 
-      return newVoteCount;
-    }).then(() => {
-      // Registrar el voto para este día y tipo en Firebase
-      //userVoteRef.set(1);  // Registrar un voto para ese día y tipo
+    // Si los votos negativos superan los 10, cambiar el estado del radar a "inactive"
+    if (tipo === "negativo" && newVoteCount > 10) {
+      const radarRef = db.ref(`radares/${radarId}`);
+      radarRef.update({
+        status: "inactive",
+        last_updated: new Date().toISOString()
+      }).then(() => {
+        console.log(`Radar ${radarId} ha sido marcado como inactivo por exceder los 10 votos negativos.`);
+      });
+    }
 
-      // Actualizar el conteo de votos en la UI
-      document.getElementById(`votos_${tipo}_${radarId}`).innerText++;
-    });
+    return newVoteCount;
+  }).then(() => {
+    // Actualizar el conteo de votos en la UI
+    document.getElementById(`votos_${tipo}_${radarId}`).innerText++;
   });
 }
 
