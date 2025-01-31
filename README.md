@@ -109,3 +109,10 @@ Añadida función para ocultar/mostrar radares inactivos.
 Añadida funcionalidad para asignar el PK de los radares.	
 Añadida opción para editar los campos de dirección, velocidad máxima, vía y PK desde el panel de administración.	
 Corregidos varios errores.	
+
+30/01/2025
+
+Añadida opción para votar los radares. Si un radar recibe una proporción elevada de votos negativos, se inhabilita automáticamente.
+Creación de un script para restablecer los votos de los radares.
+Añadida opción para exportar los radares (panel de administración)
+Correcciones de errores.
