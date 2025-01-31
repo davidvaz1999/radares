@@ -692,18 +692,20 @@
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-
+.leaflet-marker-icon {
+  z-index: 9999 !important;  /* Asegura que el marcador se mantenga visible sobre otros elementos */
+}
   </style>
 </head>
 <body>
 
 
 
-<div id="preloader">
+<!--<div id="preloader">
     <img src="https://ahorraunamulta.com/velocidades/default/120.png" alt="Logotipo">
     <h2>AHORRA UNA MULTA</h2><BR>
     <h1>Cargando...</h1>
-  </div>
+  </div>-->
   
   <button class="toggle-button" id="toggle-button">Mostrar radares en listado</button>
   <div class="list-container" id="list-container">
@@ -739,22 +741,22 @@
   </div>
 </div>
   
-   <script>
+  <!--<script>
     // Espera a que la página esté completamente cargada
-    window.addEventListener("load", function () {
-      const preloader = document.getElementById("preloader");
-      const content = document.getElementById("content");
+    //window.addEventListener("load", function () {
+      //const preloader = document.getElementById("preloader");
+      //const content = document.getElementById("content");
 
       // Añade la clase "hidden" al preloader para que se desvanezca
-      preloader.classList.add("hidden");
+      //preloader.classList.add("hidden");
 
       // Después de la transición (0.5s), oculta el preloader completamente
-      setTimeout(() => {
-        preloader.style.display = "none";
-      }, 2000); // Debe coincidir con el tiempo de transición
-    });
-  </script>
-  
+      //setTimeout(() => {
+        //preloader.style.display = "none";
+      //}, 2000); // Debe coincidir con el tiempo de transición
+    //});
+  </script>-->
+    
  <div class="popup-overlay" id="popup-overlay" style="display: none;">
   <div class="popup">
     <h2>Descargo de responsabilidad</h2>
@@ -1100,6 +1102,7 @@ function toggleInactiveRadars() {
 
 function loadRadars() {
   db.ref("radares").on("value", (snapshot) => {
+    // Limpiar los marcadores existentes
     map.eachLayer((layer) => {
       if (layer instanceof L.Marker) {
         map.removeLayer(layer);
@@ -1109,11 +1112,46 @@ function loadRadars() {
     const radars = snapshot.val();
     if (!radars) return;
 
+    // Cargar los radares
     Object.entries(radars).forEach(([id, radar]) => {
       if (radar.status === "active" || showInactiveRadars) {
         addRadarMarker(map, radar, id);
       }
     });
+
+    // Crear un ícono personalizado para el marcador
+    var userIcon = L.icon({
+      iconUrl: 'velocidades/geo.png', // Reemplaza con la ruta de tu imagen
+      iconSize: [13, 13], // Tamaño del ícono
+      iconAnchor: [16, 32], // Punto de anclaje (donde se coloca el marcador)
+    });
+
+    // Crear el marcador para la ubicación del usuario con el nuevo ícono
+    var userMarker = L.marker([0, 0], {
+      icon: userIcon, // Asignar el ícono personalizado
+      draggable: false,
+      zIndexOffset: 1000
+    }).addTo(map);
+
+    // Función para actualizar la ubicación en tiempo real
+    if (navigator.geolocation) {
+      navigator.geolocation.watchPosition(position => {
+        var lat = position.coords.latitude;
+        var lng = position.coords.longitude;
+
+        // Mover el marcador a la nueva ubicación
+        userMarker.setLatLng([lat, lng]);
+
+        // Centrar el mapa en la ubicación del usuario
+        map.setView([lat, lng]);
+      }, error => {
+        console.error("Error obteniendo la ubicación: ", error);
+      }, {
+        enableHighAccuracy: true
+      });
+    } else {
+      alert("Geolocalización no soportada en este navegador");
+    }
   });
 }
 
@@ -1245,6 +1283,7 @@ document.body.appendChild(toggleButton);
 
 // Cargar radares al inicio
 loadRadars();
+
 </script>
   
   <!-- Botón para mostrar/ocultar la leyenda -->
