@@ -1160,36 +1160,58 @@ function votar(radarId, tipo) {
   // Registrar el voto en localStorage para evitar más votos hoy
   localStorage.setItem(votoKey, JSON.stringify({ fecha: today, tipo }));
 
-  // Realizar la transacción de votos en Firebase
-  const votosRef = db.ref(`radares/${radarId}/${tipo === "positivo" ? "votos_positivos" : "votos_negativos"}`);
-  votosRef.transaction((currentVotes) => {
-    const newVoteCount = (currentVotes || 0) + 1;
+  // Referencias en Firebase
+  const votosPositivosRef = db.ref(`radares/${radarId}/votos_positivos`);
+  const votosNegativosRef = db.ref(`radares/${radarId}/votos_negativos`);
+  const radarRef = db.ref(`radares/${radarId}`);
 
-    // Si los votos negativos superan los 10, cambiar el estado del radar a "inactive"
-    if (tipo === "negativo" && newVoteCount > 10) {
-      const radarRef = db.ref(`radares/${radarId}`);
-      radarRef.update({
-        status: "inactive",
-        last_updated: new Date().toISOString() // Actualización de la fecha de modificación
-      }).then(() => {
-        console.log(`Radar ${radarId} ha sido marcado como inactivo por exceder los 10 votos negativos.`);
-      });
+  // Transacción de votos positivos
+  votosPositivosRef.transaction((currentVotes) => {
+    let newVotes = currentVotes || 0;
+    if (tipo === "positivo") {
+      newVotes++; // Aumenta el positivo
+    } else if (tipo === "negativo" && newVotes > 0) {
+      newVotes--; // Resta un positivo si hay
     }
+    return newVotes;
+  });
 
-    return newVoteCount;
+  // Transacción de votos negativos
+  votosNegativosRef.transaction((currentVotes) => {
+    let newVotes = currentVotes || 0;
+    if (tipo === "negativo") {
+      newVotes++; // Aumenta el negativo
+    } else if (tipo === "positivo" && newVotes > 0) {
+      newVotes--; // Resta un negativo si hay
+    }
+    return newVotes;
   }).then(() => {
-    // Actualizar el conteo de votos en la UI
-    document.getElementById(`votos_${tipo}_${radarId}`).innerText++;
+    // Verificar si se debe desactivar el radar
+    votosNegativosRef.once("value", (snapshot) => {
+      const votosNegativos = snapshot.val() || 0;
+      if (votosNegativos > 10) {
+        radarRef.update({
+          status: "inactive",
+          last_updated: new Date().toISOString()
+        }).then(() => {
+          console.log(`Radar ${radarId} ha sido marcado como inactivo.`);
+        });
+      }
+    });
 
-    // Actualizar la fecha de modificación en Firebase, siempre que se haya emitido un voto
-    const radarRef = db.ref(`radares/${radarId}`);
+    // Actualizar la fecha de modificación del radar
     radarRef.update({
-      last_updated: new Date().toISOString() // Actualización de la fecha de modificación
+      last_updated: new Date().toISOString()
     }).then(() => {
       console.log(`La fecha de modificación de ${radarId} ha sido actualizada.`);
     });
+
+    // Actualizar la UI
+    document.getElementById(`votos_positivo_${radarId}`).innerText++;
+    document.getElementById(`votos_negativo_${radarId}`).innerText--;
   });
 }
+
 
 loadRadars();
 
