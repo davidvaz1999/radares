@@ -116,3 +116,8 @@ Añadida opción para votar los radares. Si un radar recibe una proporción elev
 Creación de un script para restablecer los votos de los radares.
 Añadida opción para exportar los radares (panel de administración)
 Correcciones de errores.
+
+04/02/2025
+
+Añadida función para poder desactivar la actualización automática del mapa en el punto de la ubicación.
+Correcciones de errores.

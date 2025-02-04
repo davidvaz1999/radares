@@ -1119,39 +1119,75 @@ function loadRadars() {
       }
     });
 
-    // Crear un ícono personalizado para el marcador
-    var userIcon = L.icon({
-      iconUrl: 'velocidades/geo.png', // Reemplaza con la ruta de tu imagen
-      iconSize: [13, 13], // Tamaño del ícono
-      iconAnchor: [16, 32], // Punto de anclaje (donde se coloca el marcador)
-    });
+    // Crear un ícono personalizado para el marcador del usuario
+var userIcon = L.icon({
+  iconUrl: 'velocidades/geo.png', // Ruta de la imagen
+  iconSize: [13, 13], // Tamaño del ícono
+  iconAnchor: [6, 6], // Punto de anclaje ajustado
+});
 
-    // Crear el marcador para la ubicación del usuario con el nuevo ícono
-    var userMarker = L.marker([0, 0], {
-      icon: userIcon, // Asignar el ícono personalizado
-      draggable: false,
-      zIndexOffset: 1000
-    }).addTo(map);
+// Crear el marcador con el icono personalizado en una posición inicial
+var userMarker = L.marker([0, 0], {
+  icon: userIcon,
+  draggable: false,
+  zIndexOffset: 1000
+}).addTo(map);
 
-    // Función para actualizar la ubicación en tiempo real
-    if (navigator.geolocation) {
-      navigator.geolocation.watchPosition(position => {
-        var lat = position.coords.latitude;
-        var lng = position.coords.longitude;
+// Variable para controlar si el mapa debe centrarse en la ubicación del usuario
+let centrarMapa = false;
+let primerCentrado = true; // Nueva variable para evitar centrado repetido
 
-        // Mover el marcador a la nueva ubicación
-        userMarker.setLatLng([lat, lng]);
+// Función para agregar el botón de alternancia
+function agregarBotonCentrado() {
+  let botonesExistentes = document.querySelector(".boton-centrado");
+  if (botonesExistentes) {
+    botonesExistentes.remove();
+  }
 
-        // Centrar el mapa en la ubicación del usuario
-        map.setView([lat, lng]);
-      }, error => {
-        console.error("Error obteniendo la ubicación: ", error);
-      }, {
-        enableHighAccuracy: true
-      });
-    } else {
-      alert("Geolocalización no soportada en este navegador");
+  let toggleButton = L.control({ position: "topleft" });
+
+  toggleButton.onAdd = function(map) {
+    let button = L.DomUtil.create("button", "leaflet-bar leaflet-control leaflet-control-custom boton-centrado");
+    button.innerHTML = "Centrar mapa: ON";
+    button.style.backgroundColor = "white";
+    button.style.cursor = "pointer";
+    
+    button.onclick = function() {
+      centrarMapa = !centrarMapa;
+      button.innerHTML = centrarMapa ? "Centrar: ON" : "Centrar: OFF";
+    };
+
+    return button;
+  };
+
+  toggleButton.addTo(map);
+}
+
+// Agregar el botón una sola vez
+agregarBotonCentrado();
+
+if (navigator.geolocation) {
+  navigator.geolocation.watchPosition(position => {
+    var lat = position.coords.latitude;
+    var lng = position.coords.longitude;
+
+    // Mover el marcador a la nueva ubicación
+    userMarker.setLatLng([lat, lng]);
+
+    // Solo centrar si es la primera vez o si el usuario lo activó
+    if (centrarMapa || !primerCentrado) {
+      map.setView([lat, lng]);
+      primerCentrado = true; // Después de la primera vez, ya no forzamos el centrado
     }
+
+  }, error => {
+    console.error("Error obteniendo la ubicación: ", error);
+  }, {
+    enableHighAccuracy: true
+  });
+} else {
+  alert("Geolocalización no soportada en este navegador");
+}
   });
 }
 
