@@ -1148,13 +1148,13 @@ function agregarBotonCentrado() {
 
   toggleButton.onAdd = function(map) {
     let button = L.DomUtil.create("button", "leaflet-bar leaflet-control leaflet-control-custom boton-centrado");
-    button.innerHTML = "Centrar mapa: ON";
+    button.innerHTML = "Centrar ubicación: ON";
     button.style.backgroundColor = "white";
     button.style.cursor = "pointer";
     
     button.onclick = function() {
       centrarMapa = !centrarMapa;
-      button.innerHTML = centrarMapa ? "Centrar: ON" : "Centrar: OFF";
+      button.innerHTML = centrarMapa ? "Centrar ubicación: ON" : "Centrar ubicación: OFF";
     };
 
     return button;
