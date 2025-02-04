@@ -969,11 +969,13 @@ toggleInactive.addEventListener("click", () => {
       <h2>Ayuda</h2>
       <p>AhorraUnaMulta.com es una herramienta intuitiva que te ayuda a identificar radares de tráfico en tu zona y conocer las velocidades permitidas, permitiéndote evitar multas de tránsito de manera eficaz.</p>
       <p>Presionando el botón +, puedes añadir nuevos radares</p>
-      <p>Presionando sobre los radares, puedes desactivarlos.</p>
-      <p>Esto permite saber que ese radar se encuentra en ese momento averiado o ha sido reubicado en otra ubicación.</p>
+      <p>Presionando sobre los radares, tienes la opción de votarlos.</p>
+      <p>Si permites la ubicación, el mapa se irá actualizando en tiempo real según conduces.</p>
+      <p>Si no quieres que la ubicación te centre todo el rato el mapa, tienes un botón para desactivarlo arriba a la izquierda.</p>
+      <p>Los radares que no aparecen en el mapa, se encuentran averiados o desplazados de su ubicación. Tienes la opción de mostrarlos dentro del botón "Leyenda".</p>
       <p>Si necesitas ayuda, puedes contactarnos en <a href="mailto:soporte@ahorraunamulta.com">soporte@ahorraunamulta.com</a></p>
       <br>
-      <p><strong>Última actualización:</strong> Enero de 2025</p>
+      <p><strong>Última actualización:</strong>4 de febrero de 2025</p>
       
    <!--   <div class="donation-section">
   <h3>Ayúdanos con una aportación</h3>
