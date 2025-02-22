@@ -1150,7 +1150,7 @@ function agregarBotonCentrado() {
 
   toggleButton.onAdd = function(map) {
     let button = L.DomUtil.create("button", "leaflet-bar leaflet-control leaflet-control-custom boton-centrado");
-    button.innerHTML = "Centrar ubicación: ON";
+    button.innerHTML = "Centrar ubicación: PULSA PARA ACTIVAR";
     button.style.backgroundColor = "white";
     button.style.cursor = "pointer";
     
