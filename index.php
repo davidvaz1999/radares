@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Radares de tráfico en España | Localizador para evitar multas | AHORRA UNA MULTA</title>
-  
+
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-  
+
   <meta name="description" content="Ubicación de radares de tráfico en Cataluña: evita multas con información actualizada sobre radares fijos, móviles y de tramo en un mapa interactivo.">
 
   <meta name="keywords" content="radares Cataluña, radares Barcelona, radares Tarragona, radares Girona, radares Lleida, localizador radares tráfico, radares fijos móviles, radares de tramo, radares remolque, evitar multas Cataluña, mapa radares tiempo real">
-  
+
   <link rel="canonical" href="https://ahorraunamulta.com/">
 
   <meta property="og:title" content="Localizador de Radares en Cataluña | Ahorra Multas de Tráfico">
@@ -56,7 +56,7 @@
       font-family: Arial, sans-serif;
       overflow: hidden;
   }
-    
+
   #preloader {
     position: fixed;
     top: 0;
@@ -100,14 +100,14 @@
     opacity: 0;
     visibility: hidden;
   }
-  
+
   .leaflet-container {
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
     image-rendering: -webkit-optimize-contrast;
     image-rendering: crisp-edges;
   }
-  
+
   #map {
     width: 100%;
     height: 100vh;
@@ -270,6 +270,7 @@
 
   /* Botón de estadísticas */
   #statsButton {
+    display: none;
     background-color: #6f42c1;
     color: white;
   }
@@ -420,7 +421,7 @@
   .close:hover {
     background: #cc0000;
   }
-    
+
   .list-container {
     position: fixed;
     right: 0;
@@ -496,7 +497,7 @@
   .toggle-button-section:hover {
     background-color: #0056b3;
   }
-  
+
   .popup-overlay {
     position: fixed;
     top: 0;
@@ -544,7 +545,7 @@
   .popup button:hover {
     background-color: #0056b3;
   }
-    
+
   /* Mejoras para el sistema de filtrado */
   .filter-container {
     display: flex;
@@ -639,10 +640,27 @@
     right: auto !important;
   }
 
+  @media (max-width: 768px) {
+  /* Baja 20px los controles de zoom (posición relativa) */
+  .leaflet-control-zoom {
+    position: relative;
+    top: 80px !important; /* Desplaza hacia abajo */
+    margin-bottom: 0 !important;
+  }
+  }
+
+@media (max-width: 768px) {
+  /* Baja 20px el botón de centrado (si usas el estándar de Leaflet) */
+  .leaflet-control-locate {
+    top: 80px !important;
+  }
+}
   /* Botón de centrado mejorado */
   .boton-centrado {
     background-color: #28a745;
     color: white;
+    position: relative;
+    top: 80px !important;
     border: none;
     border-radius: 50%;
     width: 40px;
@@ -840,7 +858,7 @@
   }
 
   .search-input {
-    width: 100%;
+    width: 94%;
     padding: 8px 12px;
     border: 1px solid #ddd;
     border-radius: 20px;
@@ -868,7 +886,7 @@
     .list-container {
       display: flex;
     }
-    
+
     .list-modal {
       display: none !important;
     }
@@ -878,19 +896,19 @@
     .list-container {
       display: none;
     }
-    
+
     .action-buttons {
       bottom: 10px;
       right: 10px;
       gap: 8px;
     }
-    
+
     .action-button, .buttonLogin {
       width: 45px;
       height: 45px;
       font-size: 18px;
     }
-    
+
     .buttonLogin {
       font-size: 12px;
     }
@@ -903,7 +921,7 @@
       left: 20px;
       bottom: 10px;
     }
-    
+
     .search-container {
       top: 10px;
       width: calc(100% - 40px);
@@ -924,12 +942,12 @@
     <h2>AHORRA UNA MULTA</h2><BR>
     <h1>Cargando...</h1>
   </div>-->
-  
+
   <!-- Barra de búsqueda -->
   <div class="search-container">
     <input type="text" class="search-input" placeholder="Buscar radares por carretera o ubicación..." id="searchInput">
   </div>
-  
+
   <!-- Listado normal (para desktop) -->
   <div class="list-container" id="list-container">
     <h2>LISTADO DE RADARES <button class="minimize-list" id="minimize-list">×</button></h2>
@@ -945,7 +963,7 @@
           </select>
           <small>Mantén Ctrl para seleccionar múltiples filtros.<br><b>NUEVO: </b>Activando filtros, solo se mostrarán en el listado y en el mapa los radares que cumplan las condiciones seleccionadas.</small>
         </div>
-        
+
         <div class="filter-group">
           <label for="radar-status-filter">Estado:</label>
           <select id="radar-status-filter" multiple size="3">
@@ -954,7 +972,7 @@
             <option value="pending_review">Pendientes</option>
           </select>
         </div>
-        
+
         <div class="filter-group">
           <label for="radar-speed-filter">Velocidad límite:</label>
           <select id="radar-speed-filter">
@@ -972,7 +990,7 @@
           </select>
         </div>
       </div>
-      
+
       <button class="toggle-button-section" id="toggle-active">Mostrar/Ocultar Radares Activos</button>
       <div id="active-list" class="radar-section">
         <h3>Radares Activos</h3>
@@ -985,7 +1003,7 @@
       </div>
     </div>
   </div>
-  
+
   <!-- Modal para listado en móviles -->
   <div class="list-modal" id="list-modal">
     <button class="close-list" id="close-list">&times;</button>
@@ -1003,7 +1021,7 @@
             </select>
             <small>Mantén Ctrl para seleccionar múltiples filtros.<br><b>NUEVO: </b>Activando filtros, solo se mostrarán en el listado y en el mapa los radares que cumplan las condiciones seleccionadas.</small>
           </div>
-          
+
           <div class="filter-group">
             <label for="radar-status-filter-mobile">Estado:</label>
             <select id="radar-status-filter-mobile" multiple size="3">
@@ -1012,7 +1030,7 @@
               <option value="pending_review">Pendientes</option>
             </select>
           </div>
-          
+
           <div class="filter-group">
             <label for="radar-speed-filter-mobile">Velocidad límite:</label>
             <select id="radar-speed-filter-mobile">
@@ -1030,7 +1048,7 @@
             </select>
           </div>
         </div>
-        
+
         <button class="toggle-button-section" id="toggle-active-mobile">Mostrar/Ocultar Radares Activos</button>
         <div id="active-list-mobile" class="radar-section">
           <h3>Radares Activos</h3>
@@ -1044,7 +1062,7 @@
       </div>
     </div>
   </div>
-  
+
   <!-- Modal de leyenda -->
   <div class="modal" id="legendModal">
     <div class="modal-content">
@@ -1064,7 +1082,7 @@
       </div>
     </div>
   </div>
-    
+
   <div class="popup-overlay" id="popup-overlay" style="display: none;">
     <div class="popup">
       <h2>Descargo de responsabilidad</h2>
@@ -1081,7 +1099,7 @@
 
   <!-- Mapa -->
   <div id="map"></div>
-  
+
   <!-- Botones de acción agrupados -->
   <div class="action-buttons">
     <a href="/login" class="action-button buttonLogin" title="Admin">ADMIN</a>
@@ -1091,10 +1109,10 @@
     <button id="addRadarButton" class="action-button" title="Añadir radar manualmente">➕</button>
     <button id="helpButton2" class="action-button" title="Ayuda">❔</button>
   </div>
-  
+
   <!-- Botón de leyenda -->
   <button id="legend-button">Leyenda</button>
-  
+
   <!-- Formulario de radar -->
   <div id="radarForm">
     <label for="radarType">Tipo de Radar</label>
@@ -1116,7 +1134,7 @@
     <button id="saveRadarButton" class="save">Guardar Radar</button>
     <button id="cancelRadarButton" class="cancel">Cancelar</button>
   </div>
-  
+
   <!-- Modal de ayuda -->
   <div class="modal" id="helpModal">
     <div class="modal-content">
@@ -1177,24 +1195,24 @@
     // Inicialización del mapa
     function initMap() {
       map = L.map('map').setView([41.3784, 2.1927], 10);
-      
+
       // Capas base
       const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
       });
-      
+
       const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         attribution: 'Tiles &copy; Esri'
       });
-      
+
       osmLayer.addTo(map);
-      
+
       // Control de capas
       L.control.layers({
         "Mapa estándar": osmLayer,
         "Vista satélite": satelliteLayer
       }, {}, { position: 'bottomleft' }).addTo(map);
-      
+
       // Iniciar funcionalidades
       initUI();
       initGeolocation();
@@ -1212,7 +1230,7 @@
       const closeList = document.getElementById('close-list');
       const listContainer = document.getElementById('list-container');
       const actionButtons = document.querySelector('.action-buttons');
-      
+
       // Botón para minimizar el listado en desktop
       minimizeButton.addEventListener('click', () => {
         listContainer.style.display = 'none';
@@ -1223,7 +1241,7 @@
       // Añadir indicador de listado visible
       toggleButton.addEventListener('click', () => {
         const isMobile = window.innerWidth <= 768;
-        
+
         if (isMobile) {
           listModal.style.display = 'block';
           updateMobileList();
@@ -1231,7 +1249,7 @@
           const isHidden = listContainer.style.display === 'none' || listContainer.style.display === '';
           listContainer.style.display = isHidden ? 'flex' : 'none';
           toggleButton.textContent = isHidden ? '📋' : '📋';
-          
+
           // Ajustar posición de los botones cuando el listado está visible
           if (isHidden) {
             actionButtons.classList.add('list-visible');
@@ -1240,74 +1258,74 @@
           }
         }
       });
-      
+
       closeList.addEventListener('click', () => {
         listModal.style.display = 'none';
       });
-      
+
       listModal.addEventListener('click', (e) => {
         if (e.target === listModal) {
           listModal.style.display = 'none';
         }
       });
-      
+
       // Botón de leyenda
       const legendButton = document.getElementById('legend-button');
       const legendModal = document.getElementById('legendModal');
-      
+
       legendButton.addEventListener('click', () => {
         const isVisible = legendModal.style.display === 'flex';
         legendModal.style.display = isVisible ? 'none' : 'flex';
       });
-      
+
       document.getElementById('closeLegendModal').addEventListener('click', () => {
         legendModal.style.display = 'none';
       });
-      
+
       window.addEventListener('click', (e) => {
         if (e.target === legendModal) {
           legendModal.style.display = 'none';
         }
       });
-      
+
       // Botón para añadir radar en ubicación actual
       document.getElementById('addCurrentLocationButton').addEventListener('click', addRadarAtCurrentLocation);
-      
+
       // Secciones
       document.getElementById('toggle-active').addEventListener('click', () => {
         toggleSection('active-list');
       });
-      
+
       document.getElementById('toggle-inactive').addEventListener('click', () => {
         toggleSection('inactive-list');
       });
-      
+
       document.getElementById('toggle-active-mobile').addEventListener('click', () => {
         toggleSection('active-list-mobile');
       });
-      
+
       document.getElementById('toggle-inactive-mobile').addEventListener('click', () => {
         toggleSection('inactive-list-mobile');
       });
-      
+
       // Modal de ayuda
       document.getElementById('helpButton2').addEventListener('click', () => {
         document.getElementById('helpModal').style.display = 'flex';
       });
-      
+
       document.getElementById('closeModal').addEventListener('click', () => {
         document.getElementById('helpModal').style.display = 'none';
       });
-      
+
       window.addEventListener('click', (e) => {
         if (e.target === document.getElementById('helpModal')) {
           document.getElementById('helpModal').style.display = 'none';
         }
       });
-      
+
       // Botón de estadísticas
       document.getElementById('statsButton').addEventListener('click', showStats);
-      
+
       // Mejorar accesibilidad de botones
       document.querySelectorAll('button').forEach(button => {
         button.addEventListener('keydown', function(e) {
@@ -1334,13 +1352,13 @@
           .setLatLng(map.getCenter())
           .setContent('<div style="padding: 10px;"><b>Geolocalización no disponible</b><br>Tu navegador no soporta geolocalización o está desactivada.</div>')
           .openOn(map);
-        
+
         setTimeout(() => {
           map.closePopup(geoWarning);
         }, 5000);
         return;
       }
-      
+
       // Crear marcador de usuario (punto azul al estilo Google Maps)
       userMarker = L.circleMarker([0, 0], {
         radius: 8,
@@ -1351,7 +1369,7 @@
         fillOpacity: 1,
         zIndexOffset: 1000
       }).addTo(map);
-      
+
       // Círculo de precisión
       accuracyCircle = L.circle([0, 0], {
         stroke: false,
@@ -1359,32 +1377,32 @@
         fillOpacity: 0.2,
         interactive: false
       }).addTo(map);
-      
+
       // Variables para controlar la posición anterior
       let lastPosition = null;
       let lastUpdateTime = 0;
-      
+
       // Botón de centrado mejorado
       var toggleButton = L.control({ position: 'topleft' });
       toggleButton.onAdd = function(map) {
-        var container = L.DomUtil.create("div", "leaflet-bar");
+        var container = L.DomUtil.create("div");
         var button = L.DomUtil.create("a", `boton-centrado ${centrarMapa ? 'on' : 'off'}`);
         button.innerHTML = '📍';
         button.href = '#';
         button.title = 'Centrar en mi ubicación';
-        
+
         button.onclick = function(e) {
           L.DomEvent.stopPropagation(e);
           L.DomEvent.preventDefault(e);
           centrarMapa = !centrarMapa;
-          
+
           // Guardar preferencia en localStorage
           localStorage.setItem('centrarMapa', centrarMapa.toString());
-          
+
           if (centrarMapa) {
             button.classList.add('on');
             button.classList.remove('off');
-            
+
             // Centrar inmediatamente si ya tenemos posición
             if (userMarker.getLatLng().lat !== 0) {
               map.setView(userMarker.getLatLng(), map.getZoom(), {
@@ -1397,35 +1415,35 @@
             button.classList.add('off');
           }
         };
-        
+
         container.appendChild(button);
         return container;
       };
       toggleButton.addTo(map);
-      
+
       // Seguimiento de la posición con mejor control
       navigator.geolocation.watchPosition(
         position => {
           const now = Date.now();
           // Limitar actualizaciones a 1 por segundo como máximo
           if (now - lastUpdateTime < 1000) return;
-          
+
           const { latitude, longitude, accuracy } = position.coords;
           const newPos = [latitude, longitude];
-          
+
           // Solo actualizar si hay un cambio significativo (más de 5 metros)
           if (!lastPosition || distanceBetween(lastPosition, newPos) > 5) {
             userMarker.setLatLng(newPos);
             accuracyCircle.setLatLng(newPos);
             accuracyCircle.setRadius(accuracy);
-            
+
             if (centrarMapa) {
               map.setView(newPos, map.getZoom(), {
                 animate: true,
                 duration: 1
               });
             }
-            
+
             lastPosition = newPos;
             lastUpdateTime = now;
           }
@@ -1433,13 +1451,13 @@
         error => {
           console.error("Error en geolocalización:", error);
         },
-        { 
+        {
           enableHighAccuracy: true,
           maximumAge: 30000,
           timeout: 10000
         }
       );
-      
+
       // Función auxiliar para calcular distancia entre coordenadas
       function distanceBetween(pos1, pos2) {
         const R = 6371000; // Radio de la Tierra en metros
@@ -1470,7 +1488,7 @@
       }
 
       const userPos = userMarker.getLatLng();
-      
+
       // Crear un radar genérico
       const newRadar = {
         radarType: "Móvil",
@@ -1510,7 +1528,7 @@
     function showStats() {
       let activeCount = 0, inactiveCount = 0, pendingCount = 0;
       let totalRadars = 0;
-      
+
       // Contar todos los radares, incluso los ocultos
       db.ref("radares").once('value', snapshot => {
         const radares = snapshot.val();
@@ -1522,7 +1540,7 @@
             else if (radar.status === 'pending_review') pendingCount++;
           });
         }
-        
+
         const statsHtml = `
           <div style="padding: 10px; min-width: 200px;">
             <h3 style="margin-top: 0; color: #007bff;">Estadísticas de Radares</h3>
@@ -1533,7 +1551,7 @@
             <p><strong>Última actualización:</strong> ${new Date().toLocaleString()}</p>
           </div>
         `;
-        
+
         L.popup()
           .setLatLng(map.getCenter())
           .setContent(statsHtml)
@@ -1551,7 +1569,7 @@
       const speedFilterMobile = document.getElementById('radar-speed-filter-mobile');
       const clearFiltersBtn = document.getElementById('clear-filters');
       const filterContainer = document.querySelector('.filter-container');
-      
+
       // Event listeners para los filtros
       typeFilter.addEventListener('change', updateFilters);
       statusFilter.addEventListener('change', updateFilters);
@@ -1560,7 +1578,7 @@
       statusFilterMobile.addEventListener('change', updateFilters);
       speedFilterMobile.addEventListener('change', updateFilters);
       clearFiltersBtn.addEventListener('click', resetFilters);
-      
+
       // Mostrar mensaje inicial
       updateFilterMessage();
     }
@@ -1574,48 +1592,48 @@
       const statusFilterMobile = document.getElementById('radar-status-filter-mobile');
       const speedFilterMobile = document.getElementById('radar-speed-filter-mobile');
       const filterContainer = document.querySelector('.filter-container');
-      
+
       // Sincronizar filtros móviles y de escritorio
       if (this === typeFilter || this === typeFilterMobile) {
         const source = this === typeFilter ? typeFilter : typeFilterMobile;
         const target = this === typeFilter ? typeFilterMobile : typeFilter;
-        
+
         Array.from(target.options).forEach(option => {
           option.selected = Array.from(source.selectedOptions).some(
             selected => selected.value === option.value
           );
         });
       }
-      
+
       if (this === statusFilter || this === statusFilterMobile) {
         const source = this === statusFilter ? statusFilter : statusFilterMobile;
         const target = this === statusFilter ? statusFilterMobile : statusFilter;
-        
+
         Array.from(target.options).forEach(option => {
           option.selected = Array.from(source.selectedOptions).some(
             selected => selected.value === option.value
           );
         });
       }
-      
+
       if (this === speedFilter || this === speedFilterMobile) {
         const source = this === speedFilter ? speedFilter : speedFilterMobile;
         const target = this === speedFilter ? speedFilterMobile : speedFilter;
         target.value = source.value;
       }
-      
+
       // Obtener valores seleccionados
       currentFilters.types = Array.from(typeFilter.selectedOptions).map(opt => opt.value);
       currentFilters.statuses = Array.from(statusFilter.selectedOptions).map(opt => opt.value);
       currentFilters.speed = speedFilter.value;
-      
+
       // Añadir clase cuando hay filtros activos
       if (currentFilters.types.length > 0 || currentFilters.statuses.length > 0 || currentFilters.speed) {
         filterContainer.classList.add('has-filters');
       } else {
         filterContainer.classList.remove('has-filters');
       }
-      
+
       // Aplicar filtros
       applyFilters();
       updateFilterMessage();
@@ -1625,17 +1643,17 @@
     function applyFilters() {
       const filterMessage = document.getElementById('filter-message');
       let visibleCount = 0;
-      
+
       // Mostrar u ocultar marcadores según los filtros
       Object.entries(radaresMarkers).forEach(([id, marker]) => {
         const radar = marker.radarData;
-        const matchesType = currentFilters.types.length === 0 || 
+        const matchesType = currentFilters.types.length === 0 ||
                           currentFilters.types.includes(radar.radarType);
-        const matchesStatus = currentFilters.statuses.length === 0 || 
+        const matchesStatus = currentFilters.statuses.length === 0 ||
                             currentFilters.statuses.includes(radar.status);
-        const matchesSpeed = !currentFilters.speed || 
+        const matchesSpeed = !currentFilters.speed ||
                            (radar.speed && radar.speed.toString() === currentFilters.speed);
-        
+
         if (matchesType && matchesStatus && matchesSpeed) {
           marker.addTo(map);
           visibleCount++;
@@ -1643,10 +1661,10 @@
           map.removeLayer(marker);
         }
       });
-      
+
       // Actualizar listados
       updateFilteredLists();
-      
+
       // Mostrar mensaje si hay filtros activos
       if (currentFilters.types.length > 0 || currentFilters.statuses.length > 0 || currentFilters.speed) {
         filterMessage.style.display = 'block';
@@ -1659,11 +1677,11 @@
     function updateFilterMessage() {
       const filterCriteria = document.getElementById('filter-criteria');
       const parts = [];
-      
+
       if (currentFilters.types.length > 0) {
         parts.push(`tipo: ${currentFilters.types.join(', ')}`);
       }
-      
+
       if (currentFilters.statuses.length > 0) {
         parts.push(`estado: ${currentFilters.statuses.map(s => {
           if (s === 'active') return 'activos';
@@ -1672,11 +1690,11 @@
           return s;
         }).join(', ')}`);
       }
-      
+
       if (currentFilters.speed) {
         parts.push(`velocidad: ${currentFilters.speed} km/h`);
       }
-      
+
       if (parts.length > 0) {
         filterCriteria.textContent = `radares con ${parts.join('; ')}`;
       } else {
@@ -1692,13 +1710,13 @@
       document.getElementById('radar-type-filter-mobile').selectedIndex = -1;
       document.getElementById('radar-status-filter-mobile').selectedIndex = -1;
       document.getElementById('radar-speed-filter-mobile').value = '';
-      
+
       currentFilters = {
         types: [],
         statuses: [],
         speed: ''
       };
-      
+
       applyFilters();
       updateFilterMessage();
       document.querySelector('.filter-container').classList.remove('has-filters');
@@ -1708,14 +1726,14 @@
     function loadRadars() {
       db.ref("radares").on("value", snapshot => {
         console.log("Datos recibidos de Firebase:", snapshot.val());
-        
+
         Object.values(radaresMarkers).forEach(marker => {
           map.removeLayer(marker);
         });
         radaresMarkers = {};
-        
+
         const radares = snapshot.val();
-        
+
         if (radares) {
           Object.entries(radares).forEach(([id, radar]) => {
             if (radar.status === "active" || showInactiveRadars || radar.status === "pending_review") {
@@ -1723,7 +1741,7 @@
             }
           });
         }
-        
+
         updateRadarList(radares);
         applyFilters(); // Aplicar filtros después de cargar
       });
@@ -1732,11 +1750,11 @@
     // Añadir marcador de radar
     function addRadarMarker(radar, radarId) {
       const icon = getIconByRadar(radar);
-      const marker = L.marker([radar.lat, radar.lng], { 
+      const marker = L.marker([radar.lat, radar.lng], {
         icon,
         riseOnHover: true
       }).addTo(map);
-      
+
       // Añadir efecto al hacer clic
       marker.on('click', function() {
         this.setIcon(L.icon({
@@ -1744,15 +1762,15 @@
           iconSize: [35, 35],
           iconAnchor: [17, 17]
         }));
-        
+
         setTimeout(() => {
           this.setIcon(icon);
         }, 300);
       });
-      
+
       marker.radarData = radar;
       radaresMarkers[radarId] = marker;
-      
+
       const popupContent = createPopupContent(radar, radarId);
       marker.bindPopup(popupContent);
     }
@@ -1763,7 +1781,7 @@
       const votosNegativos = radar.votos_negativos || 0;
       const userVoted = localStorage.getItem(`voto_${radarId}`);
       const lastUpdated = radar.last_updated ? new Date(radar.last_updated).toLocaleString() : "No disponible";
-      
+
       const popup = document.createElement('div');
       popup.innerHTML = `
         <b>${radar.radarType || "Radar"}</b><br>
@@ -1774,17 +1792,17 @@
         Estado: <b>${radar.status === "active" ? "Activo" : radar.status === "pending_review" ? "Pendiente" : "Inactivo"}</b><br>
         Actualizado: ${lastUpdated}<br>
         <div style="margin-top: 10px; display: flex; justify-content: center; gap: 10px;">
-          <button id="boton_positivo_${radarId}" class="button-voto button-voto-positivo" 
+          <button id="boton_positivo_${radarId}" class="button-voto button-voto-positivo"
             onclick="votar('${radarId}', 'positivo')" ${userVoted ? 'disabled' : ''}>
             👍 ${votosPositivos}
           </button>
-          <button id="boton_negativo_${radarId}" class="button-voto button-voto-negativo" 
+          <button id="boton_negativo_${radarId}" class="button-voto button-voto-negativo"
             onclick="votar('${radarId}', 'negativo')" ${userVoted ? 'disabled' : ''}>
             👎 ${votosNegativos}
           </button>
         </div>
       `;
-      
+
       return popup;
     }
 
@@ -1797,15 +1815,15 @@
           iconAnchor: [15, 15]
         });
       }
-      
+
       const validTypes = ["Fijo", "Móvil", "Tramo", "Remolque"];
       const type = validTypes.includes(radar.radarType) ? radar.radarType : "default";
       const speed = (radar.speed >= 10 && radar.speed <= 140) ? radar.speed : "default";
-      
-      const iconUrl = radar.status === "active" 
+
+      const iconUrl = radar.status === "active"
         ? `https://ahorraunamulta.com/velocidades/${type}/${speed}.png`
         : `https://ahorraunamulta.com/velocidades/${type}/no_activo.png`;
-      
+
       return L.icon({
         iconUrl,
         iconSize: radar.status === "active" ? [30, 30] : [25, 25],
@@ -1819,12 +1837,12 @@
       const inactiveList = document.getElementById('inactive-list');
       const activeListMobile = document.getElementById('active-list-mobile');
       const inactiveListMobile = document.getElementById('inactive-list-mobile');
-      
+
       activeList.innerHTML = '<h3>Radares Activos</h3>';
       inactiveList.innerHTML = '<h3>Radares Inactivos</h3>';
       activeListMobile.innerHTML = '<h3>Radares Activos</h3>';
       inactiveListMobile.innerHTML = '<h3>Radares Inactivos</h3>';
-      
+
       if (!radares) {
           activeList.innerHTML += '<p>No hay radares activos</p>';
           inactiveList.innerHTML += '<p>No hay radares inactivos</p>';
@@ -1832,20 +1850,20 @@
           inactiveListMobile.innerHTML += '<p>No hay radares inactivos</p>';
           return;
       }
-      
+
       const radaresArray = Object.entries(radares).map(([key, value]) => ({ ...value, key }));
       radaresArray.sort((a, b) => {
           const dateA = a.last_updated ? new Date(a.last_updated) : 0;
           const dateB = b.last_updated ? new Date(b.last_updated) : 0;
           return dateB - dateA;
       });
-      
+
       let hasActive = false;
       let hasInactive = false;
-      
+
       radaresArray.forEach(radar => {
           const item = createRadarListItem(radar);
-          
+
           if (radar.status === "active") {
               activeList.appendChild(item.cloneNode(true));
               activeListMobile.appendChild(item.cloneNode(true));
@@ -1860,7 +1878,7 @@
               hasInactive = true;
           }
       });
-      
+
       if (!hasActive) {
         activeList.innerHTML += '<p>No hay radares activos</p>';
         activeListMobile.innerHTML += '<p>No hay radares activos</p>';
@@ -1869,7 +1887,7 @@
         inactiveList.innerHTML += '<p>No hay radares inactivos</p>';
         inactiveListMobile.innerHTML += '<p>No hay radares inactivos</p>';
       }
-      
+
       // Aplicar filtros a los listados
       updateFilteredLists();
     }
@@ -1880,40 +1898,40 @@
         document.getElementById('active-list'),
         document.getElementById('active-list-mobile')
       ];
-      
+
       const inactiveLists = [
         document.getElementById('inactive-list'),
         document.getElementById('inactive-list-mobile')
       ];
-      
+
       // Contadores
       let activeCount = 0, filteredActiveCount = 0;
       let inactiveCount = 0, filteredInactiveCount = 0;
-      
+
       // Contar radares
       Object.values(radaresMarkers).forEach(marker => {
         const radar = marker.radarData;
         if (radar.status === 'active' || radar.status === 'pending_review') activeCount++;
         else inactiveCount++;
       });
-      
+
       // Actualizar listados
       activeLists.forEach(list => {
         const items = list.querySelectorAll('.list-item');
         let visibleItems = 0;
-        
+
         items.forEach(item => {
           const radarId = item.dataset.radarId;
           const radar = radaresMarkers[radarId]?.radarData;
-          
+
           if (radar) {
-            const matchesType = currentFilters.types.length === 0 || 
+            const matchesType = currentFilters.types.length === 0 ||
                               currentFilters.types.includes(radar.radarType);
-            const matchesStatus = currentFilters.statuses.length === 0 || 
+            const matchesStatus = currentFilters.statuses.length === 0 ||
                                 currentFilters.statuses.includes(radar.status);
-            const matchesSpeed = !currentFilters.speed || 
+            const matchesSpeed = !currentFilters.speed ||
                                (radar.speed && radar.speed.toString() === currentFilters.speed);
-            
+
             if (matchesType && matchesStatus && matchesSpeed) {
               item.style.display = 'block';
               visibleItems++;
@@ -1923,31 +1941,31 @@
             }
           }
         });
-        
+
         const title = list.querySelector('h3');
         if (title) {
-          title.innerHTML = currentFilters.types.length > 0 || currentFilters.statuses.length > 0 || currentFilters.speed ? 
-            `Radares Activos (${visibleItems}/${activeCount})` : 
+          title.innerHTML = currentFilters.types.length > 0 || currentFilters.statuses.length > 0 || currentFilters.speed ?
+            `Radares Activos (${visibleItems}/${activeCount})` :
             `Radares Activos (${activeCount})`;
         }
       });
-      
+
       inactiveLists.forEach(list => {
         const items = list.querySelectorAll('.list-item');
         let visibleItems = 0;
-        
+
         items.forEach(item => {
           const radarId = item.dataset.radarId;
           const radar = radaresMarkers[radarId]?.radarData;
-          
+
           if (radar) {
-            const matchesType = currentFilters.types.length === 0 || 
+            const matchesType = currentFilters.types.length === 0 ||
                               currentFilters.types.includes(radar.radarType);
-            const matchesStatus = currentFilters.statuses.length === 0 || 
+            const matchesStatus = currentFilters.statuses.length === 0 ||
                                 currentFilters.statuses.includes(radar.status);
-            const matchesSpeed = !currentFilters.speed || 
+            const matchesSpeed = !currentFilters.speed ||
                                (radar.speed && radar.speed.toString() === currentFilters.speed);
-            
+
             if (matchesType && matchesStatus && matchesSpeed) {
               item.style.display = 'block';
               visibleItems++;
@@ -1957,11 +1975,11 @@
             }
           }
         });
-        
+
         const title = list.querySelector('h3');
         if (title) {
-          title.innerHTML = currentFilters.types.length > 0 || currentFilters.statuses.length > 0 || currentFilters.speed ? 
-            `Radares Inactivos (${visibleItems}/${inactiveCount})` : 
+          title.innerHTML = currentFilters.types.length > 0 || currentFilters.statuses.length > 0 || currentFilters.speed ?
+            `Radares Inactivos (${visibleItems}/${inactiveCount})` :
             `Radares Inactivos (${inactiveCount})`;
         }
       });
@@ -1978,9 +1996,9 @@
       item.className = 'list-item';
       item.dataset.radarId = radar.key;
       item.style.cursor = 'pointer';
-      
+
       const lastUpdated = radar.last_updated ? new Date(radar.last_updated).toLocaleString() : "No disponible";
-      
+
       item.innerHTML = `
         <h3>${radar.radarType || "Radar"} - ${radar.road || ""}</h3>
         <p><strong>Ubicación:</strong> ${radar.lat?.toFixed(4)}, ${radar.lng?.toFixed(4)}</p>
@@ -1991,11 +2009,11 @@
         <p><strong>Última modificación:</strong> ${lastUpdated}</p>
         <p><strong>Votos:</strong> 👍 ${radar.votos_positivos || 0} | 👎 ${radar.votos_negativos || 0}</p>
       `;
-      
+
       item.addEventListener('click', () => {
         centerOnRadar(radar.key);
       });
-      
+
       return item;
     }
 
@@ -2005,7 +2023,7 @@
       if (marker) {
         map.setView(marker.getLatLng(), 16);
         marker.openPopup();
-        
+
         // Destacar el elemento en el listado
         const listItems = document.querySelectorAll(`.list-item[data-radar-id="${radarId}"]`);
         listItems.forEach(item => {
@@ -2027,7 +2045,7 @@
     window.toggleInactiveRadars = function() {
       showInactiveRadars = !showInactiveRadars;
       loadRadars();
-      
+
       const button = document.getElementById('toggleInactiveRadarsButton');
       button.textContent = showInactiveRadars ? 'Ocultar inactivos' : 'Mostrar inactivos';
     }
@@ -2036,29 +2054,29 @@
     window.votar = function(radarId, tipo) {
       const today = new Date().toISOString().split('T')[0];
       const votoKey = `voto_${radarId}_${today}`; // Ahora almacena por día
-      
+
       if (localStorage.getItem(votoKey)) {
         alert('Ya has votado en este radar hoy.');
         return;
       }
-      
+
       localStorage.setItem(votoKey, 'true');
-      
+
       const radarRef = db.ref(`radares/${radarId}`);
       const votosPosRef = db.ref(`radares/${radarId}/votos_positivos`);
       const votosNegRef = db.ref(`radares/${radarId}/votos_negativos`);
-      
+
       // Animación al votar
       const buttonId = `boton_${tipo === 'positivo' ? 'positivo' : 'negativo'}_${radarId}`;
       const button = document.getElementById(buttonId);
-      
+
       if (button) {
         button.style.transform = 'scale(1.2)';
         setTimeout(() => {
           button.style.transform = '';
         }, 300);
       }
-      
+
       if (tipo === 'positivo') {
         votosPosRef.transaction(current => (current || 0) + 1);
         votosNegRef.transaction(current => (current > 0 ? current - 1 : 0));
@@ -2066,11 +2084,11 @@
         votosNegRef.transaction(current => (current || 0) + 1);
         votosPosRef.transaction(current => (current > 0 ? current - 1 : 0));
       }
-      
+
       radarRef.update({
         last_updated: new Date().toISOString()
       });
-      
+
       votosNegRef.once('value', snap => {
         if (snap.val() > 10) {
           radarRef.update({ status: 'inactive' });
@@ -2084,14 +2102,14 @@
         const button = document.getElementById('addRadarButton');
         button.classList.toggle('active');
         button.textContent = button.classList.contains('active') ? '🚨' : '➕';
-        
+
         if (!button.classList.contains('active')) {
           document.getElementById('radarForm').style.display = 'none';
           if (tempMarker) map.removeLayer(tempMarker);
           tempMarker = null;
         }
       });
-      
+
       map.on('click', e => {
         if (document.getElementById('addRadarButton').classList.contains('active')) {
           document.getElementById('radarForm').style.display = 'block';
@@ -2099,18 +2117,18 @@
           tempMarker = L.marker(e.latlng).addTo(map);
         }
       });
-      
+
       document.getElementById('saveRadarButton').addEventListener('click', () => {
         const radarType = document.getElementById('radarType').value;
         const road = document.getElementById('road').value;
         const pk = document.getElementById('pk').value;
         const direction = document.getElementById('direction').value;
         const speed = document.getElementById('speed').value;
-        
+
         // Validación de campos
         const requiredFields = ['radarType', 'road', 'direction', 'speed'];
         let isValid = true;
-        
+
         requiredFields.forEach(field => {
           const element = document.getElementById(field);
           if (!element.value) {
@@ -2120,20 +2138,20 @@
             element.style.borderColor = '';
           }
         });
-        
+
         if (!isValid || !tempMarker) {
           if (!tempMarker) {
             alert('Por favor, selecciona una ubicación en el mapa haciendo clic');
           }
           return;
         }
-        
+
         // Mostrar feedback de carga
         const saveButton = document.getElementById('saveRadarButton');
         const originalText = saveButton.textContent;
         saveButton.textContent = 'Guardando...';
         saveButton.disabled = true;
-        
+
         const { lat, lng } = tempMarker.getLatLng();
         const newRadar = {
           radarType,
@@ -2148,7 +2166,7 @@
           status: "active",
           last_updated: new Date().toISOString()
         };
-        
+
         db.ref("radares").push(newRadar)
           .then(() => {
             alert('Radar guardado con éxito');
@@ -2163,7 +2181,7 @@
             saveButton.disabled = false;
           });
       });
-      
+
       document.getElementById('cancelRadarButton').addEventListener('click', resetRadarForm);
     }
 
@@ -2176,14 +2194,14 @@
       }
       document.getElementById('addRadarButton').classList.remove('active');
       document.getElementById('addRadarButton').textContent = '➕';
-      
+
       // Limpiar campos y validaciones
       document.getElementById('radarType').value = '';
       document.getElementById('road').value = '';
       document.getElementById('pk').value = '';
       document.getElementById('direction').value = '';
       document.getElementById('speed').value = '';
-      
+
       document.querySelectorAll('#radarForm input, #radarForm select').forEach(el => {
         el.style.borderColor = '';
       });
@@ -2201,14 +2219,14 @@
       const searchInput = document.getElementById('searchInput');
       searchInput.addEventListener('input', (e) => {
         const searchTerm = e.target.value.toLowerCase();
-        
+
         if (searchTerm.length > 2) {
           Object.entries(radaresMarkers).forEach(([id, marker]) => {
             const radar = marker.radarData;
-            const matches = radar.road?.toLowerCase().includes(searchTerm) || 
-                          radar.direction?.toLowerCase().includes(searchTerm) || 
+            const matches = radar.road?.toLowerCase().includes(searchTerm) ||
+                          radar.direction?.toLowerCase().includes(searchTerm) ||
                           radar.pk?.toString().includes(searchTerm);
-            
+
             if (matches) {
               marker.addTo(map);
               marker.setOpacity(1);
@@ -2234,14 +2252,14 @@
       if (savedCentrar !== null) {
         centrarMapa = savedCentrar === 'true';
       }
-      
+
       initMap();
-      
+
       if (!localStorage.getItem('popupSeen')) {
         setTimeout(() => {
           const popup = document.getElementById('popup-overlay');
           popup.style.display = 'flex';
-          
+
           // Guardar solo si el usuario cierra el popup
           document.querySelector('.popup button').addEventListener('click', () => {
             localStorage.setItem('popupSeen', 'true');
