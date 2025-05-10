@@ -55,6 +55,7 @@
       margin: 0;
       font-family: Arial, sans-serif;
       overflow: hidden;
+      transition: all 0.3s ease;
   }
 
   #preloader {
@@ -111,6 +112,7 @@
   #map {
     width: 100%;
     height: 100vh;
+    transition: filter 0.3s ease;
   }
 
   /* Grupo de botones de acción - Escritorio */
@@ -270,15 +272,27 @@
 
   /* Botón de estadísticas */
   #statsButton {
+    display: none;
     background-color: #6f42c1;
     color: white;
-    display: none;
   }
 
   /* Botón de añadir en ubicación actual */
   #addCurrentLocationButton {
     background-color: #ff9800;
     color: white;
+  }
+
+  /* Botón modo conductor */
+  #driverModeButton {
+    background-color: #17a2b8;
+    color: white;
+  }
+
+  #driverModeButton.active-mode {
+    background-color: #ff0000 !important;
+    color: white !important;
+    animation: pulse 1.5s infinite;
   }
 
   #radarForm {
@@ -640,10 +654,27 @@
     right: auto !important;
   }
 
+  @media (max-width: 768px) {
+  /* Baja 20px los controles de zoom (posición relativa) */
+  .leaflet-control-zoom {
+    position: relative;
+    top: 80px !important; /* Desplaza hacia abajo */
+    margin-bottom: 0 !important;
+  }
+  }
+
+@media (max-width: 768px) {
+  /* Baja 20px el botón de centrado (si usas el estándar de Leaflet) */
+  .leaflet-control-locate {
+    top: 80px !important;
+  }
+}
   /* Botón de centrado mejorado */
   .boton-centrado {
     background-color: #28a745;
     color: white;
+    position: relative;
+    top: 80px !important;
     border: none;
     border-radius: 50%;
     width: 40px;
@@ -916,6 +947,103 @@
     outline: 2px solid #007bff;
     outline-offset: 2px;
   }
+
+  /* ==================== */
+  /* ESTILOS MODO CONDUCTOR */
+  /* ==================== */
+  .modo-conductor {
+    --driver-bg: #1a1a1a;
+    --driver-text: #ffffff;
+    --driver-highlight: #ff9900;
+  }
+
+  body.modo-conductor {
+    background-color: var(--driver-bg) !important;
+    color: var(--driver-text) !important;
+  }
+
+  body.modo-conductor #map {
+    filter: grayscale(50%) invert(1) contrast(0.8);
+  }
+
+  body.modo-conductor .action-buttons {
+    background-color: var(--driver-bg) !important;
+    border: 2px solid var(--driver-highlight) !important;
+    bottom: 20px !important;
+  }
+
+  body.modo-conductor .action-button {
+    width: 70px !important;
+    height: 70px !important;
+    font-size: 28px !important;
+    background-color: var(--driver-highlight) !important;
+    color: #000 !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5) !important;
+  }
+
+  body.modo-conductor .leaflet-control {
+    background-color: var(--driver-bg) !important;
+    color: var(--driver-text) !important;
+  }
+
+  body.modo-conductor .list-container {
+    background-color: var(--driver-bg) !important;
+    color: var(--driver-text) !important;
+  }
+
+  /* Ocultar elementos no esenciales en modo conductor */
+  body.modo-conductor .search-container,
+  body.modo-conductor #legend-button,
+  body.modo-conductor .leaflet-control-layers,
+  body.modo-conductor .list-container,
+  body.modo-conductor #statsButton,
+  body.modo-conductor .buttonLogin {
+    display: none !important;
+  }
+
+  /* Botón modo conductor activo */
+  #driverModeButton.active-mode {
+    background-color: #ff0000 !important;
+    color: white !important;
+    animation: pulse 1.5s infinite;
+  }
+
+  /* Notificación de radar cercano */
+  .radar-alert {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #ff0000;
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    z-index: 2000;
+    text-align: center;
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.7);
+    font-size: 24px;
+    display: none;
+  }
+
+  @keyframes alert-pulse {
+    0% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.1); }
+    100% { transform: translate(-50%, -50%) scale(1); }
+  }
+
+  .radar-alert.show {
+    display: block;
+    animation: alert-pulse 1s infinite;
+  }
+
+  /* Responsive para modo conductor */
+  @media (max-width: 768px) {
+    body.modo-conductor .action-button {
+      width: 60px !important;
+      height: 60px !important;
+      font-size: 24px !important;
+    }
+  }
   </style>
 </head>
 <body>
@@ -1066,6 +1194,13 @@
     </div>
   </div>
 
+  <!-- Notificación de radar cercano -->
+  <div class="radar-alert" id="radarAlert">
+    <div>¡RADAR CERCANO!</div>
+    <div id="radarDistance">300 metros</div>
+    <div id="radarType">Radar móvil</div>
+  </div>
+
   <div class="popup-overlay" id="popup-overlay" style="display: none;">
     <div class="popup">
       <h2>Descargo de responsabilidad</h2>
@@ -1087,6 +1222,7 @@
   <div class="action-buttons">
     <a href="/login" class="action-button buttonLogin" title="Admin">ADMIN</a>
     <button id="statsButton" class="action-button" title="Estadísticas">📊</button>
+    <button id="driverModeButton" class="action-button" title="Modo conductor">🚗</button>
     <button id="toggle-button" class="action-button" title="Mostrar listado">📋</button>
     <button id="addCurrentLocationButton" class="action-button" title="Añadir radar en mi ubicación">⚠️</button>
     <button id="addRadarButton" class="action-button" title="Añadir radar manualmente">➕</button>
@@ -1165,8 +1301,11 @@
     let accuracyCircle;
     let tempMarker = null;
     let showInactiveRadars = false;
-    let centrarMapa = true; // Cambiado a true por defecto
+    let centrarMapa = true;
     let radaresMarkers = {};
+    let lastAlertedRadar = null;
+    let speechSynthesisEnabled = true;
+    let driverModeActive = false;
 
     // Variables para los filtros
     let currentFilters = {
@@ -1309,6 +1448,17 @@
       // Botón de estadísticas
       document.getElementById('statsButton').addEventListener('click', showStats);
 
+      // Botón modo conductor
+      document.getElementById('driverModeButton').addEventListener('click', toggleDriverMode);
+
+      // Comprobar compatibilidad con voz
+      if ('speechSynthesis' in window) {
+        speechSynthesisEnabled = confirm("¿Quieres activar alertas por voz en modo conductor?");
+      }
+
+      // Iniciar reconocimiento de voz si está disponible
+      initVoiceRecognition();
+
       // Mejorar accesibilidad de botones
       document.querySelectorAll('button').forEach(button => {
         button.addEventListener('keydown', function(e) {
@@ -1319,8 +1469,77 @@
       });
     }
 
+    // Función para activar/desactivar modo conductor
+    function toggleDriverMode() {
+      const body = document.body;
+      body.classList.toggle('modo-conductor');
+
+      const button = document.getElementById('driverModeButton');
+      driverModeActive = body.classList.contains('modo-conductor');
+
+      // Feedback visual
+      button.classList.toggle('active-mode', driverModeActive);
+      button.title = driverModeActive ? 'Salir del modo conductor' : 'Modo conductor (interfaz simplificada)';
+
+      // Ajustes del mapa
+      if (driverModeActive) {
+        map.setZoom(16); // Zoom más cercano
+        if (userMarker) {
+          map.setView(userMarker.getLatLng()); // Centrar en ubicación actual
+        }
+        showAlert("Modo conductor activado", 3000);
+      }
+
+      // Guardar preferencia
+      localStorage.setItem('driverMode', driverModeActive ? 'active' : 'inactive');
+    }
+
+    // Función para mostrar alertas temporales
+    function showAlert(message, duration) {
+      const alert = document.getElementById('radarAlert');
+      alert.innerHTML = `<div>${message}</div>`;
+      alert.classList.add('show');
+
+      setTimeout(() => {
+        alert.classList.remove('show');
+      }, duration);
+    }
+
+    // Reconocimiento de voz para activar modo
+    function initVoiceRecognition() {
+      if ('webkitSpeechRecognition' in window) {
+        const recognition = new webkitSpeechRecognition();
+        recognition.lang = 'es-ES';
+        recognition.continuous = true;
+        recognition.interimResults = false;
+
+        recognition.onresult = (event) => {
+          const transcript = event.results[event.results.length-1][0].transcript.toLowerCase();
+          if (transcript.includes('activar modo conductor')) {
+            if (!document.body.classList.contains('modo-conductor')) {
+              toggleDriverMode();
+            }
+          } else if (transcript.includes('desactivar modo conductor')) {
+            if (document.body.classList.contains('modo-conductor')) {
+              toggleDriverMode();
+            }
+          }
+        };
+
+        recognition.start();
+      }
+    }
+
     // Geolocalización
     function initGeolocation() {
+      // Cargar preferencia de centrado desde localStorage
+      const savedCentrar = localStorage.getItem('centrarMapa');
+      if (savedCentrar !== null) {
+        centrarMapa = savedCentrar === 'true';
+      } else {
+        centrarMapa = true; // Valor por defecto
+      }
+
       if (!navigator.geolocation) {
         // Mostrar mensaje amigable al usuario
         const geoWarning = L.popup()
@@ -1360,8 +1579,8 @@
       // Botón de centrado mejorado
       var toggleButton = L.control({ position: 'topleft' });
       toggleButton.onAdd = function(map) {
-        var container = L.DomUtil.create("div", "leaflet-bar");
-        var button = L.DomUtil.create("a", "boton-centrado on");
+        var container = L.DomUtil.create("div");
+        var button = L.DomUtil.create("a", `boton-centrado ${centrarMapa ? 'on' : 'off'}`);
         button.innerHTML = '📍';
         button.href = '#';
         button.title = 'Centrar en mi ubicación';
@@ -1370,6 +1589,9 @@
           L.DomEvent.stopPropagation(e);
           L.DomEvent.preventDefault(e);
           centrarMapa = !centrarMapa;
+
+          // Guardar preferencia en localStorage
+          localStorage.setItem('centrarMapa', centrarMapa.toString());
 
           if (centrarMapa) {
             button.classList.add('on');
@@ -1403,14 +1625,22 @@
           const { latitude, longitude, accuracy } = position.coords;
           const newPos = [latitude, longitude];
 
-          // Solo actualizar si hay un cambio significativo (más de 10 metros)
-          if (!lastPosition || distanceBetween(lastPosition, newPos) > 10) {
+          // Solo actualizar si hay un cambio significativo (más de 5 metros)
+          if (!lastPosition || distanceBetween(lastPosition, newPos) > 5) {
             userMarker.setLatLng(newPos);
             accuracyCircle.setLatLng(newPos);
             accuracyCircle.setRadius(accuracy);
 
             if (centrarMapa) {
-              map.setView(newPos);
+              map.setView(newPos, map.getZoom(), {
+                animate: true,
+                duration: 1
+              });
+            }
+
+            // Verificar radares cercanos solo en modo conductor
+            if (driverModeActive) {
+              checkNearbyRadars(latitude, longitude);
             }
 
             lastPosition = newPos;
@@ -1426,22 +1656,73 @@
           timeout: 10000
         }
       );
+    }
 
-      // Función auxiliar para calcular distancia entre coordenadas
-      function distanceBetween(pos1, pos2) {
-        const R = 6371000; // Radio de la Tierra en metros
-        const φ1 = pos1[0] * Math.PI/180;
-        const φ2 = pos2[0] * Math.PI/180;
-        const Δφ = (pos2[0]-pos1[0]) * Math.PI/180;
-        const Δλ = (pos2[1]-pos1[1]) * Math.PI/180;
+    // Función para detectar radares cercanos
+    function checkNearbyRadars(lat, lng) {
+      const userPos = L.latLng(lat, lng);
+      let closestRadar = { distance: Infinity };
 
-        const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-                  Math.cos(φ1) * Math.cos(φ2) *
-                  Math.sin(Δλ/2) * Math.sin(Δλ/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      Object.values(radaresMarkers).forEach(marker => {
+        if (marker.radarData.status === 'active') {
+          const distance = userPos.distanceTo(marker.getLatLng());
+          if (distance < 500 && distance < closestRadar.distance) { // 500 metros
+            closestRadar = {
+              marker,
+              distance: Math.round(distance),
+              type: marker.radarData.radarType
+            };
+          }
+        }
+      });
 
-        return R * c;
+      // Mostrar alerta si hay un radar cercano
+      if (closestRadar.distance < 300 && closestRadar.marker !== lastAlertedRadar) {
+        lastAlertedRadar = closestRadar.marker;
+
+        // Mostrar alerta visual
+        const alert = document.getElementById('radarAlert');
+        document.getElementById('radarDistance').textContent = `${closestRadar.distance} metros`;
+        document.getElementById('radarType').textContent = `Radar ${closestRadar.type}`;
+        alert.classList.add('show');
+
+        // Alertar por voz si está activado
+        if (speechSynthesisEnabled) {
+          speak(`Radar ${closestRadar.type} a ${closestRadar.distance} metros`);
+        }
+
+        // Ocultar después de 5 segundos
+        setTimeout(() => {
+          alert.classList.remove('show');
+        }, 5000);
       }
+    }
+
+    // Función para hablar texto
+    function speak(text) {
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'es-ES';
+        utterance.rate = 0.9;
+        utterance.volume = 1;
+        speechSynthesis.speak(utterance);
+      }
+    }
+
+    // Función auxiliar para calcular distancia entre coordenadas
+    function distanceBetween(pos1, pos2) {
+      const R = 6371000; // Radio de la Tierra en metros
+      const φ1 = pos1[0] * Math.PI/180;
+      const φ2 = pos2[0] * Math.PI/180;
+      const Δφ = (pos2[0]-pos1[0]) * Math.PI/180;
+      const Δλ = (pos2[1]-pos1[1]) * Math.PI/180;
+
+      const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                Math.cos(φ1) * Math.cos(φ2) *
+                Math.sin(Δλ/2) * Math.sin(Δλ/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+      return R * c;
     }
 
     // Función para añadir radar en la ubicación actual
@@ -2216,6 +2497,17 @@
 
     // Inicializar la aplicación
     document.addEventListener('DOMContentLoaded', () => {
+      // Cargar preferencia de centrado
+      const savedCentrar = localStorage.getItem('centrarMapa');
+      if (savedCentrar !== null) {
+        centrarMapa = savedCentrar === 'true';
+      }
+
+      // Cargar preferencia de modo conductor
+      if (localStorage.getItem('driverMode') === 'active') {
+        toggleDriverMode();
+      }
+
       initMap();
 
       if (!localStorage.getItem('popupSeen')) {
