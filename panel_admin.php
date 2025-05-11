@@ -8,7 +8,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-auth.js";
-    import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js";
+    import { getDatabase, ref, onValue, update, remove } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js";
 
     const firebaseConfigLogin = {
       apiKey: "AIzaSyAX4uy3ON91cwK3Tt9r5Eqpucyf4sfv0No",
@@ -37,494 +37,521 @@
     const auth = getAuth(appLogin);
     const database = getDatabase(appRadares);
 
+    let allRadares = [];
+    let currentPage = 1;
+    const itemsPerPage = 20;
+
     onAuthStateChanged(auth, (user) => {
       if (!user) {
         window.location.href = 'login.html';
       } else {
         document.getElementById('userInfo').innerText = `Bienvenido, ${user.email}`;
+        document.getElementById('userEmail').textContent = user.email;
         fetchRadares();
       }
     });
 
     const fetchRadares = () => {
+      showLoading(true);
       const radaresRef = ref(database, 'radares');
       onValue(radaresRef, (snapshot) => {
         const data = snapshot.val();
-        const radaresTableBody = document.getElementById('radares-table-body');
-        const radaresCardsContainer = document.getElementById('radares-cards-container');
-
-        radaresTableBody.innerHTML = '';
-        radaresCardsContainer.innerHTML = '';
+        showLoading(false);
 
         if (data) {
-          const radaresArray = Object.keys(data).map((key) => {
+          allRadares = Object.keys(data).map((key) => {
             return { id: key, ...data[key] };
           });
 
-          radaresArray.forEach((radar) => {
+          allRadares.forEach((radar) => {
             if (radar.last_updated) {
               radar.last_updated = new Date(radar.last_updated).getTime();
             }
           });
 
-          radaresArray.sort((a, b) => b.last_updated - a.last_updated);
-
-          // Render para desktop (tabla)
-          radaresArray.forEach((radar) => {
-            const row = document.createElement('tr');
-
-            const createEditableCell = (value, fieldName) => {
-              return `
-                <td>
-                  <input type="text" value="${value || ''}" data-field="${fieldName}" data-id="${radar.id}">
-                  <button class="confirm-btn" data-field="${fieldName}" data-id="${radar.id}">✓</button>
-                </td>
-              `;
-            };
-
-            const lastUpdated = radar.last_updated ? formatDate(radar.last_updated) : 'N/A';
-            const roadValue = radar.road || 'Sin especificar';
-
-            row.innerHTML = `
-              <td>
-                <span class="radar-id">${radar.id.substring(0, 6)}...</span>
-              </td>
-              ${createEditableCell(radar.direction, 'direction')}
-              ${createEditableCell(radar.speed, 'speed')}
-              <td>
-                <select data-field="status" data-id="${radar.id}">
-                  <option value="active" ${radar.status === 'active' ? 'selected' : ''}>Activo</option>
-                  <option value="inactive" ${radar.status === 'inactive' ? 'selected' : ''}>Inactivo</option>
-                  <option value="pending_review" ${radar.status === 'pending_review' ? 'selected' : ''}>Pendiente</option>
-                </select>
-                <button class="confirm-btn" data-field="status" data-id="${radar.id}">✓</button>
-              </td>
-              ${createEditableCell(roadValue, 'road')}
-              ${createEditableCell(radar.pk, 'pk')}
-              <td>${lastUpdated}</td>
-              <td>
-                <select data-field="radarType" data-id="${radar.id}">
-                  <option value="Fijo" ${radar.radarType === 'Fijo' ? 'selected' : ''}>Fijo</option>
-                  <option value="Móvil" ${radar.radarType === 'Móvil' ? 'selected' : ''}>Móvil</option>
-                  <option value="Tramo" ${radar.radarType === 'Tramo' ? 'selected' : ''}>Tramo</option>
-                  <option value="Remolque" ${radar.radarType === 'Remolque' ? 'selected' : ''}>Remolque</option>
-                </select>
-                <button class="confirm-btn" data-field="radarType" data-id="${radar.id}">✓</button>
-              </td>
-              <td class="action-buttons">
-                ${radar.status !== 'active' ? `<button class="approve-btn" data-id="${radar.id}">Activar</button>` : ''}
-                ${radar.status !== 'inactive' ? `<button class="reject-btn" data-id="${radar.id}">Desactivar</button>` : ''}
-                ${radar.status === 'pending_review' ? `<button class="complete-btn" data-id="${radar.id}">Completar</button>` : ''}
-              </td>
-            `;
-
-            radaresTableBody.appendChild(row);
-          });
-
-          // Render para móvil (tarjetas)
-          radaresArray.forEach((radar) => {
-            const card = document.createElement('div');
-            card.className = 'radar-card';
-
-            const lastUpdated = radar.last_updated ? formatDate(radar.last_updated) : 'N/A';
-            const roadValue = radar.road || 'Sin especificar';
-            const statusClass = radar.status === 'active' ? 'active' : radar.status === 'inactive' ? 'inactive' : 'pending';
-
-            card.innerHTML = `
-              <div class="card-header">
-                <span class="radar-id">ID: ${radar.id.substring(0, 8)}...</span>
-                <span class="status-badge ${statusClass}">${getStatusText(radar.status)}</span>
-              </div>
-              <div class="card-body">
-                <div class="card-row">
-                  <label>Dirección:</label>
-                  <div class="editable-field">
-                    <input type="text" value="${radar.direction || ''}" data-field="direction" data-id="${radar.id}">
-                    <button class="confirm-btn" data-field="direction" data-id="${radar.id}">✓</button>
-                  </div>
-                </div>
-                <div class="card-row">
-                  <label>Velocidad:</label>
-                  <div class="editable-field">
-                    <input type="text" value="${radar.speed || ''}" data-field="speed" data-id="${radar.id}">
-                    <button class="confirm-btn" data-field="speed" data-id="${radar.id}">✓</button>
-                  </div>
-                </div>
-                <div class="card-row">
-                  <label>Vía:</label>
-                  <div class="editable-field">
-                    <input type="text" value="${roadValue}" data-field="road" data-id="${radar.id}">
-                    <button class="confirm-btn" data-field="road" data-id="${radar.id}">✓</button>
-                  </div>
-                </div>
-                <div class="card-row">
-                  <label>PK:</label>
-                  <div class="editable-field">
-                    <input type="text" value="${radar.pk || ''}" data-field="pk" data-id="${radar.id}">
-                    <button class="confirm-btn" data-field="pk" data-id="${radar.id}">✓</button>
-                  </div>
-                </div>
-                <div class="card-row">
-                  <label>Tipo:</label>
-                  <div class="editable-field">
-                    <select data-field="radarType" data-id="${radar.id}">
-                      <option value="Fijo" ${radar.radarType === 'Fijo' ? 'selected' : ''}>Fijo</option>
-                      <option value="Móvil" ${radar.radarType === 'Móvil' ? 'selected' : ''}>Móvil</option>
-                      <option value="Tramo" ${radar.radarType === 'Tramo' ? 'selected' : ''}>Tramo</option>
-                      <option value="Remolque" ${radar.radarType === 'Remolque' ? 'selected' : ''}>Remolque</option>
-                    </select>
-                    <button class="confirm-btn" data-field="radarType" data-id="${radar.id}">✓</button>
-                  </div>
-                </div>
-                <div class="card-row">
-                  <label>Estado:</label>
-                  <div class="editable-field">
-                    <select data-field="status" data-id="${radar.id}">
-                      <option value="active" ${radar.status === 'active' ? 'selected' : ''}>Activo</option>
-                      <option value="inactive" ${radar.status === 'inactive' ? 'selected' : ''}>Inactivo</option>
-                      <option value="pending_review" ${radar.status === 'pending_review' ? 'selected' : ''}>Pendiente</option>
-                    </select>
-                    <button class="confirm-btn" data-field="status" data-id="${radar.id}">✓</button>
-                  </div>
-                </div>
-                <div class="card-row">
-                  <label>Últ. modificación:</label>
-                  <span>${lastUpdated}</span>
-                </div>
-              </div>
-              <div class="card-actions">
-                ${radar.status !== 'active' ? `<button class="approve-btn" data-id="${radar.id}">Activar</button>` : ''}
-                ${radar.status !== 'inactive' ? `<button class="reject-btn" data-id="${radar.id}">Desactivar</button>` : ''}
-                ${radar.status === 'pending_review' ? `<button class="complete-btn" data-id="${radar.id}">Completar</button>` : ''}
-              </div>
-            `;
-
-            radaresCardsContainer.appendChild(card);
-          });
-
-          setupEventListeners();
+          updateDashboardStats();
+          renderRadares();
+        } else {
+          allRadares = [];
+          document.getElementById('radares-table-body').innerHTML = '<tr><td colspan="9">No se encontraron radares</td></tr>';
         }
+      }, (error) => {
+        showLoading(false);
+        showNotification(`Error al cargar radares: ${error.message}`, 'error');
       });
     };
 
-    function getStatusText(status) {
-      const statusMap = {
-        'active': 'Activo',
-        'inactive': 'Inactivo',
-        'pending_review': 'Pendiente'
-      };
-      return statusMap[status] || status;
-    }
+    const renderRadares = (radares = allRadares) => {
+      const filteredRadares = filterRadares(radares);
+      const sortedRadares = sortRadares(filteredRadares);
+      const paginatedRadares = paginateRadares(sortedRadares);
 
-    function setupEventListeners() {
+      const radaresTableBody = document.getElementById('radares-table-body');
+      radaresTableBody.innerHTML = '';
+
+      if (paginatedRadares.length === 0) {
+        radaresTableBody.innerHTML = '<tr><td colspan="9">No se encontraron radares con los filtros aplicados</td></tr>';
+        return;
+      }
+
+      paginatedRadares.forEach((radar) => {
+        const row = document.createElement('tr');
+        row.className = `status-${radar.status || 'pending_review'}`;
+
+        const createEditableCell = (value, fieldName, isNumber = false) => {
+          return `
+            <td>
+              <input type="${isNumber ? 'number' : 'text'}"
+                     value="${value || ''}"
+                     data-field="${fieldName}"
+                     data-id="${radar.id}"
+                     ${isNumber ? 'min="0" step="1"' : ''}>
+              <button class="confirm-btn" data-field="${fieldName}" data-id="${radar.id}">✓</button>
+            </td>
+          `;
+        };
+
+        const lastUpdated = radar.last_updated ? formatDate(radar.last_updated) : 'N/A';
+        const roadValue = radar.road || 'Sin especificar';
+
+        row.innerHTML = `
+          <td>
+            <button class="toggle-id-btn" data-id="${radar.id}">🔍</button>
+            <span class="radar-id" style="display: none;">${radar.id}</span>
+          </td>
+          ${createEditableCell(radar.direction, 'direction')}
+          ${createEditableCell(radar.speed, 'speed', true)}
+          <td>
+            <select data-field="status" data-id="${radar.id}" class="status-select">
+              <option value="active" ${radar.status === 'active' ? 'selected' : ''}>Activo</option>
+              <option value="inactive" ${radar.status === 'inactive' ? 'selected' : ''}>Inactivo</option>
+              <option value="pending_review" ${radar.status === 'pending_review' ? 'selected' : ''}>Pendiente</option>
+            </select>
+            <button class="confirm-btn" data-field="status" data-id="${radar.id}">✓</button>
+          </td>
+          ${createEditableCell(roadValue, 'road')}
+          ${createEditableCell(radar.pk, 'pk')}
+          <td>${lastUpdated}</td>
+          <td>
+            <select data-field="radarType" data-id="${radar.id}">
+              <option value="Fijo" ${radar.radarType === 'Fijo' ? 'selected' : ''}>Fijo</option>
+              <option value="Móvil" ${radar.radarType === 'Móvil' ? 'selected' : ''}>Móvil</option>
+              <option value="Tramo" ${radar.radarType === 'Tramo' ? 'selected' : ''}>Tramo</option>
+              <option value="Remolque" ${radar.radarType === 'Remolque' ? 'selected' : ''}>Remolque</option>
+            </select>
+            <button class="confirm-btn" data-field="radarType" data-id="${radar.id}">✓</button>
+          </td>
+          <td class="actions">
+            ${radar.status !== 'active' ? `<button class="approve-btn" data-id="${radar.id}">✅ Activar</button>` : ''}
+            ${radar.status !== 'inactive' ? `<button class="reject-btn" data-id="${radar.id}">❌ Desactivar</button>` : ''}
+            ${radar.status === 'pending_review' ? `<button class="complete-btn" data-id="${radar.id}">✔️ Completar</button>` : ''}
+            <button class="delete-btn" data-id="${radar.id}">🗑️ Eliminar</button>
+          </td>
+        `;
+
+        radaresTableBody.appendChild(row);
+      });
+
+      setupEventListeners();
+      updatePaginationControls(sortedRadares.length);
+    };
+
+    const filterRadares = (radares) => {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      const statusFilter = document.getElementById('statusFilter').value;
+      const typeFilter = document.getElementById('typeFilter').value;
+
+      return radares.filter(radar => {
+        const matchesSearch =
+          (radar.direction && radar.direction.toLowerCase().includes(searchTerm)) ||
+          (radar.road && radar.road.toLowerCase().includes(searchTerm)) ||
+          (radar.pk && radar.pk.toString().includes(searchTerm)) ||
+          radar.id.includes(searchTerm);
+
+        const matchesStatus = statusFilter === 'all' || radar.status === statusFilter;
+        const matchesType = typeFilter === 'all' || radar.radarType === typeFilter;
+
+        return matchesSearch && matchesStatus && matchesType;
+      });
+    };
+
+    const sortRadares = (radares) => {
+      const sortBy = document.getElementById('sortSelect').value;
+      const sortOrder = document.getElementById('sortOrder').value === 'asc' ? 1 : -1;
+
+      return [...radares].sort((a, b) => {
+        const valA = a[sortBy] || '';
+        const valB = b[sortBy] || '';
+
+        if (sortBy === 'last_updated') {
+          return (valA - valB) * sortOrder;
+        }
+        return String(valA).localeCompare(String(valB)) * sortOrder;
+      });
+    };
+
+    const paginateRadares = (radares) => {
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      return radares.slice(startIndex, startIndex + itemsPerPage);
+    };
+
+    const updateDashboardStats = () => {
+      const stats = {
+        total: allRadares.length,
+        active: allRadares.filter(r => r.status === 'active').length,
+        inactive: allRadares.filter(r => r.status === 'inactive').length,
+        pending: allRadares.filter(r => r.status === 'pending_review').length
+      };
+
+      document.getElementById('totalRadars').textContent = stats.total;
+      document.getElementById('activeRadars').textContent = stats.active;
+      document.getElementById('inactiveRadars').textContent = stats.inactive;
+      document.getElementById('pendingRadars').textContent = stats.pending;
+    };
+
+    const updatePaginationControls = (totalItems) => {
+      const totalPages = Math.ceil(totalItems / itemsPerPage);
+      const paginationDiv = document.getElementById('paginationControls');
+
+      paginationDiv.innerHTML = `
+        <button class="page-btn" data-page="first" ${currentPage === 1 ? 'disabled' : ''}>⏮️ Primera</button>
+        <button class="page-btn" data-page="prev" ${currentPage === 1 ? 'disabled' : ''}>◀️ Anterior</button>
+        <span>Página ${currentPage} de ${totalPages}</span>
+        <button class="page-btn" data-page="next" ${currentPage >= totalPages ? 'disabled' : ''}>Siguiente ▶️</button>
+        <button class="page-btn" data-page="last" ${currentPage >= totalPages ? 'disabled' : ''}>Última ⏭️</button>
+      `;
+    };
+
+    const setupEventListeners = () => {
+      document.querySelectorAll('.toggle-id-btn').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          const idSpan = e.target.nextElementSibling;
+          if (idSpan.style.display === 'none') {
+            idSpan.style.display = 'inline';
+            e.target.textContent = '❌';
+          } else {
+            idSpan.style.display = 'none';
+            e.target.textContent = '🔍';
+          }
+        });
+      });
+
       document.querySelectorAll('.confirm-btn').forEach((btn) => {
         btn.addEventListener('click', (e) => {
           e.preventDefault();
           const field = e.target.dataset.field;
           const id = e.target.dataset.id;
-          const input = e.target.previousElementSibling || e.target.parentElement.querySelector('select');
-          const newValue = input.value;
-          const currentDate = Date.now();
 
-          const radarRef = ref(database, `radares/${id}`);
-          const updateData = {
-            [field]: newValue,
-            last_updated: currentDate
-          };
+          let inputElement = e.target.parentElement.querySelector('input, select');
 
-          update(radarRef, updateData)
-            .then(() => showNotification(`Campo ${field} actualizado a "${newValue}".`))
-            .catch((error) => showNotification(`Error: ${error.message}`));
+          if (!inputElement) {
+            showNotification('No se pudo encontrar el elemento de entrada', 'error');
+            return;
+          }
+
+          const newValue = inputElement.value;
+
+          if (field === 'speed' && (isNaN(newValue) || newValue < 0)) {
+            showNotification('La velocidad debe ser un número positivo', 'error');
+            return;
+          }
+
+          if (confirm(`¿Confirmas que deseas actualizar el campo ${field} a "${newValue}"?`)) {
+            const radarRef = ref(database, `radares/${id}`);
+            const updateData = {
+              [field]: field === 'speed' ? parseInt(newValue) : newValue,
+              last_updated: Date.now(),
+              updated_by: document.getElementById('userEmail').textContent
+            };
+
+            update(radarRef, updateData)
+              .then(() => showNotification(`Campo ${field} actualizado correctamente.`, 'success'))
+              .catch((error) => showNotification(`Error: ${error.message}`, 'error'));
+          }
         });
       });
 
       document.querySelectorAll('.approve-btn').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const id = btn.dataset.id;
-          const radarRef = ref(database, `radares/${id}`);
-          update(radarRef, {
-            status: 'active',
-            last_updated: Date.now()
-          })
-            .then(() => showNotification(`Radar con ID ${id} activado.`))
-            .catch((error) => showNotification(`Error: ${error.message}`));
+        btn.addEventListener('click', (e) => {
+          if (confirm('¿Confirmas que deseas activar este radar?')) {
+            const id = btn.dataset.id;
+            updateRadarStatus(id, 'active');
+          }
         });
       });
 
       document.querySelectorAll('.reject-btn').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const id = btn.dataset.id;
-          const radarRef = ref(database, `radares/${id}`);
-          update(radarRef, {
-            status: 'inactive',
-            last_updated: Date.now()
-          })
-            .then(() => showNotification(`Radar con ID ${id} desactivado.`))
-            .catch((error) => showNotification(`Error: ${error.message}`));
+        btn.addEventListener('click', (e) => {
+          if (confirm('¿Confirmas que deseas desactivar este radar?')) {
+            const id = btn.dataset.id;
+            updateRadarStatus(id, 'inactive');
+          }
         });
       });
 
       document.querySelectorAll('.complete-btn').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const id = btn.dataset.id;
-          const radarRef = ref(database, `radares/${id}`);
-          update(radarRef, {
-            status: 'active',
-            last_updated: Date.now()
-          })
-            .then(() => showNotification(`Radar con ID ${id} completado y activado.`))
-            .catch((error) => showNotification(`Error: ${error.message}`));
+        btn.addEventListener('click', (e) => {
+          if (confirm('¿Confirmas que deseas marcar este radar como completado y activo?')) {
+            const id = btn.dataset.id;
+            updateRadarStatus(id, 'active');
+          }
         });
+      });
+
+      document.querySelectorAll('.delete-btn').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          const id = btn.dataset.id;
+          if (confirm('¿Estás seguro de que deseas eliminar permanentemente este radar? Esta acción no se puede deshacer.')) {
+            deleteRadar(id);
+          }
+        });
+      });
+    };
+
+    const updateRadarStatus = (id, status) => {
+      const radarRef = ref(database, `radares/${id}`);
+      update(radarRef, {
+        status: status,
+        last_updated: Date.now(),
+        updated_by: document.getElementById('userEmail').textContent
+      })
+        .then(() => showNotification(`Radar ${id} actualizado a ${status}.`, 'success'))
+        .catch((error) => showNotification(`Error: ${error.message}`, 'error'));
+    };
+
+    const deleteRadar = (id) => {
+      showLoading(true);
+      const radarRef = ref(database, `radares/${id}`);
+      remove(radarRef)
+        .then(() => {
+          showNotification(`Radar ${id} eliminado correctamente.`, 'success');
+          fetchRadares(); // Recargar la lista de radares
+        })
+        .catch((error) => {
+          showLoading(false);
+          showNotification(`Error al eliminar radar: ${error.message}`, 'error');
+        });
+    };
+
+    document.getElementById('searchInput').addEventListener('input', () => {
+      currentPage = 1;
+      renderRadares();
+    });
+
+    document.getElementById('statusFilter').addEventListener('change', () => {
+      currentPage = 1;
+      renderRadares();
+    });
+
+    document.getElementById('typeFilter').addEventListener('change', () => {
+      currentPage = 1;
+      renderRadares();
+    });
+
+    document.getElementById('sortSelect').addEventListener('change', () => {
+      renderRadares();
+    });
+
+    document.getElementById('sortOrder').addEventListener('change', () => {
+      renderRadares();
+    });
+
+    document.getElementById('paginationControls').addEventListener('click', (e) => {
+      if (e.target.classList.contains('page-btn')) {
+        const action = e.target.dataset.page;
+        const totalPages = Math.ceil(filterRadares(allRadares).length / itemsPerPage);
+
+        switch(action) {
+          case 'first':
+            currentPage = 1;
+            break;
+          case 'prev':
+            if (currentPage > 1) currentPage--;
+            break;
+          case 'next':
+            if (currentPage < totalPages) currentPage++;
+            break;
+          case 'last':
+            currentPage = totalPages;
+            break;
+        }
+
+        renderRadares();
+      }
+    });
+
+    function formatDate(timestamp) {
+      const date = new Date(timestamp);
+      return date.toLocaleString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
       });
     }
 
-    function formatDate(isoDate) {
-      const date = new Date(isoDate);
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const year = date.getFullYear();
-      const hours = String(date.getHours()).padStart(2, '0');
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      return `${day}-${month}-${year} ${hours}:${minutes}`;
-    }
-
-    const showNotification = (message) => {
+    const showNotification = (message, type = 'success') => {
       const notification = document.getElementById('notification');
       notification.textContent = message;
+      notification.className = type;
       notification.style.display = 'block';
+
       setTimeout(() => {
         notification.style.display = 'none';
       }, 3000);
     };
 
+    const showLoading = (show) => {
+      document.getElementById('loadingIndicator').style.display = show ? 'block' : 'none';
+    };
+
     const logout = () => {
-      signOut(auth)
-        .then(() => (window.location.href = 'login'))
-        .catch((error) => console.error("Error al cerrar sesión:", error));
+      if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+        signOut(auth)
+          .then(() => (window.location.href = 'login'))
+          .catch((error) => showNotification(`Error al cerrar sesión: ${error.message}`, 'error'));
+      }
     };
 
     window.logout = logout;
   </script>
   <style>
-    :root {
-      --primary-color: #3498db;
-      --primary-dark: #2980b9;
-      --success-color: #2ecc71;
-      --danger-color: #e74c3c;
-      --warning-color: #f39c12;
-      --info-color: #1abc9c;
-      --light-gray: #ecf0f1;
-      --medium-gray: #bdc3c7;
-      --dark-gray: #2c3e50;
-      --text-color: #333;
-      --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      --border-radius: 8px;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 20px;
-      color: var(--text-color);
-      line-height: 1.6;
-      background-color: #f5f7fa;
-    }
-
-    .header {
-      text-align: center;
-      margin-bottom: 25px;
-      padding-bottom: 15px;
-      border-bottom: 1px solid var(--medium-gray);
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      color: #333;
     }
 
     h1 {
-      color: var(--dark-gray);
-      margin-bottom: 5px;
-      font-size: 1.8rem;
+      color: #2c3e50;
+      border-bottom: 2px solid #3498db;
+      padding-bottom: 10px;
     }
 
     h2 {
-      color: var(--text-color);
-      font-size: 1.2rem;
-      font-weight: normal;
+      color: #34495e;
     }
 
-    /* Notificación */
-    #notification {
-      display: none;
-      margin: 0 auto 20px;
-      padding: 12px 20px;
-      background-color: var(--success-color);
-      color: white;
-      border-radius: var(--border-radius);
-      text-align: center;
-      max-width: 600px;
-      box-shadow: var(--card-shadow);
+    .dashboard-stats {
+      display: flex;
+      justify-content: space-between;
+      margin: 20px 0;
+      flex-wrap: wrap;
+      gap: 10px;
     }
 
-    /* Contenedor principal */
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-
-    /* Vista de tabla (desktop) */
-    .desktop-view {
-      display: block;
-      width: 100%;
-      overflow-x: auto;
-      margin-bottom: 30px;
+    .stat-card {
       background: white;
-      border-radius: var(--border-radius);
-      box-shadow: var(--card-shadow);
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      flex: 1;
+      min-width: 150px;
+      text-align: center;
+    }
+
+    .stat-card h3 {
+      margin-top: 0;
+      color: #7f8c8d;
+      font-size: 14px;
+    }
+
+    .stat-card p {
+      font-size: 24px;
+      font-weight: bold;
+      margin: 10px 0 0;
+    }
+
+    .controls {
+      margin: 20px 0;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+    }
+
+    .controls input, .controls select {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    #searchInput {
+      flex: 2;
+      min-width: 200px;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 1000px;
+      margin: 20px 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
 
     th, td {
-      border: 1px solid var(--light-gray);
-      padding: 12px 10px;
+      border: 1px solid #ddd;
+      padding: 12px;
       text-align: center;
     }
 
     th {
-      background-color: var(--primary-color);
+      background-color: #3498db;
       color: white;
-      font-weight: 600;
       position: sticky;
       top: 0;
     }
 
     tr:nth-child(even) {
-      background-color: rgba(52, 152, 219, 0.05);
+      background-color: #f2f2f2;
     }
 
     tr:hover {
-      background-color: rgba(52, 152, 219, 0.1);
+      background-color: #e9e9e9;
     }
 
-    /* Vista de tarjetas (móvil) */
-    .mobile-view {
-      display: none;
+    .status-active {
+      background-color: #e8f5e9 !important;
     }
 
-    .radar-cards-container {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 15px;
-      margin-bottom: 20px;
+    .status-inactive {
+      background-color: #ffebee !important;
     }
 
-    .radar-card {
-      background: white;
-      border-radius: var(--border-radius);
-      box-shadow: var(--card-shadow);
-      overflow: hidden;
-      transition: transform 0.3s ease;
+    .status-pending_review {
+      background-color: #fff8e1 !important;
     }
 
-    .radar-card:hover {
-      transform: translateY(-3px);
-    }
-
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 15px;
-      background-color: var(--primary-color);
-      color: white;
-      font-weight: bold;
-    }
-
-    .status-badge {
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      font-weight: bold;
-    }
-
-    .status-badge.active {
-      background-color: var(--success-color);
-    }
-
-    .status-badge.inactive {
-      background-color: var(--danger-color);
-    }
-
-    .status-badge.pending {
-      background-color: var(--warning-color);
-    }
-
-    .card-body {
-      padding: 15px;
-    }
-
-    .card-row {
-      display: flex;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-
-    .card-row:last-child {
-      margin-bottom: 0;
-    }
-
-    .card-row label {
-      flex: 0 0 120px;
-      font-weight: 500;
-      color: var(--dark-gray);
-    }
-
-    .editable-field {
-      flex: 1;
-      display: flex;
-      align-items: center;
-    }
-
-    .card-actions {
-      display: flex;
-      justify-content: space-around;
-      padding: 10px 15px;
-      border-top: 1px solid var(--light-gray);
-      background-color: rgba(52, 152, 219, 0.05);
-    }
-
-    /* Botones */
     button {
-      padding: 8px 12px;
-      margin: 0 5px;
+      padding: 6px 12px;
+      margin: 0 2px;
       border: none;
       color: white;
       border-radius: 4px;
       cursor: pointer;
-      font-size: 0.85rem;
-      transition: all 0.3s ease;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
 
     .approve-btn {
-      background-color: var(--success-color);
-    }
-
-    .approve-btn:hover {
       background-color: #27ae60;
     }
 
+    .approve-btn:hover {
+      background-color: #2ecc71;
+    }
+
     .reject-btn {
-      background-color: var(--danger-color);
+      background-color: #e74c3c;
     }
 
     .reject-btn:hover {
@@ -532,179 +559,230 @@
     }
 
     .complete-btn {
-      background-color: var(--warning-color);
+      background-color: #f39c12;
     }
 
     .complete-btn:hover {
       background-color: #e67e22;
     }
 
+    .delete-btn {
+      background-color: #e74c3c;
+    }
+
+    .delete-btn:hover {
+      background-color: #c0392b;
+    }
+
+    #notification {
+      display: none;
+      margin: 20px 0;
+      padding: 15px;
+      border-radius: 4px;
+      color: white;
+    }
+
+    #notification.success {
+      background-color: #27ae60;
+    }
+
+    #notification.error {
+      background-color: #e74c3c;
+    }
+
+    #notification.warning {
+      background-color: #f39c12;
+    }
+
     .logout-btn {
       display: block;
       margin: 30px auto;
-      padding: 12px 25px;
-      font-size: 1rem;
+      padding: 10px 20px;
+      font-size: 16px;
       color: white;
-      background-color: var(--dark-gray);
+      background-color: #3498db;
       border: none;
-      border-radius: var(--border-radius);
+      border-radius: 5px;
       cursor: pointer;
       text-align: center;
-      transition: background-color 0.3s ease;
-      box-shadow: var(--card-shadow);
+      transition: background-color 0.3s;
     }
 
     .logout-btn:hover {
-      background-color: #1a252f;
+      background-color: #2980b9;
     }
 
     .confirm-btn {
-      background-color: var(--info-color);
-      color: white;
-      border: none;
-      padding: 6px 10px;
-      border-radius: 4px;
-      cursor: pointer;
-      margin-left: 8px;
-      font-size: 0.8rem;
-      min-width: 28px;
+      background-color: #3498db;
     }
 
     .confirm-btn:hover {
-      background-color: #16a085;
+      background-color: #2980b9;
     }
 
-    /* Formularios */
-    select {
+    .toggle-id-btn {
+      background-color: #9b59b6;
+    }
+
+    .toggle-id-btn:hover {
+      background-color: #8e44ad;
+    }
+
+    select, input {
       padding: 8px;
       border-radius: 4px;
-      border: 1px solid var(--medium-gray);
-      flex: 1;
-      font-size: 0.9rem;
+      border: 1px solid #ddd;
+      font-size: 14px;
     }
 
     input {
-      padding: 8px;
-      border-radius: 4px;
-      border: 1px solid var(--medium-gray);
-      flex: 1;
-      font-size: 0.9rem;
+      width: 80%;
     }
 
-    /* Responsive */
-    @media (max-width: 992px) {
-      .desktop-view {
-        display: none;
-      }
+    .actions {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
 
-      .mobile-view {
+    #loadingIndicator {
+      display: none;
+      text-align: center;
+      margin: 20px 0;
+      font-size: 18px;
+      color: #3498db;
+    }
+
+    .pagination-controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .page-btn {
+      background-color: #3498db;
+      padding: 8px 12px;
+    }
+
+    .page-btn:hover {
+      background-color: #2980b9;
+    }
+
+    @media (max-width: 768px) {
+      table {
         display: block;
+        overflow-x: auto;
+        white-space: nowrap;
       }
 
-      .card-row {
+      .controls {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: stretch;
       }
 
-      .card-row label {
-        margin-bottom: 5px;
-        flex: 0 0 auto;
+      .stat-card {
+        min-width: 100%;
       }
 
-      .editable-field {
-        width: 100%;
-      }
-
-      .card-actions {
+      .actions {
         flex-direction: column;
-        gap: 8px;
       }
 
-      .card-actions button {
+      .actions button {
         width: 100%;
         margin: 2px 0;
       }
     }
 
-    @media (max-width: 768px) {
-      body {
-        padding: 15px;
-      }
-
-      h1 {
-        font-size: 1.5rem;
-      }
-
-      h2 {
-        font-size: 1.1rem;
-      }
+    .radar-id {
+      font-family: monospace;
+      background: #f8f9fa;
+      padding: 2px 5px;
+      border-radius: 3px;
+      margin-left: 5px;
     }
 
-    @media (max-width: 480px) {
-      body {
-        padding: 10px;
-      }
-
-      .header {
-        margin-bottom: 15px;
-      }
-
-      h1 {
-        font-size: 1.3rem;
-      }
-
-      h2 {
-        font-size: 1rem;
-      }
-
-      .logout-btn {
-        width: 100%;
-        padding: 12px;
-      }
-
-      .card-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 5px;
-      }
+    .status-select {
+      min-width: 120px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>PANEL DE ADMINISTRACIÓN</h1>
-      <h2 id="userInfo">Cargando...</h2>
+  <h1>PANEL DE ADMINISTRACIÓN DE RADARES</h1>
+  <h2 id="userInfo">Cargando...</h2>
+  <span id="userEmail" style="display:none;"></span>
+
+  <div id="loadingIndicator">Cargando datos, por favor espere...</div>
+  <div id="notification"></div>
+
+  <div class="dashboard-stats">
+    <div class="stat-card">
+      <h3>Total de Radares</h3>
+      <p id="totalRadars">0</p>
     </div>
-
-    <div id="notification"></div>
-
-    <!-- Vista para desktop -->
-    <div class="desktop-view">
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>DIRECCIÓN</th>
-            <th>VELOCIDAD</th>
-            <th>ESTADO</th>
-            <th>VIA</th>
-            <th>PK</th>
-            <th>ÚLTIMA MODIFICACIÓN</th>
-            <th>TIPO RADAR</th>
-            <th>ACCIÓN</th>
-          </tr>
-        </thead>
-        <tbody id="radares-table-body"></tbody>
-      </table>
+    <div class="stat-card">
+      <h3>Activos</h3>
+      <p id="activeRadars">0</p>
     </div>
-
-    <!-- Vista para móvil -->
-    <div class="mobile-view">
-      <div id="radares-cards-container" class="radar-cards-container"></div>
+    <div class="stat-card">
+      <h3>Inactivos</h3>
+      <p id="inactiveRadars">0</p>
     </div>
-
-    <button class="logout-btn" onclick="logout()">CERRAR SESIÓN</button>
+    <div class="stat-card">
+      <h3>Pendientes</h3>
+      <p id="pendingRadars">0</p>
+    </div>
   </div>
+
+  <div class="controls">
+    <input type="text" id="searchInput" placeholder="Buscar por dirección, vía o PK...">
+    <select id="statusFilter">
+      <option value="all">Todos los estados</option>
+      <option value="active">Activos</option>
+      <option value="inactive">Inactivos</option>
+      <option value="pending_review">Pendientes</option>
+    </select>
+    <select id="typeFilter">
+      <option value="all">Todos los tipos</option>
+      <option value="Fijo">Fijo</option>
+      <option value="Móvil">Móvil</option>
+      <option value="Tramo">Tramo</option>
+      <option value="Remolque">Remolque</option>
+    </select>
+    <select id="sortSelect">
+      <option value="last_updated">Ordenar por fecha</option>
+      <option value="direction">Ordenar por dirección</option>
+      <option value="road">Ordenar por vía</option>
+      <option value="speed">Ordenar por velocidad</option>
+    </select>
+    <select id="sortOrder">
+      <option value="desc">Descendente</option>
+      <option value="asc">Ascendente</option>
+    </select>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>DIRECCIÓN</th>
+        <th>VELOCIDAD (km/h)</th>
+        <th>ESTADO</th>
+        <th>VÍA</th>
+        <th>PK</th>
+        <th>ÚLTIMA MODIFICACIÓN</th>
+        <th>TIPO RADAR</th>
+        <th>ACCIONES</th>
+      </tr>
+    </thead>
+    <tbody id="radares-table-body"></tbody>
+  </table>
+
+  <div id="paginationControls" class="pagination-controls"></div>
+
+  <button class="logout-btn" onclick="logout()">CERRAR SESIÓN</button>
 </body>
 </html>

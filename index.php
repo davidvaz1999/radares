@@ -281,6 +281,29 @@
     color: white;
   }
 
+  /* Botón de modo conducción */
+  #driveModeButton {
+    background-color: #17a2b8;
+    color: white;
+    position: relative;
+  }
+
+  #driveModeButton.active {
+    background-color: #138496;
+  }
+
+  #driveModeButton span {
+    font-size: 10px;
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #ff9800;
+    color: white;
+    border-radius: 3px;
+    padding: 1px 3px;
+    pointer-events: none;
+  }
+
   #radarForm {
     position: absolute;
     top: 10%;
@@ -865,6 +888,90 @@
     animation: pulse 2s infinite;
   }
 
+  /* Modo conducción */
+  #drive-mode-container {
+    display: none;
+    position: fixed;
+    bottom: 70px;
+    left: 0;
+    width: 100%;
+    z-index: 1001;
+    pointer-events: none;
+  }
+
+  #drive-mode-bar {
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    padding: 10px 15px;
+    margin: 0 auto;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: auto;
+  }
+
+  .drive-mode-info {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+  }
+
+  .speed-display,
+  .speed-limit-display,
+  .next-radar-info {
+    text-align: center;
+  }
+
+  #current-speed,
+  #speed-limit,
+  #next-radar-distance {
+    font-size: 1.2rem;
+    font-weight: bold;
+    display: block;
+  }
+
+  #current-speed.exceeding {
+    color: #ff0000;
+    animation: pulse 0.5s infinite;
+  }
+
+  #drive-mode-bar small {
+    font-size: 0.7rem;
+    color: #666;
+  }
+
+  #exit-drive-mode {
+    width: 40px;
+    height: 40px;
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
+
+  /* Ajustes para cuando el listado está visible */
+  .list-visible + #drive-mode-container {
+    left: 150px;
+  }
+
+  @media (max-width: 768px) {
+    #drive-mode-container {
+      bottom: 100px;
+    }
+
+    .list-visible + #drive-mode-container {
+      left: 0;
+    }
+  }
+
   @media (min-width: 769px) {
     .list-container {
       display: flex;
@@ -920,15 +1027,30 @@
 </head>
 <body>
 
-  <!--<div id="preloader">
-    <img src="https://ahorraunamulta.com/velocidades/default/120.png" alt="Logotipo">
-    <h2>AHORRA UNA MULTA</h2><BR>
-    <h1>Cargando...</h1>
-  </div>-->
-
   <!-- Barra de búsqueda -->
   <div class="search-container">
     <input type="text" class="search-input" placeholder="Buscar radares por carretera o ubicación..." id="searchInput">
+  </div>
+
+  <!-- Modo conducción -->
+  <div id="drive-mode-container">
+    <div id="drive-mode-bar">
+      <div class="drive-mode-info">
+        <div class="speed-display">
+          <span id="current-speed">--</span>
+          <small>km/h</small>
+        </div>
+        <div class="speed-limit-display">
+          <span id="speed-limit">--</span>
+          <small>Límite</small>
+        </div>
+        <div class="next-radar-info">
+          <span id="next-radar-distance">--</span>
+          <small>Próximo radar</small>
+        </div>
+      </div>
+      <button id="exit-drive-mode" class="action-button" title="Salir del modo conducción">🚗</button>
+    </div>
   </div>
 
   <!-- Listado normal (para desktop) -->
@@ -1088,6 +1210,7 @@
     <a href="/login" class="action-button buttonLogin" title="Admin">ADMIN</a>
     <button id="statsButton" class="action-button" title="Estadísticas">📊</button>
     <button id="toggle-button" class="action-button" title="Mostrar listado">📋</button>
+    <button id="driveModeButton" class="action-button" title="Modo conducción (BETA)">🚗<span>BETA</span></button>
     <button id="addCurrentLocationButton" class="action-button" title="Añadir radar en mi ubicación">⚠️</button>
     <button id="addRadarButton" class="action-button" title="Añadir radar manualmente">➕</button>
     <button id="helpButton2" class="action-button" title="Ayuda">❔</button>
@@ -1126,6 +1249,7 @@
       <p>AhorraUnaMulta.com es una herramienta intuitiva que te ayuda a identificar radares de tráfico en tu zona y conocer las velocidades permitidas, permitiéndote evitar multas de tránsito de manera eficaz.</p>
       <p>Presionando el botón +, puedes añadir nuevos radares manualmente.</p>
       <p>Presionando el botón ⚠️, puedes añadir un radar en tu ubicación actual (un administrador lo revisará).</p>
+      <p>Presionando el botón 🚗, puedes activar el modo conducción (BETA) para una experiencia más segura al volante.</p>
       <p>Presionando sobre los radares, tienes la opción de votarlos.</p>
       <p>Si permites la ubicación, el mapa se irá actualizando en tiempo real según conduces.</p>
       <p>Si no quieres que la ubicación te centre todo el rato el mapa, tienes un botón para desactivarlo arriba a la izquierda.</p>
@@ -1165,8 +1289,13 @@
     let accuracyCircle;
     let tempMarker = null;
     let showInactiveRadars = false;
-    let centrarMapa = true; // Cambiado a true por defecto
+    let centrarMapa = true;
     let radaresMarkers = {};
+    let isDriveModeActive = false;
+    let driveModeCheckInterval;
+    let lastPositionForDriveMode = null;
+    let lastAlertedRadar = null;
+    let lastRadarCheckTime = 0;
 
     // Variables para los filtros
     let currentFilters = {
@@ -1309,6 +1438,18 @@
       // Botón de estadísticas
       document.getElementById('statsButton').addEventListener('click', showStats);
 
+      // Botón de modo conducción
+      document.getElementById('driveModeButton').addEventListener('click', () => {
+        if (isDriveModeActive) {
+          disableDriveMode();
+        } else {
+          enableDriveMode();
+        }
+      });
+
+      // Evento para salir del modo conducción
+      document.getElementById('exit-drive-mode').addEventListener('click', disableDriveMode);
+
       // Mejorar accesibilidad de botones
       document.querySelectorAll('button').forEach(button => {
         button.addEventListener('keydown', function(e) {
@@ -1396,11 +1537,14 @@
       // Seguimiento de la posición con mejor control
       navigator.geolocation.watchPosition(
         position => {
+          // Guardar posición para el modo conducción
+          lastPositionForDriveMode = position;
+
           const now = Date.now();
           // Limitar actualizaciones a 1 por segundo como máximo
           if (now - lastUpdateTime < 1000) return;
 
-          const { latitude, longitude, accuracy } = position.coords;
+          const { latitude, longitude, accuracy, speed } = position.coords;
           const newPos = [latitude, longitude];
 
           // Solo actualizar si hay un cambio significativo (más de 10 metros)
@@ -1411,6 +1555,24 @@
 
             if (centrarMapa) {
               map.setView(newPos);
+            }
+
+            // Actualizar velocidad en modo conducción
+            if (isDriveModeActive && speed) {
+              const speedKmh = (speed * 3.6).toFixed(0);
+              document.getElementById('current-speed').textContent = speedKmh;
+
+              // Comprobar si estamos excediendo el límite de velocidad
+              const speedLimit = document.getElementById('speed-limit').textContent;
+              if (speedLimit !== '--' && speedKmh > speedLimit) {
+                document.getElementById('current-speed').classList.add('exceeding');
+                // Alertar solo si estamos significativamente por encima (+5km/h)
+                if (speedKmh - speedLimit > 5) {
+                  playAlert(`¡Exceso de velocidad! Límite: ${speedLimit} km/h. Tu velocidad: ${speedKmh} km/h`);
+                }
+              } else {
+                document.getElementById('current-speed').classList.remove('exceeding');
+              }
             }
 
             lastPosition = newPos;
@@ -1444,6 +1606,260 @@
       }
     }
 
+    // Función para activar el modo conducción
+    function enableDriveMode() {
+      if (isDriveModeActive) return;
+
+      // Mostrar advertencia BETA la primera vez
+      if (!localStorage.getItem('driveModeBetaWarningShown')) {
+        const betaWarning = L.popup()
+          .setLatLng(map.getCenter())
+          .setContent(`
+            <div style="padding: 10px; max-width: 250px;">
+              <b>⚠️ Modo Conducción (BETA)</b><br>
+              Esta función está en fase de pruebas y puede contener errores.<br>
+              <small>No sustituye a la atención al volante.</small>
+            </div>
+          `)
+          .openOn(map);
+
+        setTimeout(() => {
+          map.closePopup(betaWarning);
+        }, 8000);
+
+        localStorage.setItem('driveModeBetaWarningShown', 'true');
+      }
+
+      isDriveModeActive = true;
+      document.getElementById('drive-mode-container').style.display = 'block';
+      document.getElementById('driveModeButton').classList.add('active');
+
+      // Ocultar elementos no esenciales
+      document.querySelector('.search-container').style.display = 'none';
+      document.getElementById('legend-button').style.display = 'none';
+
+      // Ocultar todos los botones de acción excepto el de añadir radar y el de salir del modo conducción
+      const actionButtons = document.querySelectorAll('.action-button');
+      actionButtons.forEach(button => {
+        if (button.id !== 'addCurrentLocationButton' && button.id !== 'exit-drive-mode') {
+          button.style.display = 'none';
+        }
+      });
+
+      // Ajustar el mapa para modo conducción
+      if (userMarker && userMarker.getLatLng().lat !== 0) {
+        map.setView(userMarker.getLatLng(), 15);
+      }
+
+      // Iniciar chequeo de radares con optimización
+      lastRadarCheckTime = 0;
+      driveModeCheckInterval = setInterval(optimizedCheckNearbyRadars, 1000);
+
+      // Actualizar datos inmediatamente
+      checkNearbyRadars();
+    }
+
+    // Función optimizada para chequeo de radares
+    function optimizedCheckNearbyRadars() {
+      const now = Date.now();
+      // Limitar chequeos a 1 por segundo como máximo
+      if (now - lastRadarCheckTime < 1000) return;
+      lastRadarCheckTime = now;
+
+      checkNearbyRadars();
+    }
+
+    // Función para desactivar el modo conducción
+    function disableDriveMode() {
+      if (!isDriveModeActive) return;
+
+      isDriveModeActive = false;
+      document.getElementById('drive-mode-container').style.display = 'none';
+      document.getElementById('driveModeButton').classList.remove('active');
+
+      // Mostrar elementos nuevamente
+      document.querySelector('.search-container').style.display = 'block';
+      document.getElementById('legend-button').style.display = 'block';
+
+      // Mostrar todos los botones de acción
+      const actionButtons = document.querySelectorAll('.action-button');
+      actionButtons.forEach(button => {
+        button.style.display = '';
+      });
+
+      // Detener chequeo de radares
+      clearInterval(driveModeCheckInterval);
+
+      // Restablecer valores
+      document.getElementById('current-speed').textContent = '--';
+      document.getElementById('current-speed').classList.remove('exceeding');
+      document.getElementById('speed-limit').textContent = '--';
+      document.getElementById('next-radar-distance').textContent = '--';
+
+      // Resetear radar alertado
+      lastAlertedRadar = null;
+    }
+
+    // Comprobar radares cercanos y actualizar UI - FUNCIÓN MEJORADA
+    function checkNearbyRadars() {
+      if (!userMarker || !userMarker.getLatLng() || !isDriveModeActive) return;
+
+      const userPos = userMarker.getLatLng();
+      const userHeading = lastPositionForDriveMode?.coords?.heading || null;
+      const userSpeed = lastPositionForDriveMode?.coords?.speed || 0;
+      const nearbyRadars = getNearbyRadars(userPos.lat, userPos.lng, 1); // 1km radius
+
+      // Filtrar radares en la misma dirección (si tenemos heading)
+      const filteredRadars = nearbyRadars.filter(radar => {
+        // Si no tenemos heading, mostrar todos los radares con advertencia
+        if (userHeading === null) return true;
+
+        // Calcular ángulo entre usuario y radar
+        const angleToRadar = Math.atan2(
+          radar.getLatLng().lng - userPos.lng,
+          radar.getLatLng().lat - userPos.lat
+        ) * (180 / Math.PI);
+
+        // Normalizar ángulos
+        const normalizedUserHeading = (userHeading + 360) % 360;
+        const normalizedAngleToRadar = (angleToRadar + 360) % 360;
+
+        // Comprobar si el radar está en la misma dirección (±45 grados)
+        const angleDiff = Math.abs(normalizedUserHeading - normalizedAngleToRadar);
+        return angleDiff < 45 || angleDiff > 315;
+      });
+
+      // Ordenar por distancia
+      filteredRadars.sort((a, b) => {
+        const distA = map.distance(userPos, a.getLatLng());
+        const distB = map.distance(userPos, b.getLatLng());
+        return distA - distB;
+      });
+
+      // Actualizar UI con el radar más cercano
+      if (filteredRadars.length > 0) {
+        const closestRadar = filteredRadars[0];
+        const distance = map.distance(userPos, closestRadar.getLatLng());
+        const distanceM = Math.round(distance);
+
+        document.getElementById('next-radar-distance').textContent = `${distanceM} m`;
+
+        // Actualizar límite de velocidad en el panel
+        if (closestRadar.radarData.speed) {
+          document.getElementById('speed-limit').textContent = closestRadar.radarData.speed;
+        }
+
+        // Alertar si está muy cerca (solo si velocidad > 30 km/h)
+        if (userSpeed > 8.33) { // 8.33 m/s ≈ 30 km/h
+          if (distance < 500 && distance > 480 && lastAlertedRadar !== closestRadar.radarData.key) {
+            const radarType = getRadarTypeDescription(closestRadar.radarData.radarType);
+            const directionInfo = userHeading === null ? " (dirección no confirmada)" : "";
+            playAlert(`Radar ${radarType} a 500 metros${directionInfo}. Límite ${closestRadar.radarData.speed || 'desconocida'} km/h`);
+            lastAlertedRadar = closestRadar.radarData.key;
+
+            // Si hay más radares cercanos, mencionar el siguiente
+            if (filteredRadars.length > 1) {
+              const nextRadar = filteredRadars[1];
+              const nextDistance = Math.round(map.distance(userPos, nextRadar.getLatLng()));
+              const nextRadarType = getRadarTypeDescription(nextRadar.radarData.radarType);
+
+              setTimeout(() => {
+                playAlert(`Próximo radar ${nextRadarType} a ${nextDistance} metros`);
+              }, 3000);
+            }
+          }
+          else if (distance < 200 && distance > 180 && lastAlertedRadar === closestRadar.radarData.key) {
+            const radarType = getRadarTypeDescription(closestRadar.radarData.radarType);
+            playAlert(`¡Atención! Radar ${radarType} a 200 metros`);
+          }
+        }
+
+        // Si nos alejamos del radar, resetear la alerta
+        if (distance > 500) {
+          lastAlertedRadar = null;
+        }
+      } else {
+        document.getElementById('next-radar-distance').textContent = '--';
+        document.getElementById('speed-limit').textContent = '--';
+        lastAlertedRadar = null;
+      }
+
+      // Actualizar velocidad actual si está disponible
+      if (userSpeed) {
+        const speedKmh = (userSpeed * 3.6).toFixed(0);
+        document.getElementById('current-speed').textContent = speedKmh;
+
+        // Comprobar exceso de velocidad
+        const speedLimit = document.getElementById('speed-limit').textContent;
+        if (speedLimit !== '--' && speedKmh > speedLimit) {
+          document.getElementById('current-speed').classList.add('exceeding');
+          // Alertar solo si estamos significativamente por encima (+5km/h)
+          if (speedKmh - speedLimit > 5) {
+            playAlert(`¡Exceso de velocidad! Límite: ${speedLimit} km/h. Tu velocidad: ${speedKmh} km/h`);
+          }
+        } else {
+          document.getElementById('current-speed').classList.remove('exceeding');
+        }
+      }
+    }
+
+    // Función auxiliar para descripciones de tipos de radar
+    function getRadarTypeDescription(type) {
+      const descriptions = {
+        'Fijo': 'fijo',
+        'Móvil': 'móvil',
+        'Tramo': 'de tramo',
+        'Remolque': 'en remolque',
+        'default': ''
+      };
+      return descriptions[type] || descriptions['default'];
+    }
+
+    // Notificación de voz mejorada
+    function playAlert(message) {
+      // Cancelar cualquier alerta previa que esté en curso
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(message);
+        utterance.lang = 'es-ES';
+        utterance.rate = 0.9; // Un poco más lento para mejor comprensión
+        utterance.volume = 1.5; // Mayor volumen (algunos navegadores soportan >1)
+
+        // Configurar voz femenina si está disponible
+        const voices = window.speechSynthesis.getVoices();
+        const femaleVoice = voices.find(v => v.name.includes('female') && v.lang.includes('es'));
+        if (femaleVoice) {
+          utterance.voice = femaleVoice;
+        }
+
+        window.speechSynthesis.speak(utterance);
+      }
+
+      // También mostrar notificación visual
+      const notification = L.popup()
+        .setLatLng(userMarker.getLatLng())
+        .setContent(`
+          <div style="padding: 10px; background: #ffeb3b; border-radius: 5px; max-width: 250px;">
+            <b>⚠️ Alerta de Radar</b><br>
+            ${message}
+          </div>
+        `)
+        .openOn(map);
+
+      setTimeout(() => {
+        map.closePopup(notification);
+      }, 5000);
+    }
+
+    // Obtener radares cercanos
+    function getNearbyRadars(lat, lng, radiusKm) {
+      return Object.values(radaresMarkers).filter(marker => {
+        const distance = map.distance([lat, lng], marker.getLatLng());
+        return distance <= radiusKm * 1000;
+      });
+    }
+
     // Función para añadir radar en la ubicación actual
     function addRadarAtCurrentLocation() {
       if (!userMarker || !userMarker.getLatLng()) {
@@ -1451,26 +1867,36 @@
         return;
       }
 
-      // Mostrar confirmación
-      if (!confirm('¿Quieres añadir un radar genérico en tu ubicación actual? Un administrador lo revisará y completará los detalles.')) {
+      // Obtener velocidad actual si está disponible
+      const currentSpeed = lastPositionForDriveMode?.coords?.speed
+        ? Math.round(lastPositionForDriveMode.coords.speed * 3.6)
+        : null;
+
+      // Mostrar confirmación con información adicional
+      const confirmMessage = currentSpeed
+        ? `¿Quieres añadir un radar genérico en tu ubicación actual? Velocidad detectada: ${currentSpeed} km/h. Un administrador revisará y completará los detalles.`
+        : `¿Quieres añadir un radar genérico en tu ubicación actual? Un administrador lo revisará y completará los detalles.`;
+
+      if (!confirm(confirmMessage)) {
         return;
       }
 
       const userPos = userMarker.getLatLng();
 
-      // Crear un radar genérico
+      // Crear un radar genérico con la velocidad detectada si está disponible
       const newRadar = {
         radarType: "Móvil",
         road: "Por determinar",
         direction: "Por determinar",
-        speed: 0,
+        speed: currentSpeed || 0, // Incluir velocidad GPS si está disponible
         lat: userPos.lat,
         lng: userPos.lng,
         votos_positivos: 0,
         votos_negativos: 0,
         status: "pending_review",
         last_updated: new Date().toISOString(),
-        is_temp: true
+        is_temp: true,
+        detected_speed: currentSpeed || null // Guardar velocidad detectada por separado
       };
 
       // Mostrar feedback de carga
@@ -1481,7 +1907,8 @@
 
       db.ref("radares").push(newRadar)
         .then(() => {
-          alert('Radar temporal añadido. Un administrador lo revisará y completará la información.');
+          alert('Radar temporal añadido. Un administrador lo revisará y completará la información.' +
+                (currentSpeed ? ` Velocidad detectada: ${currentSpeed} km/h.` : ''));
         })
         .catch(error => {
           console.error("Error al guardar radar:", error);
@@ -1738,6 +2165,7 @@
       });
 
       marker.radarData = radar;
+      marker.radarData.key = radarId; // Añadir ID para referencia
       radaresMarkers[radarId] = marker;
 
       const popupContent = createPopupContent(radar, radarId);
