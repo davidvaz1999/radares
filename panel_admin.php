@@ -166,7 +166,7 @@
           (radar.direction && radar.direction.toLowerCase().includes(searchTerm)) ||
           (radar.road && radar.road.toLowerCase().includes(searchTerm)) ||
           (radar.pk && radar.pk.toString().includes(searchTerm)) ||
-          radar.id.includes(searchTerm);
+          radar.id.toLowerCase().includes(searchTerm);
 
         const matchesStatus = statusFilter === 'all' || radar.status === statusFilter;
         const matchesType = typeFilter === 'all' || radar.radarType === typeFilter;
@@ -738,7 +738,7 @@
   </div>
 
   <div class="controls">
-    <input type="text" id="searchInput" placeholder="Buscar por dirección, vía o PK...">
+    <input type="text" id="searchInput" placeholder="Buscar por ID, dirección, vía o PK...">
     <select id="statusFilter">
       <option value="all">Todos los estados</option>
       <option value="active">Activos</option>

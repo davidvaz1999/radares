@@ -1727,8 +1727,8 @@
 
         // Calcular ángulo entre usuario y radar
         const angleToRadar = Math.atan2(
-          radar.getLatLng().lng - userPos.lng,
-          radar.getLatLng().lat - userPos.lat
+          marker.getLatLng().lng - userPos.lng,
+          marker.getLatLng().lat - userPos.lat
         ) * (180 / Math.PI);
 
         // Normalizar ángulos
@@ -2192,13 +2192,17 @@
 
       const popup = document.createElement('div');
       popup.innerHTML = `
-        <b>${radar.radarType || "Radar"} (ID: ${radarId})</b><br>
+        <b>${radar.radarType || "Radar"}</b><br>
         <small>${radar.road || "Carretera no especificada"}</small><br>
         ${radar.pk ? `PK: ${radar.pk}<br>` : ''}
         Dirección: ${radar.direction || "No especificada"}<br>
         Velocidad: ${radar.speed || "N/A"} km/h<br>
         Estado: <b>${radar.status === "active" ? "Activo" : radar.status === "pending_review" ? "Pendiente" : "Inactivo"}</b><br>
         Actualizado: ${lastUpdated}<br>
+        <button onclick="copyToClipboard('${radarId}')"
+                style="margin-top: 5px; padding: 2px 5px; font-size: 10px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 3px; cursor: pointer;">
+          Copiar ID
+        </button>
         <div style="margin-top: 10px; display: flex; justify-content: center; gap: 10px;">
           <button id="boton_positivo_${radarId}" class="button-voto button-voto-positivo"
             onclick="votar('${radarId}', 'positivo')" ${userVoted ? 'disabled' : ''}>
@@ -2213,6 +2217,27 @@
 
       return popup;
     }
+
+    // Función para copiar ID al portapapeles
+    window.copyToClipboard = function(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        // Mostrar feedback visual
+        const button = event.target;
+        const originalText = button.textContent;
+        button.textContent = "¡Copiado!";
+        button.style.backgroundColor = "#4CAF50";
+        button.style.color = "white";
+
+        setTimeout(() => {
+          button.textContent = originalText;
+          button.style.backgroundColor = "#f0f0f0";
+          button.style.color = "black";
+        }, 2000);
+      }).catch(err => {
+        console.error('Error al copiar: ', err);
+        alert('No se pudo copiar el ID');
+      });
+    };
 
     // Obtener icono según tipo de radar
     function getIconByRadar(radar) {
