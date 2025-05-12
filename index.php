@@ -460,6 +460,7 @@
     z-index: 900;
     box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease;
+    transform: translateX(100%);
   }
 
   .list-container:not([style*="display: none"]) {
@@ -974,7 +975,7 @@
 
   @media (min-width: 769px) {
     .list-container {
-      display: flex;
+      display: none;
     }
 
     .list-modal {
@@ -1345,7 +1346,10 @@
 
       // Botón para minimizar el listado en desktop
       minimizeButton.addEventListener('click', () => {
-        listContainer.style.display = 'none';
+        listContainer.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+          listContainer.style.display = 'none';
+        }, 300);
         document.querySelector('.action-buttons').classList.remove('list-visible');
         toggleButton.textContent = '📋';
       });
@@ -1358,15 +1362,22 @@
           listModal.style.display = 'block';
           updateMobileList();
         } else {
-          const isHidden = listContainer.style.display === 'none' || listContainer.style.display === '';
-          listContainer.style.display = isHidden ? 'flex' : 'none';
-          toggleButton.textContent = isHidden ? '📋' : '📋';
+          const isHidden = listContainer.style.display === 'none' ||
+                          listContainer.style.display === '' ||
+                          listContainer.style.transform === 'translateX(100%)';
 
-          // Ajustar posición de los botones cuando el listado está visible
           if (isHidden) {
+            listContainer.style.display = 'flex';
+            listContainer.style.transform = 'translateX(0)';
             actionButtons.classList.add('list-visible');
+            toggleButton.textContent = '📋';
           } else {
+            listContainer.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+              listContainer.style.display = 'none';
+            }, 300);
             actionButtons.classList.remove('list-visible');
+            toggleButton.textContent = '📋';
           }
         }
       });
@@ -1710,7 +1721,7 @@
       const nearbyRadars = getNearbyRadars(userPos.lat, userPos.lng, 1); // 1km radius
 
       // Filtrar radares en la misma dirección (si tenemos heading)
-      const filteredRadars = nearbyRadars.filter(radar => {
+      const filteredRadars = nearbyRadars.filter(marker => {
         // Si no tenemos heading, mostrar todos los radares con advertencia
         if (userHeading === null) return true;
 
@@ -2181,7 +2192,7 @@
 
       const popup = document.createElement('div');
       popup.innerHTML = `
-        <b>${radar.radarType || "Radar"}</b><br>
+        <b>${radar.radarType || "Radar"} (ID: ${radarId})</b><br>
         <small>${radar.road || "Carretera no especificada"}</small><br>
         ${radar.pk ? `PK: ${radar.pk}<br>` : ''}
         Dirección: ${radar.direction || "No especificada"}<br>
