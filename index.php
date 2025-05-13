@@ -306,6 +306,10 @@
     border-radius: 3px;
     padding: 1px 3px;
     pointer-events: none;
+    z-index: 1001;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    font-weight: bold;
+    text-transform: uppercase;
   }
 
   #radarForm {
