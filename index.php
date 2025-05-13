@@ -1307,7 +1307,22 @@
 
     // Inicialización del mapa
     function initMap() {
-      map = L.map('map').setView([41.3784, 2.1927], 10);
+      // Verificar si hay parámetros para centrar el mapa
+      const urlParams = new URLSearchParams(window.location.search);
+      const radarId = urlParams.get('radar');
+      const centerLat = parseFloat(urlParams.get('lat'));
+      const centerLng = parseFloat(urlParams.get('lng'));
+
+      // Configurar vista inicial
+      let initialView = [41.3784, 2.1927];
+      let initialZoom = 10;
+
+      if (centerLat && centerLng) {
+        initialView = [centerLat, centerLng];
+        initialZoom = 16;
+      }
+
+      map = L.map('map').setView(initialView, initialZoom);
 
       // Capas base
       const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -1333,6 +1348,35 @@
       loadRadars();
       setupEventListeners();
       setupSearch();
+
+      // Si hay un radar específico para centrar
+      if (radarId && centerLat && centerLng) {
+        // Esperar a que se carguen los radares
+        db.ref("radares").once('value', snapshot => {
+          const radares = snapshot.val();
+          if (radares && radares[radarId]) {
+            const radar = radares[radarId];
+            const marker = radaresMarkers[radarId];
+
+            if (marker) {
+              // Centrar y abrir popup
+              map.setView([radar.lat, radar.lng], 16);
+              marker.openPopup();
+
+              // Destacar el marcador
+              marker.setIcon(L.icon({
+                iconUrl: marker.options.icon.options.iconUrl,
+                iconSize: [40, 40],
+                iconAnchor: [20, 20]
+              }));
+
+              setTimeout(() => {
+                marker.setIcon(getIconByRadar(radar));
+              }, 2000);
+            }
+          }
+        });
+      }
     }
 
     // Interfaz de usuario
@@ -1896,7 +1940,7 @@
 
       // Crear un radar genérico con la velocidad detectada si está disponible
       const newRadar = {
-        radarType: "Móvil",
+        radarType: "Pendiente de completar",
         road: "Por determinar",
         direction: "Por determinar",
         speed: currentSpeed || 0, // Incluir velocidad GPS si está disponible

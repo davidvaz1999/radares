@@ -145,6 +145,7 @@
             ${radar.status !== 'active' ? `<button class="approve-btn" data-id="${radar.id}">✅ Activar</button>` : ''}
             ${radar.status !== 'inactive' ? `<button class="reject-btn" data-id="${radar.id}">❌ Desactivar</button>` : ''}
             ${radar.status === 'pending_review' ? `<button class="complete-btn" data-id="${radar.id}">✔️ Completar</button>` : ''}
+            <button class="view-map-btn" data-id="${radar.id}" data-lat="${radar.lat}" data-lng="${radar.lng}">🗺️ Ver en mapa</button>
             <button class="delete-btn" data-id="${radar.id}">🗑️ Eliminar</button>
           </td>
         `;
@@ -298,6 +299,15 @@
         });
       });
 
+      document.querySelectorAll('.view-map-btn').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          const id = btn.dataset.id;
+          const lat = btn.dataset.lat;
+          const lng = btn.dataset.lng;
+          viewRadarOnMap(id, lat, lng);
+        });
+      });
+
       document.querySelectorAll('.delete-btn').forEach((btn) => {
         btn.addEventListener('click', (e) => {
           const id = btn.dataset.id;
@@ -306,6 +316,12 @@
           }
         });
       });
+    };
+
+    const viewRadarOnMap = (id, lat, lng) => {
+      // Abrir el mapa en una nueva pestaña con parámetros de ubicación
+      const url = `index.php?radar=${id}&lat=${lat}&lng=${lng}`;
+      window.open(url, '_blank');
     };
 
     const updateRadarStatus = (id, status) => {
@@ -572,6 +588,14 @@
 
     .delete-btn:hover {
       background-color: #c0392b;
+    }
+
+    .view-map-btn {
+      background-color: #3498db;
+    }
+
+    .view-map-btn:hover {
+      background-color: #2980b9;
     }
 
     #notification {
