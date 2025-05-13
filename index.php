@@ -57,6 +57,10 @@
       overflow: hidden;
   }
 
+  body.modal-open {
+    overflow: hidden;
+  }
+
   #preloader {
     position: fixed;
     top: 0;
@@ -67,7 +71,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: 3000;
     flex-direction: column;
     transition: opacity 0.5s ease, visibility 0.5s ease;
   }
@@ -313,7 +317,7 @@
     padding: 20px;
     border-radius: 16px;
     box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.2);
-    z-index: 1001;
+    z-index: 2002;
     width: 90%;
     max-width: 400px;
     font-size: 16px;
@@ -393,6 +397,7 @@
     color: white;
   }
 
+  /* Modales - Estilos actualizados */
   .modal {
     display: none;
     position: fixed;
@@ -400,10 +405,11 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.8);
     justify-content: center;
     align-items: center;
-    z-index: 999;
+    z-index: 2000;
+    pointer-events: auto;
   }
 
   .modal-content {
@@ -412,10 +418,13 @@
     border-radius: 10px;
     width: 90%;
     max-width: 600px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     text-align: center;
     border: 2px solid #007bff;
     position: relative;
+    z-index: 2001;
+    max-height: 90vh;
+    overflow-y: auto;
   }
 
   .modal-content h2 {
@@ -439,6 +448,7 @@
     position: absolute;
     top: 10px;
     right: 10px;
+    z-index: 2002;
   }
 
   .close:hover {
@@ -457,7 +467,7 @@
     overflow-y: auto;
     display: none;
     flex-direction: column;
-    z-index: 900;
+    z-index: 1500;
     box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease;
     transform: translateX(100%);
@@ -532,7 +542,7 @@
     display: none;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: 2000;
   }
 
   .popup {
@@ -543,6 +553,7 @@
     max-width: 400px;
     padding: 20px;
     text-align: center;
+    z-index: 2001;
   }
 
   .popup h2 {
@@ -662,6 +673,7 @@
     bottom: 180px !important;
     left: 10px !important;
     right: auto !important;
+    z-index: 800 !important;
   }
 
   /* Botón de centrado mejorado */
@@ -679,6 +691,7 @@
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     transition: all 0.3s ease;
     font-size: 20px;
+    z-index: 800;
   }
 
   .boton-centrado.on {
@@ -758,13 +771,13 @@
   }
 
   .leaflet-marker-icon {
-    z-index: 9999 !important;
+    z-index: 999 !important;
     transition: transform 0.2s ease;
   }
 
   .leaflet-marker-icon:hover {
     transform: scale(1.2);
-    z-index: 10000 !important;
+    z-index: 1000 !important;
   }
 
   /* Nuevos estilos para el modal de listado */
@@ -787,6 +800,7 @@
     border-radius: 10px;
     max-height: 85vh;
     overflow-y: auto;
+    z-index: 2001;
   }
 
   .close-list {
@@ -799,6 +813,7 @@
     font-weight: bold;
     background: none;
     border: none;
+    z-index: 2002;
   }
 
   /* Indicador de filtros activos */
@@ -1403,7 +1418,7 @@
         const isMobile = window.innerWidth <= 768;
 
         if (isMobile) {
-          listModal.style.display = 'block';
+          openModal('list-modal');
           updateMobileList();
         } else {
           const isHidden = listContainer.style.display === 'none' ||
@@ -1427,32 +1442,23 @@
       });
 
       closeList.addEventListener('click', () => {
-        listModal.style.display = 'none';
+        closeModal('list-modal');
       });
 
       listModal.addEventListener('click', (e) => {
         if (e.target === listModal) {
-          listModal.style.display = 'none';
+          closeModal('list-modal');
         }
       });
 
       // Botón de leyenda
       const legendButton = document.getElementById('legend-button');
-      const legendModal = document.getElementById('legendModal');
-
       legendButton.addEventListener('click', () => {
-        const isVisible = legendModal.style.display === 'flex';
-        legendModal.style.display = isVisible ? 'none' : 'flex';
+        openModal('legendModal');
       });
 
       document.getElementById('closeLegendModal').addEventListener('click', () => {
-        legendModal.style.display = 'none';
-      });
-
-      window.addEventListener('click', (e) => {
-        if (e.target === legendModal) {
-          legendModal.style.display = 'none';
-        }
+        closeModal('legendModal');
       });
 
       // Botón para añadir radar en ubicación actual
@@ -1477,17 +1483,11 @@
 
       // Modal de ayuda
       document.getElementById('helpButton2').addEventListener('click', () => {
-        document.getElementById('helpModal').style.display = 'flex';
+        openModal('helpModal');
       });
 
       document.getElementById('closeModal').addEventListener('click', () => {
-        document.getElementById('helpModal').style.display = 'none';
-      });
-
-      window.addEventListener('click', (e) => {
-        if (e.target === document.getElementById('helpModal')) {
-          document.getElementById('helpModal').style.display = 'none';
-        }
+        closeModal('helpModal');
       });
 
       // Botón de estadísticas
@@ -1513,6 +1513,18 @@
           }
         });
       });
+    }
+
+    // Abrir modal
+    function openModal(modalId) {
+      document.getElementById(modalId).style.display = 'flex';
+      document.body.classList.add('modal-open');
+    }
+
+    // Cerrar modal
+    function closeModal(modalId) {
+      document.getElementById(modalId).style.display = 'none';
+      document.body.classList.remove('modal-open');
     }
 
     // Geolocalización
