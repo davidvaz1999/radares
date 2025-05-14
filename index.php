@@ -294,6 +294,7 @@
 
   #driveModeButton.active {
     background-color: #138496;
+    animation: pulse 2s infinite;
   }
 
   #driveModeButton span {
@@ -303,13 +304,29 @@
     right: -5px;
     background-color: #ff9800;
     color: white;
-    border-radius: 3px;
-    padding: 1px 3px;
+    border-radius: 10px;
+    padding: 2px 5px;
     pointer-events: none;
     z-index: 1001;
     box-shadow: 0 1px 3px rgba(0,0,0,0.3);
     font-weight: bold;
     text-transform: uppercase;
+    font-family: Arial, sans-serif;
+  }
+
+  @media (max-width: 768px) {
+    #driveModeButton span {
+      font-size: 8px;
+      padding: 1px 3px;
+      top: -3px;
+      right: -3px;
+    }
+  }
+
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(19, 132, 150, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(19, 132, 150, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(19, 132, 150, 0); }
   }
 
   #radarForm {
@@ -465,9 +482,9 @@
     top: 0;
     width: 300px;
     height: 100vh;
-    background-color: #f9f9f9;
+    background-color: #f8f9fa;
     border-left: 2px solid #ccc;
-    padding: 20px;
+    padding: 15px;
     overflow-y: auto;
     display: none;
     flex-direction: column;
@@ -485,33 +502,70 @@
     transform: translateX(100%);
   }
 
+  /* Nuevos estilos mejorados para el listado */
   .list-item {
-    padding: 10px;
-    margin: 10px 0;
-    background: #e6e6e6;
-    border-radius: 5px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    border-left: 4px solid #007bff;
+    padding: 12px 15px;
+    margin: 8px 0;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    border-left: 5px solid #007bff;
     transition: all 0.3s ease;
     cursor: pointer;
+    border: 1px solid #e0e0e0;
   }
 
   .list-item:hover {
-    transform: translateX(5px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    background-color: #f0f7ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background-color: #f5f9ff;
+    border-left-color: #0056b3;
   }
 
   .list-item h3 {
-    margin: 0;
-    font-size: 1.2rem;
+    margin: 0 0 8px 0;
+    font-size: 1.1rem;
     color: #2c3e50;
+    display: flex;
+    align-items: center;
   }
 
   .list-item p {
-    margin: 5px 0;
+    margin: 6px 0;
     font-size: 0.9rem;
     color: #555;
+    display: flex;
+    align-items: center;
+  }
+
+  .list-item p strong {
+    min-width: 120px;
+    display: inline-block;
+    color: #333;
+  }
+
+  .list-item .status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    margin-left: 8px;
+  }
+
+  .status-active {
+    background-color: #28a745;
+    color: white;
+  }
+
+  .status-inactive {
+    background-color: #dc3545;
+    color: white;
+  }
+
+  .status-pending {
+    background-color: #ffc107;
+    color: #212529;
   }
 
   .radar-section {
@@ -523,17 +577,41 @@
     background-color: #007bff;
     color: white;
     border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
+    padding: 12px 20px;
+    border-radius: 8px;
     cursor: pointer;
     font-size: 1rem;
-    margin-bottom: 10px;
-    transition: background-color 0.2s;
+    margin-bottom: 15px;
+    transition: all 0.2s;
     width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
 
   .toggle-button-section:hover {
     background-color: #0056b3;
+    transform: translateY(-1px);
+  }
+
+  .toggle-button-section:after {
+    content: '▼';
+    font-size: 0.8rem;
+    transition: transform 0.2s;
+  }
+
+  .toggle-button-section.collapsed:after {
+    transform: rotate(-90deg);
+  }
+
+  .list-container h2, .list-modal-content h2 {
+    color: #2c3e50;
+    margin-top: 0;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
 
   .popup-overlay {
@@ -590,12 +668,10 @@
     display: flex;
     flex-wrap: wrap;
     gap: 1rem;
-    padding: 1rem;
+    padding: 15px;
     margin-bottom: 1.5rem;
-    background-color: #f0f8ff;
-    border: 1px solid #d0e3ff;
-    border-radius: 12px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background-color: #e9f2ff;
+    border-radius: 10px;
   }
 
   .filter-group {
@@ -603,9 +679,10 @@
     flex-direction: column;
     min-width: 200px;
     background: white;
-    padding: 12px;
+    padding: 15px;
     border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    margin-bottom: 10px;
   }
 
   .filter-group label {
@@ -798,9 +875,9 @@
   }
 
   .list-modal-content {
-    background-color: #f9f9f9;
+    background-color: #f8f9fa;
     margin: 20px;
-    padding: 20px;
+    padding: 15px;
     border-radius: 10px;
     max-height: 85vh;
     overflow-y: auto;
@@ -908,7 +985,7 @@
     animation: pulse 2s infinite;
   }
 
-  /* Modo conducción */
+  /* Modo conducción - ESTILOS ACTUALIZADOS */
   #drive-mode-container {
     display: none;
     position: fixed;
@@ -921,12 +998,12 @@
 
   #drive-mode-bar {
     background-color: rgba(255, 255, 255, 0.95);
-    border-radius: 15px;
+    border-radius: 12px;
     padding: 10px 15px;
     margin: 0 auto;
-    width: 90%;
-    max-width: 400px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    width: 95%;
+    max-width: 500px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -935,30 +1012,53 @@
 
   .drive-mode-info {
     display: flex;
-    gap: 15px;
+    gap: 10px;
     align-items: center;
+    width: 100%;
   }
 
-  .speed-display,
-  .speed-limit-display,
-  .next-radar-info {
+  .speed-display {
+    position: relative;
     text-align: center;
+    flex: 1;
+    padding: 0 5px;
   }
 
-  #current-speed,
-  #speed-limit,
-  #next-radar-distance {
-    font-size: 1.2rem;
+  .speed-progress-container {
+    width: 100%;
+    height: 4px;
+    background: #f0f0f0;
+    border-radius: 2px;
+    margin-bottom: 3px;
+    overflow: hidden;
+  }
+
+  .speed-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: #4CAF50;
+    transition: width 0.5s ease, background-color 0.5s ease;
+  }
+
+  #current-speed, #speed-limit, #next-radar-distance {
+    font-size: 1.4rem;
     font-weight: bold;
     display: block;
+    transition: color 0.3s ease;
+    color: #333;
+    line-height: 1.2;
   }
 
   #current-speed.exceeding {
-    color: #ff0000;
     animation: pulse 0.5s infinite;
   }
 
-  #drive-mode-bar small {
+  .speed-limit-display, .next-radar-info {
+    text-align: center;
+    flex: 1;
+  }
+
+  .drive-mode-info small {
     font-size: 0.7rem;
     color: #666;
   }
@@ -966,15 +1066,38 @@
   #exit-drive-mode {
     width: 40px;
     height: 40px;
-    background-color: #ff4d4d;
-    color: white;
-    border: none;
+    font-size: 16px;
+    margin-left: 10px;
+  }
+
+  /* Animación de radar */
+  @keyframes radarPulse {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(1.5); opacity: 0; }
+  }
+
+  .radar-alert {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200px;
+    height: 200px;
     border-radius: 50%;
+    background: rgba(255, 59, 48, 0.2);
     display: flex;
-    align-items: center;
     justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    align-items: center;
+    pointer-events: none;
+    z-index: 2000;
+    animation: radarPulse 2s infinite;
+  }
+
+  .radar-alert span {
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(0,0,0,0.5);
   }
 
   /* Ajustes para cuando el listado está visible */
@@ -982,27 +1105,64 @@
     left: 150px;
   }
 
+  /* Autocompletado de búsqueda */
+  .search-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 0 0 8px 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1001;
+    display: none;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+
+  .search-suggestion {
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+
+  .search-suggestion:hover {
+    background-color: #f0f0f0;
+  }
+
+  .search-suggestion.highlighted {
+    background-color: #e6f2ff;
+  }
+
   @media (max-width: 768px) {
     #drive-mode-container {
-      bottom: 100px;
+      bottom: 80px;
+    }
+  
+    #drive-mode-bar {
+      flex-direction: row;
+      gap: 5px;
+      padding: 8px 10px;
+    }
+    
+    .drive-mode-info {
+      flex-direction: row;
+      gap: 5px;
+    }
+    
+    #current-speed, #speed-limit, #next-radar-distance {
+      font-size: 1.2rem;
     }
 
-    .list-visible + #drive-mode-container {
-      left: 0;
-    }
-  }
-
-  @media (min-width: 769px) {
-    .list-container {
-      display: none;
+    .speed-progress-container {
+      height: 3px;
     }
 
-    .list-modal {
-      display: none !important;
+    #exit-drive-mode {
+      width: 35px;
+      height: 35px;
     }
-  }
 
-  @media (max-width: 768px) {
     .list-container {
       display: none;
     }
@@ -1049,14 +1209,18 @@
 
   <!-- Barra de búsqueda -->
   <div class="search-container">
-    <input type="text" class="search-input" placeholder="Buscar radares por carretera o ubicación..." id="searchInput">
+    <input type="text" class="search-input" placeholder="Buscar radares por carretera o ubicación..." id="searchInput" autocomplete="off">
+    <div id="search-suggestions" class="search-suggestions"></div>
   </div>
 
-  <!-- Modo conducción -->
+  <!-- Modo conducción - ACTUALIZADO -->
   <div id="drive-mode-container">
     <div id="drive-mode-bar">
       <div class="drive-mode-info">
         <div class="speed-display">
+          <div class="speed-progress-container">
+            <div class="speed-progress-bar" id="speed-progress-bar"></div>
+          </div>
           <span id="current-speed">--</span>
           <small>km/h</small>
         </div>
@@ -1066,7 +1230,7 @@
         </div>
         <div class="next-radar-info">
           <span id="next-radar-distance">--</span>
-          <small>Próximo radar</small>
+          <small>Próximo</small>
         </div>
       </div>
       <button id="exit-drive-mode" class="action-button" title="Salir del modo conducción">🚗</button>
@@ -1469,19 +1633,23 @@
       document.getElementById('addCurrentLocationButton').addEventListener('click', addRadarAtCurrentLocation);
 
       // Secciones
-      document.getElementById('toggle-active').addEventListener('click', () => {
+      document.getElementById('toggle-active').addEventListener('click', function() {
+        this.classList.toggle('collapsed');
         toggleSection('active-list');
       });
 
-      document.getElementById('toggle-inactive').addEventListener('click', () => {
+      document.getElementById('toggle-inactive').addEventListener('click', function() {
+        this.classList.toggle('collapsed');
         toggleSection('inactive-list');
       });
 
-      document.getElementById('toggle-active-mobile').addEventListener('click', () => {
+      document.getElementById('toggle-active-mobile').addEventListener('click', function() {
+        this.classList.toggle('collapsed');
         toggleSection('active-list-mobile');
       });
 
-      document.getElementById('toggle-inactive-mobile').addEventListener('click', () => {
+      document.getElementById('toggle-inactive-mobile').addEventListener('click', function() {
+        this.classList.toggle('collapsed');
         toggleSection('inactive-list-mobile');
       });
 
@@ -1630,20 +1798,7 @@
 
             // Actualizar velocidad en modo conducción
             if (isDriveModeActive && speed) {
-              const speedKmh = (speed * 3.6).toFixed(0);
-              document.getElementById('current-speed').textContent = speedKmh;
-
-              // Comprobar si estamos excediendo el límite de velocidad
-              const speedLimit = document.getElementById('speed-limit').textContent;
-              if (speedLimit !== '--' && speedKmh > speedLimit) {
-                document.getElementById('current-speed').classList.add('exceeding');
-                // Alertar solo si estamos significativamente por encima (+5km/h)
-                if (speedKmh - speedLimit > 5) {
-                  playAlert(`¡Exceso de velocidad! Límite: ${speedLimit} km/h. Tu velocidad: ${speedKmh} km/h`);
-                }
-              } else {
-                document.getElementById('current-speed').classList.remove('exceeding');
-              }
+              updateSpeedInDriveMode(speed);
             }
 
             lastPosition = newPos;
@@ -1677,29 +1832,71 @@
       }
     }
 
+    // Función para actualizar la velocidad en modo conducción
+    function updateSpeedInDriveMode(speed) {
+      const speedKmh = (speed * 3.6).toFixed(0);
+      document.getElementById('current-speed').textContent = speedKmh;
+
+      // Comprobar exceso de velocidad
+      const speedLimit = document.getElementById('speed-limit').textContent;
+      if (speedLimit !== '--') {
+        updateSpeedProgress(speedKmh, speedLimit);
+        
+        if (speedKmh > speedLimit) {
+          document.getElementById('current-speed').classList.add('exceeding');
+          // Alertar solo si estamos significativamente por encima (+5km/h)
+          if (speedKmh - speedLimit > 5) {
+            playAlert(`¡Exceso de velocidad! Límite: ${speedLimit} km/h. Tu velocidad: ${speedKmh} km/h`);
+          }
+        } else {
+          document.getElementById('current-speed').classList.remove('exceeding');
+        }
+      }
+    }
+
+    // Función para actualizar la barra de progreso de velocidad
+    function updateSpeedProgress(currentSpeed, speedLimit) {
+      if (!currentSpeed || !speedLimit) return;
+      
+      const progressBar = document.getElementById('speed-progress-bar');
+      const speedRatio = Math.min(currentSpeed / speedLimit, 1.5); // Máximo 150% del límite
+      
+      // Calcular porcentaje y color
+      let percentage = (speedRatio / 1.5) * 100;
+      let color;
+      
+      if (speedRatio < 0.8) {
+        color = '#4CAF50'; // Verde
+      } else if (speedRatio < 1.0) {
+        color = '#FFC107'; // Amarillo
+      } else {
+        color = '#F44336'; // Rojo
+      }
+      
+      progressBar.style.width = `${percentage}%`;
+      progressBar.style.backgroundColor = color;
+    }
+
     // Función para activar el modo conducción
     function enableDriveMode() {
       if (isDriveModeActive) return;
 
-      // Mostrar advertencia BETA la primera vez
-      if (!localStorage.getItem('driveModeBetaWarningShown')) {
-        const betaWarning = L.popup()
-          .setLatLng(map.getCenter())
-          .setContent(`
-            <div style="padding: 10px; max-width: 250px;">
-              <b>⚠️ Modo Conducción (BETA)</b><br>
-              Esta función está en fase de pruebas y puede contener errores.<br>
-              <small>No sustituye a la atención al volante.</small>
-            </div>
-          `)
-          .openOn(map);
+      // Mostrar advertencia BETA más visible
+      const betaWarning = L.popup()
+        .setLatLng(map.getCenter())
+        .setContent(`
+          <div style="padding: 15px; max-width: 280px; text-align: center; background: #fff3cd; border: 2px solid #ffc107; border-radius: 10px;">
+            <h3 style="margin-top: 0; color: #856404;">⚠️ MODO CONDUCCIÓN (BETA)</h3>
+            <p style="margin-bottom: 0;">Esta función está en fase de pruebas y puede contener errores.</p>
+            <p style="font-size: 0.9em; margin-top: 10px;"><b>No sustituye a la atención al volante.</b></p>
+          </div>
+        `)
+        .openOn(map);
 
-        setTimeout(() => {
-          map.closePopup(betaWarning);
-        }, 8000);
-
-        localStorage.setItem('driveModeBetaWarningShown', 'true');
-      }
+      // Cerrar automáticamente después de 8 segundos
+      setTimeout(() => {
+        map.closePopup(betaWarning);
+      }, 8000);
 
       isDriveModeActive = true;
       document.getElementById('drive-mode-container').style.display = 'block';
@@ -1766,6 +1963,7 @@
       document.getElementById('current-speed').classList.remove('exceeding');
       document.getElementById('speed-limit').textContent = '--';
       document.getElementById('next-radar-distance').textContent = '--';
+      document.getElementById('speed-progress-bar').style.width = '0%';
 
       // Resetear radar alertado
       lastAlertedRadar = null;
@@ -1778,6 +1976,7 @@
       const userPos = userMarker.getLatLng();
       const userHeading = lastPositionForDriveMode?.coords?.heading || null;
       const userSpeed = lastPositionForDriveMode?.coords?.speed || 0;
+      const userSpeedKmh = userSpeed ? (userSpeed * 3.6).toFixed(0) : 0;
       const nearbyRadars = getNearbyRadars(userPos.lat, userPos.lng, 1); // 1km radius
 
       // Filtrar radares en la misma dirección (si tenemos heading)
@@ -1817,27 +2016,18 @@
 
         // Actualizar límite de velocidad en el panel
         if (closestRadar.radarData.speed) {
-          document.getElementById('speed-limit').textContent = closestRadar.radarData.speed;
+          const speedLimit = closestRadar.radarData.speed;
+          document.getElementById('speed-limit').textContent = speedLimit;
+
+          // Actualizar barra de progreso y colores
+          updateSpeedProgress(userSpeedKmh, speedLimit);
         }
 
         // Alertar si está muy cerca (solo si velocidad > 30 km/h)
         if (userSpeed > 8.33) { // 8.33 m/s ≈ 30 km/h
           if (distance < 500 && distance > 480 && lastAlertedRadar !== closestRadar.radarData.key) {
-            const radarType = getRadarTypeDescription(closestRadar.radarData.radarType);
-            const directionInfo = userHeading === null ? " (dirección no confirmada)" : "";
-            playAlert(`Radar ${radarType} a 500 metros${directionInfo}. Límite ${closestRadar.radarData.speed || 'desconocida'} km/h`);
+            showRadarAlert(closestRadar, distanceM);
             lastAlertedRadar = closestRadar.radarData.key;
-
-            // Si hay más radares cercanos, mencionar el siguiente
-            if (filteredRadars.length > 1) {
-              const nextRadar = filteredRadars[1];
-              const nextDistance = Math.round(map.distance(userPos, nextRadar.getLatLng()));
-              const nextRadarType = getRadarTypeDescription(nextRadar.radarData.radarType);
-
-              setTimeout(() => {
-                playAlert(`Próximo radar ${nextRadarType} a ${nextDistance} metros`);
-              }, 3000);
-            }
           }
           else if (distance < 200 && distance > 180 && lastAlertedRadar === closestRadar.radarData.key) {
             const radarType = getRadarTypeDescription(closestRadar.radarData.radarType);
@@ -1852,26 +2042,30 @@
       } else {
         document.getElementById('next-radar-distance').textContent = '--';
         document.getElementById('speed-limit').textContent = '--';
+        document.getElementById('speed-progress-bar').style.width = '0%';
         lastAlertedRadar = null;
       }
+    }
 
-      // Actualizar velocidad actual si está disponible
-      if (userSpeed) {
-        const speedKmh = (userSpeed * 3.6).toFixed(0);
-        document.getElementById('current-speed').textContent = speedKmh;
+    // Función para mostrar alerta visual de radar
+    function showRadarAlert(radar, distance) {
+      // Eliminar alertas anteriores
+      document.querySelectorAll('.radar-alert').forEach(el => el.remove());
+      
+      const radarType = getRadarTypeDescription(radar.radarData.radarType);
+      const alertDiv = document.createElement('div');
+      alertDiv.className = 'radar-alert';
+      alertDiv.innerHTML = `<span>Radar ${radarType}<br>${distance}m</span>`;
+      document.body.appendChild(alertDiv);
+      
+      // Eliminar después de la animación
+      setTimeout(() => {
+        alertDiv.remove();
+      }, 2000);
 
-        // Comprobar exceso de velocidad
-        const speedLimit = document.getElementById('speed-limit').textContent;
-        if (speedLimit !== '--' && speedKmh > speedLimit) {
-          document.getElementById('current-speed').classList.add('exceeding');
-          // Alertar solo si estamos significativamente por encima (+5km/h)
-          if (speedKmh - speedLimit > 5) {
-            playAlert(`¡Exceso de velocidad! Límite: ${speedLimit} km/h. Tu velocidad: ${speedKmh} km/h`);
-          }
-        } else {
-          document.getElementById('current-speed').classList.remove('exceeding');
-        }
-      }
+      // Alertar por voz
+      const directionInfo = lastPositionForDriveMode?.coords?.heading === null ? " (dirección no confirmada)" : "";
+      playAlert(`Radar ${radarType} a 500 metros${directionInfo}. Límite ${radar.radarData.speed || 'desconocida'} km/h`);
     }
 
     // Función auxiliar para descripciones de tipos de radar
@@ -2385,6 +2579,40 @@
       updateFilteredLists();
     }
 
+    // Crear elemento de listado mejorado
+    function createRadarListItem(radar) {
+      const item = document.createElement('div');
+      item.className = 'list-item';
+      item.dataset.radarId = radar.key;
+      
+      const lastUpdated = radar.last_updated ? new Date(radar.last_updated).toLocaleString() : "No disponible";
+      const statusClass = radar.status === "active" ? "status-active" : 
+                         radar.status === "pending_review" ? "status-pending" : "status-inactive";
+      const statusText = radar.status === "active" ? "Activo" : 
+                        radar.status === "pending_review" ? "Pendiente" : "Inactivo";
+
+      item.innerHTML = `
+        <h3>${radar.radarType || "Radar"} - ${radar.road || ""} 
+          <span class="status-badge ${statusClass}">${statusText}</span>
+        </h3>
+        <p><strong>Ubicación:</strong> ${radar.lat?.toFixed(4)}, ${radar.lng?.toFixed(4)}</p>
+        ${radar.pk ? `<p><strong>PK:</strong> ${radar.pk}</p>` : ''}
+        <p><strong>Dirección:</strong> ${radar.direction || "N/A"}</p>
+        <p><strong>Velocidad:</strong> ${radar.speed || "N/A"} km/h</p>
+        <p><strong>Última modificación:</strong> ${lastUpdated}</p>
+        <p><strong>Votos:</strong> 
+          <span style="color: #28a745;">👍 ${radar.votos_positivos || 0}</span> | 
+          <span style="color: #dc3545;">👎 ${radar.votos_negativos || 0}</span>
+        </p>
+      `;
+
+      item.addEventListener('click', () => {
+        centerOnRadar(radar.key);
+      });
+
+      return item;
+    }
+
     // Actualizar listados filtrados
     function updateFilteredLists() {
       const activeLists = [
@@ -2481,33 +2709,6 @@
     // Actualizar listado móvil
     function updateMobileList() {
       updateFilteredLists();
-    }
-
-    // Crear elemento de listado
-    function createRadarListItem(radar) {
-      const item = document.createElement('div');
-      item.className = 'list-item';
-      item.dataset.radarId = radar.key;
-      item.style.cursor = 'pointer';
-
-      const lastUpdated = radar.last_updated ? new Date(radar.last_updated).toLocaleString() : "No disponible";
-
-      item.innerHTML = `
-        <h3>${radar.radarType || "Radar"} - ${radar.road || ""}</h3>
-        <p><strong>Ubicación:</strong> ${radar.lat?.toFixed(4)}, ${radar.lng?.toFixed(4)}</p>
-        ${radar.pk ? `<p><strong>PK:</strong> ${radar.pk}</p>` : ''}
-        <p><strong>Dirección:</strong> ${radar.direction || "N/A"}</p>
-        <p><strong>Velocidad:</strong> ${radar.speed || "N/A"} km/h</p>
-        <p><strong>Estado:</strong> ${radar.status === "active" ? "Activo" : radar.status === "pending_review" ? "Pendiente" : "Inactivo"}</p>
-        <p><strong>Última modificación:</strong> ${lastUpdated}</p>
-        <p><strong>Votos:</strong> 👍 ${radar.votos_positivos || 0} | 👎 ${radar.votos_negativos || 0}</p>
-      `;
-
-      item.addEventListener('click', () => {
-        centerOnRadar(radar.key);
-      });
-
-      return item;
     }
 
     // Centrar mapa en un radar específico
@@ -2707,14 +2908,54 @@
       localStorage.setItem('popupSeen', 'true');
     }
 
-    // Función para búsqueda de radares
+    // Función para búsqueda de radares con autocompletado
     function setupSearch() {
       const searchInput = document.getElementById('searchInput');
+      const suggestionsContainer = document.getElementById('search-suggestions');
+      let currentSuggestions = [];
+      let selectedSuggestion = -1;
+
       searchInput.addEventListener('input', (e) => {
         const searchTerm = e.target.value.toLowerCase();
+        suggestionsContainer.innerHTML = '';
+        suggestionsContainer.style.display = 'none';
+        currentSuggestions = [];
+        selectedSuggestion = -1;
 
         if (searchTerm.length > 2) {
+          // Buscar coincidencias en los radares
           Object.entries(radaresMarkers).forEach(([id, marker]) => {
+            const radar = marker.radarData;
+            const roadMatch = radar.road?.toLowerCase().includes(searchTerm);
+            const directionMatch = radar.direction?.toLowerCase().includes(searchTerm);
+            const pkMatch = radar.pk?.toString().includes(searchTerm);
+
+            if (roadMatch || directionMatch || pkMatch) {
+              currentSuggestions.push({
+                id,
+                text: `${radar.road} ${radar.pk ? 'PK ' + radar.pk : ''} - ${radar.direction}`
+              });
+            }
+          });
+
+          // Mostrar sugerencias
+          if (currentSuggestions.length > 0) {
+            currentSuggestions.slice(0, 5).forEach((suggestion, index) => {
+              const suggestionElement = document.createElement('div');
+              suggestionElement.className = 'search-suggestion';
+              suggestionElement.textContent = suggestion.text;
+              suggestionElement.addEventListener('click', () => {
+                centerOnRadar(suggestion.id);
+                searchInput.value = suggestion.text;
+                suggestionsContainer.style.display = 'none';
+              });
+              suggestionsContainer.appendChild(suggestionElement);
+            });
+            suggestionsContainer.style.display = 'block';
+          }
+
+          // Resaltar marcadores coincidentes
+          Object.values(radaresMarkers).forEach(marker => {
             const radar = marker.radarData;
             const matches = radar.road?.toLowerCase().includes(searchTerm) ||
                           radar.direction?.toLowerCase().includes(searchTerm) ||
@@ -2730,12 +2971,54 @@
             }
           });
         } else {
+          // Restablecer todos los marcadores
           Object.values(radaresMarkers).forEach(marker => {
             marker.setOpacity(1);
             marker.setZIndexOffset(0);
           });
         }
       });
+
+      // Manejar teclado para navegación en sugerencias
+      searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          if (selectedSuggestion < currentSuggestions.length - 1) {
+            selectedSuggestion++;
+            updateSelectedSuggestion();
+          }
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          if (selectedSuggestion > 0) {
+            selectedSuggestion--;
+            updateSelectedSuggestion();
+          }
+        } else if (e.key === 'Enter' && selectedSuggestion >= 0) {
+          e.preventDefault();
+          const suggestion = currentSuggestions[selectedSuggestion];
+          centerOnRadar(suggestion.id);
+          searchInput.value = suggestion.text;
+          suggestionsContainer.style.display = 'none';
+        } else if (e.key === 'Escape') {
+          suggestionsContainer.style.display = 'none';
+        }
+      });
+
+      // Cerrar sugerencias al hacer clic fuera
+      document.addEventListener('click', (e) => {
+        if (e.target !== searchInput && e.target.closest('.search-suggestions') === null) {
+          suggestionsContainer.style.display = 'none';
+        }
+      });
+
+      function updateSelectedSuggestion() {
+        document.querySelectorAll('.search-suggestion').forEach((el, index) => {
+          el.classList.toggle('highlighted', index === selectedSuggestion);
+          if (index === selectedSuggestion) {
+            el.scrollIntoView({ block: 'nearest' });
+          }
+        });
+      }
     }
 
     // Inicializar la aplicación
