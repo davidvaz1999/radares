@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="https://ahorraunamulta.com/favicon.png" />
   <title>PANEL DE ADMINISTRACIÓN - AHORRA UNA MULTA</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-auth.js";
@@ -40,6 +42,11 @@
     let allRadares = [];
     let currentPage = 1;
     const itemsPerPage = 20;
+
+    // Variables para el mapa de edición
+    let adminMap;
+    let editableMarker;
+    let currentEditingRadarId;
 
     onAuthStateChanged(auth, (user) => {
       if (!user) {
@@ -145,6 +152,7 @@
             ${radar.status !== 'active' ? `<button class="approve-btn" data-id="${radar.id}">✅ Activar</button>` : ''}
             ${radar.status !== 'inactive' ? `<button class="reject-btn" data-id="${radar.id}">❌ Desactivar</button>` : ''}
             ${radar.status === 'pending_review' ? `<button class="complete-btn" data-id="${radar.id}">✔️ Completar</button>` : ''}
+            <button class="edit-location-btn" data-id="${radar.id}" data-lat="${radar.lat}" data-lng="${radar.lng}">📍 Editar ubicación</button>
             <button class="view-map-btn" data-id="${radar.id}" data-lat="${radar.lat}" data-lng="${radar.lng}">🗺️ Ver en mapa</button>
             <button class="delete-btn" data-id="${radar.id}">🗑️ Eliminar</button>
           </td>
@@ -156,6 +164,67 @@
       setupEventListeners();
       updatePaginationControls(sortedRadares.length);
     };
+
+    // Inicializar el mapa Leaflet para edición
+    function initAdminMap(lat, lng) {
+      if (!adminMap) {
+        adminMap = L.map('adminMap').setView([lat, lng], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(adminMap);
+      } else {
+        adminMap.setView([lat, lng], 15);
+      }
+
+      // Eliminar marcador existente si lo hay
+      if (editableMarker) {
+        adminMap.removeLayer(editableMarker);
+      }
+
+      // Crear nuevo marcador editable
+      editableMarker = L.marker([lat, lng], {
+        draggable: true
+      }).addTo(adminMap);
+
+      // Centrar el mapa en el marcador
+      adminMap.setView([lat, lng], 15);
+    }
+
+    // Mostrar modal de edición de ubicación
+    function showMapModal(radarId, lat, lng) {
+      currentEditingRadarId = radarId;
+      document.getElementById('mapModal').style.display = 'flex';
+      initAdminMap(parseFloat(lat), parseFloat(lng));
+    }
+
+    // Cerrar modal de edición de ubicación
+    function closeMapModal() {
+      document.getElementById('mapModal').style.display = 'none';
+      currentEditingRadarId = null;
+    }
+
+    // Guardar nueva ubicación
+    function saveRadarLocation() {
+      if (!currentEditingRadarId || !editableMarker) return;
+
+      const newLatLng = editableMarker.getLatLng();
+      const radarRef = ref(database, `radares/${currentEditingRadarId}`);
+
+      update(radarRef, {
+        lat: newLatLng.lat,
+        lng: newLatLng.lng,
+        last_updated: Date.now(),
+        updated_by: document.getElementById('userEmail').textContent
+      })
+        .then(() => {
+          showNotification('Ubicación del radar actualizada correctamente.', 'success');
+          closeMapModal();
+          fetchRadares(); // Recargar la lista para mostrar los cambios
+        })
+        .catch((error) => {
+          showNotification(`Error al actualizar ubicación: ${error.message}`, 'error');
+        });
+    }
 
     const filterRadares = (radares) => {
       const searchTerm = document.getElementById('searchInput').value.toLowerCase();
@@ -299,6 +368,15 @@
         });
       });
 
+      document.querySelectorAll('.edit-location-btn').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          const radarId = btn.dataset.id;
+          const lat = btn.dataset.lat;
+          const lng = btn.dataset.lng;
+          showMapModal(radarId, lat, lng);
+        });
+      });
+
       document.querySelectorAll('.view-map-btn').forEach((btn) => {
         btn.addEventListener('click', (e) => {
           const id = btn.dataset.id;
@@ -393,6 +471,18 @@
         }
 
         renderRadares();
+      }
+    });
+
+    // Event listeners para el modal de mapa
+    document.getElementById('closeMapModal').addEventListener('click', closeMapModal);
+    document.getElementById('cancelLocationBtn').addEventListener('click', closeMapModal);
+    document.getElementById('saveLocationBtn').addEventListener('click', saveRadarLocation);
+
+    // Cerrar modal al hacer clic fuera del contenido
+    document.getElementById('mapModal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('mapModal')) {
+        closeMapModal();
       }
     });
 
@@ -598,6 +688,14 @@
       background-color: #2980b9;
     }
 
+    .edit-location-btn {
+      background-color: #9b59b6;
+    }
+
+    .edit-location-btn:hover {
+      background-color: #8e44ad;
+    }
+
     #notification {
       display: none;
       margin: 20px 0;
@@ -693,6 +791,45 @@
 
     .page-btn:hover {
       background-color: #2980b9;
+    }
+
+    /* Estilos para el modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      position: relative;
+    }
+
+    .close-modal {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .cancel-btn {
+      background-color: #e74c3c;
+    }
+
+    .cancel-btn:hover {
+      background-color: #c0392b;
     }
 
     @media (max-width: 768px) {
@@ -806,6 +943,19 @@
   </table>
 
   <div id="paginationControls" class="pagination-controls"></div>
+
+  <!-- Modal para editar ubicación -->
+  <div id="mapModal" class="modal">
+    <div class="modal-content" style="width: 90%; max-width: 800px; height: 80vh;">
+      <button class="close-modal" id="closeMapModal">&times;</button>
+      <h2>Editar ubicación del radar</h2>
+      <div id="adminMap" style="width: 100%; height: calc(100% - 60px);"></div>
+      <div style="margin-top: 10px; text-align: center;">
+        <button id="saveLocationBtn" class="confirm-btn">Guardar ubicación</button>
+        <button id="cancelLocationBtn" class="cancel-btn">Cancelar</button>
+      </div>
+    </div>
+  </div>
 
   <button class="logout-btn" onclick="logout()">CERRAR SESIÓN</button>
 </body>
