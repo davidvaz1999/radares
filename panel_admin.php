@@ -165,13 +165,37 @@
       updatePaginationControls(sortedRadares.length);
     };
 
-    // Inicializar el mapa Leaflet para edición
+    // Inicializar el mapa Leaflet para edición con capas de satélite
     function initAdminMap(lat, lng) {
       if (!adminMap) {
         adminMap = L.map('adminMap').setView([lat, lng], 15);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(adminMap);
+
+        // Capa base (OpenStreetMap)
+        const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        });
+
+        // Capa satelital (Esri World Imagery)
+        const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+          attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+        });
+
+        // Capa topográfica (OpenTopoMap)
+        const topoLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+          attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+        });
+
+        // Añadir capa base por defecto
+        osmLayer.addTo(adminMap);
+
+        // Añadir control de capas
+        const baseLayers = {
+          "Mapa Callejero": osmLayer,
+          "Mapa Topográfico": topoLayer,
+          "Vista Satélite": satelliteLayer
+        };
+
+        L.control.layers(baseLayers).addTo(adminMap);
       } else {
         adminMap.setView([lat, lng], 15);
       }
@@ -812,6 +836,9 @@
       padding: 20px;
       border-radius: 10px;
       position: relative;
+      width: 90%;
+      max-width: 800px;
+      height: 80vh;
     }
 
     .close-modal {
@@ -946,7 +973,7 @@
 
   <!-- Modal para editar ubicación -->
   <div id="mapModal" class="modal">
-    <div class="modal-content" style="width: 90%; max-width: 800px; height: 80vh;">
+    <div class="modal-content">
       <button class="close-modal" id="closeMapModal">&times;</button>
       <h2>Editar ubicación del radar</h2>
       <div id="adminMap" style="width: 100%; height: calc(100% - 60px);"></div>
