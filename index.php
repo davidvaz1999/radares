@@ -1138,18 +1138,18 @@
     #drive-mode-container {
       bottom: 80px;
     }
-  
+
     #drive-mode-bar {
       flex-direction: row;
       gap: 5px;
       padding: 8px 10px;
     }
-    
+
     .drive-mode-info {
       flex-direction: row;
       gap: 5px;
     }
-    
+
     #current-speed, #speed-limit, #next-radar-distance {
       font-size: 1.2rem;
     }
@@ -1480,6 +1480,7 @@
     let lastPositionForDriveMode = null;
     let lastAlertedRadar = null;
     let lastRadarCheckTime = 0;
+    let currentVoice = null;
 
     // Variables para los filtros
     let currentFilters = {
@@ -1783,7 +1784,7 @@
           // Limitar actualizaciones a 1 por segundo como máximo
           if (now - lastUpdateTime < 1000) return;
 
-          const { latitude, longitude, accuracy, speed } = position.coords;
+          const { latitude, longitude, accuracy, speed, heading } = position.coords;
           const newPos = [latitude, longitude];
 
           // Solo actualizar si hay un cambio significativo (más de 10 metros)
@@ -1841,30 +1842,20 @@
       const speedLimit = document.getElementById('speed-limit').textContent;
       if (speedLimit !== '--') {
         updateSpeedProgress(speedKmh, speedLimit);
-        
-        if (speedKmh > speedLimit) {
-          document.getElementById('current-speed').classList.add('exceeding');
-          // Alertar solo si estamos significativamente por encima (+5km/h)
-          if (speedKmh - speedLimit > 5) {
-            playAlert(`¡Exceso de velocidad! Límite: ${speedLimit} km/h. Tu velocidad: ${speedKmh} km/h`);
-          }
-        } else {
-          document.getElementById('current-speed').classList.remove('exceeding');
-        }
       }
     }
 
     // Función para actualizar la barra de progreso de velocidad
     function updateSpeedProgress(currentSpeed, speedLimit) {
       if (!currentSpeed || !speedLimit) return;
-      
+
       const progressBar = document.getElementById('speed-progress-bar');
       const speedRatio = Math.min(currentSpeed / speedLimit, 1.5); // Máximo 150% del límite
-      
+
       // Calcular porcentaje y color
       let percentage = (speedRatio / 1.5) * 100;
       let color;
-      
+
       if (speedRatio < 0.8) {
         color = '#4CAF50'; // Verde
       } else if (speedRatio < 1.0) {
@@ -1872,7 +1863,7 @@
       } else {
         color = '#F44336'; // Rojo
       }
-      
+
       progressBar.style.width = `${percentage}%`;
       progressBar.style.backgroundColor = color;
     }
@@ -1881,19 +1872,18 @@
     function enableDriveMode() {
       if (isDriveModeActive) return;
 
-      // Mostrar advertencia BETA más visible
+      // Mostrar advertencia
       const betaWarning = L.popup()
         .setLatLng(map.getCenter())
         .setContent(`
           <div style="padding: 15px; max-width: 280px; text-align: center; background: #fff3cd; border: 2px solid #ffc107; border-radius: 10px;">
-            <h3 style="margin-top: 0; color: #856404;">⚠️ MODO CONDUCCIÓN (BETA)</h3>
-            <p style="margin-bottom: 0;">Esta función está en fase de pruebas y puede contener errores.</p>
-            <p style="font-size: 0.9em; margin-top: 10px;"><b>No sustituye a la atención al volante.</b></p>
+            <h3 style="margin-top: 0; color: #856404;">⚠️ MODO CONDUCCIÓN</h3>
+            <p style="margin-bottom: 0;">El sistema alertará con voz femenina sobre radares a 600 y 300 metros.</p>
+            <p style="font-size: 0.9em; margin-top: 10px;"><b>Mantenga la atención en la carretera.</b></p>
           </div>
         `)
         .openOn(map);
 
-      // Cerrar automáticamente después de 8 segundos
       setTimeout(() => {
         map.closePopup(betaWarning);
       }, 8000);
@@ -1905,36 +1895,33 @@
       // Ocultar elementos no esenciales
       document.querySelector('.search-container').style.display = 'none';
       document.getElementById('legend-button').style.display = 'none';
-
-      // Ocultar todos los botones de acción excepto el de añadir radar y el de salir del modo conducción
+      
+      // Ocultar todos los botones excepto los necesarios
       const actionButtons = document.querySelectorAll('.action-button');
       actionButtons.forEach(button => {
-        if (button.id !== 'addCurrentLocationButton' && button.id !== 'exit-drive-mode') {
-          button.style.display = 'none';
-        }
+        button.style.display = 'none';
       });
+      
+      // Mostrar solo los botones necesarios
+      document.getElementById('exit-drive-mode').style.display = 'flex';
+      document.getElementById('addCurrentLocationButton').style.display = 'flex';
+
+      // Configurar voz femenina si está disponible
+      if ('speechSynthesis' in window) {
+        const voices = window.speechSynthesis.getVoices();
+        const femaleVoice = voices.find(v => v.name.includes('female') && v.lang.includes('es'));
+        if (femaleVoice) {
+          currentVoice = femaleVoice;
+        }
+      }
 
       // Ajustar el mapa para modo conducción
       if (userMarker && userMarker.getLatLng().lat !== 0) {
         map.setView(userMarker.getLatLng(), 15);
       }
 
-      // Iniciar chequeo de radares con optimización
-      lastRadarCheckTime = 0;
-      driveModeCheckInterval = setInterval(optimizedCheckNearbyRadars, 1000);
-
-      // Actualizar datos inmediatamente
-      checkNearbyRadars();
-    }
-
-    // Función optimizada para chequeo de radares
-    function optimizedCheckNearbyRadars() {
-      const now = Date.now();
-      // Limitar chequeos a 1 por segundo como máximo
-      if (now - lastRadarCheckTime < 1000) return;
-      lastRadarCheckTime = now;
-
-      checkNearbyRadars();
+      // Iniciar chequeo de radares
+      driveModeCheckInterval = setInterval(checkNearbyRadars, 500);
     }
 
     // Función para desactivar el modo conducción
@@ -1948,11 +1935,11 @@
       // Mostrar elementos nuevamente
       document.querySelector('.search-container').style.display = 'block';
       document.getElementById('legend-button').style.display = 'block';
-
-      // Mostrar todos los botones de acción
+      
+      // Restaurar todos los botones
       const actionButtons = document.querySelectorAll('.action-button');
       actionButtons.forEach(button => {
-        button.style.display = '';
+        button.style.display = 'flex';
       });
 
       // Detener chequeo de radares
@@ -1979,22 +1966,17 @@
       const userSpeedKmh = userSpeed ? (userSpeed * 3.6).toFixed(0) : 0;
       const nearbyRadars = getNearbyRadars(userPos.lat, userPos.lng, 1); // 1km radius
 
-      // Filtrar radares en la misma dirección (si tenemos heading)
+      // Filtrar radares en la misma dirección
       const filteredRadars = nearbyRadars.filter(marker => {
-        // Si no tenemos heading, mostrar todos los radares con advertencia
         if (userHeading === null) return true;
 
-        // Calcular ángulo entre usuario y radar
         const angleToRadar = Math.atan2(
           marker.getLatLng().lng - userPos.lng,
           marker.getLatLng().lat - userPos.lat
         ) * (180 / Math.PI);
 
-        // Normalizar ángulos
         const normalizedUserHeading = (userHeading + 360) % 360;
         const normalizedAngleToRadar = (angleToRadar + 360) % 360;
-
-        // Comprobar si el radar está en la misma dirección (±45 grados)
         const angleDiff = Math.abs(normalizedUserHeading - normalizedAngleToRadar);
         return angleDiff < 45 || angleDiff > 315;
       });
@@ -2018,25 +2000,28 @@
         if (closestRadar.radarData.speed) {
           const speedLimit = closestRadar.radarData.speed;
           document.getElementById('speed-limit').textContent = speedLimit;
-
-          // Actualizar barra de progreso y colores
           updateSpeedProgress(userSpeedKmh, speedLimit);
         }
 
         // Alertar si está muy cerca (solo si velocidad > 30 km/h)
         if (userSpeed > 8.33) { // 8.33 m/s ≈ 30 km/h
-          if (distance < 500 && distance > 480 && lastAlertedRadar !== closestRadar.radarData.key) {
-            showRadarAlert(closestRadar, distanceM);
-            lastAlertedRadar = closestRadar.radarData.key;
+          // Alerta a 600 metros
+          if (distance < 620 && distance > 580 && lastAlertedRadar !== closestRadar.radarData.key) {
+            playRadarAlert(closestRadar, 600);
           }
-          else if (distance < 200 && distance > 180 && lastAlertedRadar === closestRadar.radarData.key) {
-            const radarType = getRadarTypeDescription(closestRadar.radarData.radarType);
-            playAlert(`¡Atención! Radar ${radarType} a 200 metros`);
+          // Alerta a 300 metros
+          else if (distance < 320 && distance > 280 && lastAlertedRadar === closestRadar.radarData.key) {
+            playRadarAlert(closestRadar, 300);
+          }
+          // Alerta por exceso de velocidad cuando estamos cerca
+          else if (distance < 200 && userSpeedKmh > closestRadar.radarData.speed) {
+            const excess = userSpeedKmh - closestRadar.radarData.speed;
+            playAlert(`¡Exceso de velocidad! Límite: ${closestRadar.radarData.speed} km/h. Tu velocidad: ${userSpeedKmh} km/h. Reduzca ${excess} km/h`);
           }
         }
 
         // Si nos alejamos del radar, resetear la alerta
-        if (distance > 500) {
+        if (distance > 650) {
           lastAlertedRadar = null;
         }
       } else {
@@ -2047,25 +2032,30 @@
       }
     }
 
-    // Función para mostrar alerta visual de radar
-    function showRadarAlert(radar, distance) {
-      // Eliminar alertas anteriores
-      document.querySelectorAll('.radar-alert').forEach(el => el.remove());
-      
+    // Función para alertas de radar con voz femenina
+    function playRadarAlert(radar, distance) {
       const radarType = getRadarTypeDescription(radar.radarData.radarType);
+      const speedLimit = radar.radarData.speed || 'velocidad desconocida';
+      
+      let alertMessage = `Radar ${radarType} a ${distance} metros. Límite ${speedLimit} km/h.`;
+      
+      // Mostrar alerta visual
       const alertDiv = document.createElement('div');
       alertDiv.className = 'radar-alert';
-      alertDiv.innerHTML = `<span>Radar ${radarType}<br>${distance}m</span>`;
+      alertDiv.innerHTML = `<span>Radar ${radarType}<br>${distance}m<br>Límite: ${speedLimit} km/h</span>`;
       document.body.appendChild(alertDiv);
-      
-      // Eliminar después de la animación
+
       setTimeout(() => {
         alertDiv.remove();
-      }, 2000);
+      }, 3000);
 
       // Alertar por voz
-      const directionInfo = lastPositionForDriveMode?.coords?.heading === null ? " (dirección no confirmada)" : "";
-      playAlert(`Radar ${radarType} a 500 metros${directionInfo}. Límite ${radar.radarData.speed || 'desconocida'} km/h`);
+      playAlert(alertMessage);
+      
+      // Marcar como alertado
+      if (distance === 600) {
+        lastAlertedRadar = radar.radarData.key;
+      }
     }
 
     // Función auxiliar para descripciones de tipos de radar
@@ -2082,31 +2072,28 @@
 
     // Notificación de voz mejorada
     function playAlert(message) {
-      // Cancelar cualquier alerta previa que esté en curso
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
 
         const utterance = new SpeechSynthesisUtterance(message);
         utterance.lang = 'es-ES';
-        utterance.rate = 0.9; // Un poco más lento para mejor comprensión
-        utterance.volume = 1.5; // Mayor volumen (algunos navegadores soportan >1)
-
-        // Configurar voz femenina si está disponible
-        const voices = window.speechSynthesis.getVoices();
-        const femaleVoice = voices.find(v => v.name.includes('female') && v.lang.includes('es'));
-        if (femaleVoice) {
-          utterance.voice = femaleVoice;
+        utterance.rate = 0.9;
+        utterance.volume = 1.5;
+        
+        // Usar voz femenina si está configurada
+        if (currentVoice) {
+          utterance.voice = currentVoice;
         }
 
         window.speechSynthesis.speak(utterance);
       }
 
-      // También mostrar notificación visual
+      // Mostrar notificación visual
       const notification = L.popup()
         .setLatLng(userMarker.getLatLng())
         .setContent(`
           <div style="padding: 10px; background: #ffeb3b; border-radius: 5px; max-width: 250px;">
-            <b>⚠️ Alerta de Radar</b><br>
+            <b>⚠️ Alerta</b><br>
             ${message}
           </div>
         `)
@@ -2584,15 +2571,15 @@
       const item = document.createElement('div');
       item.className = 'list-item';
       item.dataset.radarId = radar.key;
-      
+
       const lastUpdated = radar.last_updated ? new Date(radar.last_updated).toLocaleString() : "No disponible";
-      const statusClass = radar.status === "active" ? "status-active" : 
+      const statusClass = radar.status === "active" ? "status-active" :
                          radar.status === "pending_review" ? "status-pending" : "status-inactive";
-      const statusText = radar.status === "active" ? "Activo" : 
+      const statusText = radar.status === "active" ? "Activo" :
                         radar.status === "pending_review" ? "Pendiente" : "Inactivo";
 
       item.innerHTML = `
-        <h3>${radar.radarType || "Radar"} - ${radar.road || ""} 
+        <h3>${radar.radarType || "Radar"} - ${radar.road || ""}
           <span class="status-badge ${statusClass}">${statusText}</span>
         </h3>
         <p><strong>Ubicación:</strong> ${radar.lat?.toFixed(4)}, ${radar.lng?.toFixed(4)}</p>
@@ -2600,8 +2587,8 @@
         <p><strong>Dirección:</strong> ${radar.direction || "N/A"}</p>
         <p><strong>Velocidad:</strong> ${radar.speed || "N/A"} km/h</p>
         <p><strong>Última modificación:</strong> ${lastUpdated}</p>
-        <p><strong>Votos:</strong> 
-          <span style="color: #28a745;">👍 ${radar.votos_positivos || 0}</span> | 
+        <p><strong>Votos:</strong>
+          <span style="color: #28a745;">👍 ${radar.votos_positivos || 0}</span> |
           <span style="color: #dc3545;">👎 ${radar.votos_negativos || 0}</span>
         </p>
       `;
@@ -3024,6 +3011,17 @@
     // Inicializar la aplicación
     document.addEventListener('DOMContentLoaded', () => {
       initMap();
+
+      // Cargar voces disponibles cuando estén listas
+      if ('speechSynthesis' in window) {
+        speechSynthesis.onvoiceschanged = function() {
+          const voices = window.speechSynthesis.getVoices();
+          const femaleVoice = voices.find(v => v.name.includes('female') && v.lang.includes('es'));
+          if (femaleVoice) {
+            currentVoice = femaleVoice;
+          }
+        };
+      }
 
       if (!localStorage.getItem('popupSeen')) {
         setTimeout(() => {
