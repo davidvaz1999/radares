@@ -165,6 +165,31 @@
       updatePaginationControls(sortedRadares.length);
     };
 
+    // Función para obtener el icono según el tipo de radar
+    function getIconByRadar(radar) {
+      if (radar.status === "pending_review") {
+        return L.icon({
+          iconUrl: 'https://ahorraunamulta.com/velocidades/default/pendiente.png',
+          iconSize: [30, 30],
+          iconAnchor: [15, 15]
+        });
+      }
+
+      const validTypes = ["Fijo", "Móvil", "Tramo", "Remolque"];
+      const type = validTypes.includes(radar.radarType) ? radar.radarType : "default";
+      const speed = (radar.speed >= 10 && radar.speed <= 140) ? radar.speed : "default";
+
+      const iconUrl = radar.status === "active"
+        ? `https://ahorraunamulta.com/velocidades/${type}/${speed}.png`
+        : `https://ahorraunamulta.com/velocidades/${type}/no_activo.png`;
+
+      return L.icon({
+        iconUrl,
+        iconSize: radar.status === "active" ? [30, 30] : [25, 25],
+        iconAnchor: [15, 15]
+      });
+    }
+
     // Inicializar el mapa Leaflet para edición con capas de satélite
     function initAdminMap(lat, lng) {
       if (!adminMap) {
@@ -205,9 +230,51 @@
         adminMap.removeLayer(editableMarker);
       }
 
+      // Cargar todos los radares en el mapa
+      const radaresRef = ref(database, 'radares');
+      onValue(radaresRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          // Limpiar marcadores existentes
+          adminMap.eachLayer(layer => {
+            if (layer instanceof L.Marker && layer !== editableMarker) {
+              adminMap.removeLayer(layer);
+            }
+          });
+
+          // Añadir todos los radares al mapa
+          Object.entries(data).forEach(([id, radar]) => {
+            if (radar.lat && radar.lng) {
+              const marker = L.marker([radar.lat, radar.lng], {
+                icon: getIconByRadar(radar),
+                zIndexOffset: radar.status === 'active' ? 1000 : 0
+              }).addTo(adminMap);
+
+              // Crear contenido del popup
+              const popupContent = `
+                <b>${radar.radarType || "Radar"}</b><br>
+                <small>${radar.road || "Carretera no especificada"}</small><br>
+                ${radar.pk ? `PK: ${radar.pk}<br>` : ''}
+                Dirección: ${radar.direction || "No especificada"}<br>
+                Velocidad: ${radar.speed || "N/A"} km/h<br>
+                Estado: <b>${radar.status === "active" ? "Activo" : radar.status === "pending_review" ? "Pendiente" : "Inactivo"}</b><br>
+                ID: ${id}
+              `;
+
+              marker.bindPopup(popupContent);
+            }
+          });
+        }
+      });
+
       // Crear nuevo marcador editable
       editableMarker = L.marker([lat, lng], {
-        draggable: true
+        draggable: true,
+        icon: L.icon({
+          iconUrl: 'https://ahorraunamulta.com/velocidades/default/pendiente.png',
+          iconSize: [30, 30],
+          iconAnchor: [15, 15]
+        })
       }).addTo(adminMap);
 
       // Centrar el mapa en el marcador
@@ -857,6 +924,22 @@
 
     .cancel-btn:hover {
       background-color: #c0392b;
+    }
+
+    /* Estilos para los marcadores del mapa */
+    .leaflet-marker-icon {
+      transition: transform 0.2s ease;
+    }
+
+    .leaflet-marker-icon:hover {
+      transform: scale(1.2);
+      z-index: 1000 !important;
+    }
+
+    /* Asegurar que el mapa tenga un tamaño adecuado */
+    #adminMap {
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
 
     @media (max-width: 768px) {
