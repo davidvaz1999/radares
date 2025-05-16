@@ -1473,7 +1473,7 @@
     let accuracyCircle;
     let tempMarker = null;
     let showInactiveRadars = false;
-    let centrarMapa = true;
+    let centrarMapa = false; // Cambiado a false por defecto
     let radaresMarkers = {};
     let isDriveModeActive = false;
     let driveModeCheckInterval;
@@ -1742,7 +1742,7 @@
       var toggleButton = L.control({ position: 'topleft' });
       toggleButton.onAdd = function(map) {
         var container = L.DomUtil.create("div", "leaflet-bar");
-        var button = L.DomUtil.create("a", "boton-centrado on");
+        var button = L.DomUtil.create("a", "boton-centrado off"); // Cambiado a 'off' por defecto
         button.innerHTML = '📍';
         button.href = '#';
         button.title = 'Centrar en mi ubicación';
@@ -1787,19 +1787,15 @@
           const { latitude, longitude, accuracy, speed, heading } = position.coords;
           const newPos = [latitude, longitude];
 
-          // Solo actualizar si hay un cambio significativo (más de 10 metros)
-          if (!lastPosition || distanceBetween(lastPosition, newPos) > 10) {
+          // Solo actualizar si hay un cambio significativo (más de 50 metros)
+          if (!lastPosition || distanceBetween(lastPosition, newPos) > 50) {
             userMarker.setLatLng(newPos);
             accuracyCircle.setLatLng(newPos);
             accuracyCircle.setRadius(accuracy);
 
-            if (centrarMapa) {
+            // Solo centrar en modo conductor o si el usuario lo ha activado manualmente
+            if (isDriveModeActive || centrarMapa) {
               map.setView(newPos);
-            }
-
-            // Actualizar velocidad en modo conducción
-            if (isDriveModeActive && speed) {
-              updateSpeedInDriveMode(speed);
             }
 
             lastPosition = newPos;
@@ -1891,17 +1887,18 @@
       isDriveModeActive = true;
       document.getElementById('drive-mode-container').style.display = 'block';
       document.getElementById('driveModeButton').classList.add('active');
+      centrarMapa = true; // Forzar centrado en modo conductor
 
       // Ocultar elementos no esenciales
       document.querySelector('.search-container').style.display = 'none';
       document.getElementById('legend-button').style.display = 'none';
-      
+
       // Ocultar todos los botones excepto los necesarios
       const actionButtons = document.querySelectorAll('.action-button');
       actionButtons.forEach(button => {
         button.style.display = 'none';
       });
-      
+
       // Mostrar solo los botones necesarios
       document.getElementById('exit-drive-mode').style.display = 'flex';
       document.getElementById('addCurrentLocationButton').style.display = 'flex';
@@ -1931,11 +1928,12 @@
       isDriveModeActive = false;
       document.getElementById('drive-mode-container').style.display = 'none';
       document.getElementById('driveModeButton').classList.remove('active');
+      centrarMapa = false; // Desactivar centrado automático al salir del modo conductor
 
       // Mostrar elementos nuevamente
       document.querySelector('.search-container').style.display = 'block';
       document.getElementById('legend-button').style.display = 'block';
-      
+
       // Restaurar todos los botones
       const actionButtons = document.querySelectorAll('.action-button');
       actionButtons.forEach(button => {
@@ -2036,9 +2034,9 @@
     function playRadarAlert(radar, distance) {
       const radarType = getRadarTypeDescription(radar.radarData.radarType);
       const speedLimit = radar.radarData.speed || 'velocidad desconocida';
-      
+
       let alertMessage = `Radar ${radarType} a ${distance} metros. Límite ${speedLimit} km/h.`;
-      
+
       // Mostrar alerta visual
       const alertDiv = document.createElement('div');
       alertDiv.className = 'radar-alert';
@@ -2051,7 +2049,7 @@
 
       // Alertar por voz
       playAlert(alertMessage);
-      
+
       // Marcar como alertado
       if (distance === 600) {
         lastAlertedRadar = radar.radarData.key;
@@ -2079,7 +2077,7 @@
         utterance.lang = 'es-ES';
         utterance.rate = 0.9;
         utterance.volume = 1.5;
-        
+
         // Usar voz femenina si está configurada
         if (currentVoice) {
           utterance.voice = currentVoice;

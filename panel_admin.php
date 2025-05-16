@@ -154,6 +154,7 @@
             ${radar.status === 'pending_review' ? `<button class="complete-btn" data-id="${radar.id}">✔️ Completar</button>` : ''}
             <button class="edit-location-btn" data-id="${radar.id}" data-lat="${radar.lat}" data-lng="${radar.lng}">📍 Editar ubicación</button>
             <button class="view-map-btn" data-id="${radar.id}" data-lat="${radar.lat}" data-lng="${radar.lng}">🗺️ Ver en mapa</button>
+            <button class="edit-all-btn" data-id="${radar.id}">✏️ Editar todo</button>
             <button class="delete-btn" data-id="${radar.id}">🗑️ Eliminar</button>
           </td>
         `;
@@ -247,6 +248,7 @@
             if (radar.lat && radar.lng) {
               const marker = L.marker([radar.lat, radar.lng], {
                 icon: getIconByRadar(radar),
+                draggable: true,  // <-- Añade esta línea
                 zIndexOffset: radar.status === 'active' ? 1000 : 0
               }).addTo(adminMap);
 
@@ -267,7 +269,7 @@
         }
       });
 
-      // Crear nuevo marcador editable
+      // Crear nuevo marcador editable - SIEMPRE ARRASTRABLE
       editableMarker = L.marker([lat, lng], {
         draggable: true,
         icon: L.icon({
@@ -281,16 +283,40 @@
       adminMap.setView([lat, lng], 15);
     }
 
-    // Mostrar modal de edición de ubicación
+    // Mostrar modal de edición de ubicación - CORRECCIÓN APLICADA AQUÍ
     function showMapModal(radarId, lat, lng) {
       currentEditingRadarId = radarId;
       document.getElementById('mapModal').style.display = 'flex';
       initAdminMap(parseFloat(lat), parseFloat(lng));
     }
 
+    // Mostrar modal de edición completa
+    function showEditAllModal(radarId) {
+      const radar = allRadares.find(r => r.id === radarId);
+      if (!radar) return;
+
+      currentEditingRadarId = radarId;
+
+      // Llenar el formulario con los datos actuales del radar
+      document.getElementById('editDirection').value = radar.direction || '';
+      document.getElementById('editSpeed').value = radar.speed || '';
+      document.getElementById('editStatus').value = radar.status || 'pending_review';
+      document.getElementById('editRoad').value = radar.road || '';
+      document.getElementById('editPk').value = radar.pk || '';
+      document.getElementById('editRadarType').value = radar.radarType || 'Fijo';
+
+      document.getElementById('editAllModal').style.display = 'flex';
+    }
+
     // Cerrar modal de edición de ubicación
     function closeMapModal() {
       document.getElementById('mapModal').style.display = 'none';
+      currentEditingRadarId = null;
+    }
+
+    // Cerrar modal de edición completa
+    function closeEditAllModal() {
+      document.getElementById('editAllModal').style.display = 'none';
       currentEditingRadarId = null;
     }
 
@@ -314,6 +340,39 @@
         })
         .catch((error) => {
           showNotification(`Error al actualizar ubicación: ${error.message}`, 'error');
+        });
+    }
+
+    // Guardar todos los cambios del formulario completo
+    function saveAllRadarData() {
+      if (!currentEditingRadarId) return;
+
+      const radarRef = ref(database, `radares/${currentEditingRadarId}`);
+
+      const updateData = {
+        direction: document.getElementById('editDirection').value,
+        speed: parseInt(document.getElementById('editSpeed').value) || 0,
+        status: document.getElementById('editStatus').value,
+        road: document.getElementById('editRoad').value,
+        pk: document.getElementById('editPk').value,
+        radarType: document.getElementById('editRadarType').value,
+        last_updated: Date.now(),
+        updated_by: document.getElementById('userEmail').textContent
+      };
+
+      if (isNaN(updateData.speed)) {
+        showNotification('La velocidad debe ser un número', 'error');
+        return;
+      }
+
+      update(radarRef, updateData)
+        .then(() => {
+          showNotification('Datos del radar actualizados correctamente.', 'success');
+          closeEditAllModal();
+          fetchRadares(); // Recargar la lista para mostrar los cambios
+        })
+        .catch((error) => {
+          showNotification(`Error al actualizar datos: ${error.message}`, 'error');
         });
     }
 
@@ -468,6 +527,13 @@
         });
       });
 
+      document.querySelectorAll('.edit-all-btn').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          const radarId = btn.dataset.id;
+          showEditAllModal(radarId);
+        });
+      });
+
       document.querySelectorAll('.view-map-btn').forEach((btn) => {
         btn.addEventListener('click', (e) => {
           const id = btn.dataset.id;
@@ -565,15 +631,25 @@
       }
     });
 
-    // Event listeners para el modal de mapa
+    // Event listeners para los modales
     document.getElementById('closeMapModal').addEventListener('click', closeMapModal);
     document.getElementById('cancelLocationBtn').addEventListener('click', closeMapModal);
     document.getElementById('saveLocationBtn').addEventListener('click', saveRadarLocation);
 
-    // Cerrar modal al hacer clic fuera del contenido
+    document.getElementById('closeEditAllModal').addEventListener('click', closeEditAllModal);
+    document.getElementById('cancelEditAllBtn').addEventListener('click', closeEditAllModal);
+    document.getElementById('saveAllBtn').addEventListener('click', saveAllRadarData);
+
+    // Cerrar modales al hacer clic fuera del contenido
     document.getElementById('mapModal').addEventListener('click', (e) => {
       if (e.target === document.getElementById('mapModal')) {
         closeMapModal();
+      }
+    });
+
+    document.getElementById('editAllModal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('editAllModal')) {
+        closeEditAllModal();
       }
     });
 
@@ -611,7 +687,12 @@
       }
     };
 
+    const goToMainSite = () => {
+      window.open('https://ahorraunamulta.com', '_blank');
+    };
+
     window.logout = logout;
+    window.goToMainSite = goToMainSite;
   </script>
   <style>
     body {
@@ -624,6 +705,9 @@
       color: #2c3e50;
       border-bottom: 2px solid #3498db;
       padding-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
     h2 {
@@ -787,6 +871,14 @@
       background-color: #8e44ad;
     }
 
+    .edit-all-btn {
+      background-color: #2ecc71;
+    }
+
+    .edit-all-btn:hover {
+      background-color: #27ae60;
+    }
+
     #notification {
       display: none;
       margin: 20px 0;
@@ -823,6 +915,16 @@
 
     .logout-btn:hover {
       background-color: #2980b9;
+    }
+
+    .main-site-btn {
+      background-color: #f39c12;
+      padding: 8px 15px;
+      font-size: 14px;
+    }
+
+    .main-site-btn:hover {
+      background-color: #e67e22;
     }
 
     .confirm-btn {
@@ -884,7 +986,7 @@
       background-color: #2980b9;
     }
 
-    /* Estilos para el modal */
+    /* Estilos para los modales */
     .modal {
       display: none;
       position: fixed;
@@ -906,6 +1008,17 @@
       width: 90%;
       max-width: 800px;
       height: 80vh;
+    }
+
+    .edit-all-modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      position: relative;
+      width: 90%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
     }
 
     .close-modal {
@@ -942,6 +1055,39 @@
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
 
+    /* Estilos para el formulario de edición completa */
+    .edit-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    .form-buttons {
+      grid-column: span 2;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
     @media (max-width: 768px) {
       table {
         display: block;
@@ -966,6 +1112,14 @@
         width: 100%;
         margin: 2px 0;
       }
+
+      .edit-form {
+        grid-template-columns: 1fr;
+      }
+
+      .form-buttons {
+        grid-column: span 1;
+      }
     }
 
     .radar-id {
@@ -982,7 +1136,10 @@
   </style>
 </head>
 <body>
-  <h1>PANEL DE ADMINISTRACIÓN DE RADARES</h1>
+  <h1>
+    PANEL DE ADMINISTRACIÓN DE RADARES
+    <button class="main-site-btn" onclick="goToMainSite()">Ir a ahorraunamulta.com</button>
+  </h1>
   <h2 id="userInfo">Cargando...</h2>
   <span id="userEmail" style="display:none;"></span>
 
@@ -1063,6 +1220,53 @@
       <div style="margin-top: 10px; text-align: center;">
         <button id="saveLocationBtn" class="confirm-btn">Guardar ubicación</button>
         <button id="cancelLocationBtn" class="cancel-btn">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para edición completa -->
+  <div id="editAllModal" class="modal">
+    <div class="edit-all-modal-content">
+      <button class="close-modal" id="closeEditAllModal">&times;</button>
+      <h2>Editar todos los datos del radar</h2>
+      <div class="edit-form">
+        <div class="form-group">
+          <label for="editDirection">Dirección:</label>
+          <input type="text" id="editDirection">
+        </div>
+        <div class="form-group">
+          <label for="editSpeed">Velocidad (km/h):</label>
+          <input type="number" id="editSpeed" min="0" step="1">
+        </div>
+        <div class="form-group">
+          <label for="editStatus">Estado:</label>
+          <select id="editStatus">
+            <option value="active">Activo</option>
+            <option value="inactive">Inactivo</option>
+            <option value="pending_review">Pendiente</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="editRoad">Vía:</label>
+          <input type="text" id="editRoad">
+        </div>
+        <div class="form-group">
+          <label for="editPk">PK:</label>
+          <input type="text" id="editPk">
+        </div>
+        <div class="form-group">
+          <label for="editRadarType">Tipo de radar:</label>
+          <select id="editRadarType">
+            <option value="Fijo">Fijo</option>
+            <option value="Móvil">Móvil</option>
+            <option value="Tramo">Tramo</option>
+            <option value="Remolque">Remolque</option>
+          </select>
+        </div>
+        <div class="form-buttons">
+          <button id="cancelEditAllBtn" class="cancel-btn">Cancelar</button>
+          <button id="saveAllBtn" class="confirm-btn">Guardar todos los cambios</button>
+        </div>
       </div>
     </div>
   </div>
