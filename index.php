@@ -1788,7 +1788,7 @@
           const newPos = [latitude, longitude];
 
           // Solo actualizar si hay un cambio significativo (más de 50 metros)
-          if (!lastPosition || distanceBetween(lastPosition, newPos) > 50) {
+          if (!lastPosition || distanceBetween(lastPosition, newPos) > 5) {
             userMarker.setLatLng(newPos);
             accuracyCircle.setLatLng(newPos);
             accuracyCircle.setRadius(accuracy);
