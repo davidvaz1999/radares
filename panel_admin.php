@@ -10,7 +10,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-auth.js";
-    import { getDatabase, ref, onValue, update, remove } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js";
+    import { getDatabase, ref, onValue, update, remove, get } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js";
 
     const firebaseConfigLogin = {
       apiKey: "AIzaSyAX4uy3ON91cwK3Tt9r5Eqpucyf4sfv0No",
@@ -78,6 +78,7 @@
 
           updateDashboardStats();
           renderRadares();
+          updateStatusOptions();
         } else {
           allRadares = [];
           document.getElementById('radares-table-body').innerHTML = '<tr><td colspan="9">No se encontraron radares</td></tr>';
@@ -88,6 +89,86 @@
       });
     };
 
+    // Función para registrar cambios en el historial
+    function logChange(radarId, fieldChanged, oldValue, newValue, changedBy) {
+      const changeRef = ref(database, `historial/${radarId}/${Date.now()}`);
+      const changeData = {
+        field: fieldChanged,
+        oldValue: oldValue,
+        newValue: newValue,
+        changedBy: changedBy,
+        timestamp: Date.now()
+      };
+
+      return update(changeRef, changeData);
+    }
+
+    // Función para actualizar campos con registro de historial
+    async function updateRadarField(id, field, value) {
+      const radarRef = ref(database, `radares/${id}`);
+      const userEmail = document.getElementById('userEmail').textContent;
+
+      try {
+        // Obtener valor actual antes de actualizar
+        const snapshot = await get(radarRef);
+        const oldValue = snapshot.val()[field];
+
+        // Actualizar radar
+        await update(radarRef, {
+          [field]: field === 'speed' ? parseInt(value) : value,
+          last_updated: Date.now(),
+          updated_by: userEmail
+        });
+
+        // Registrar cambio en el historial si el valor es diferente
+        if (oldValue !== value) {
+          await logChange(id, field, oldValue, value, userEmail);
+        }
+
+        return true;
+      } catch (error) {
+        console.error("Error updating radar:", error);
+        return false;
+      }
+    }
+
+    // Función para mostrar el historial de cambios
+    function showHistoryModal(radarId) {
+      const historyRef = ref(database, `historial/${radarId}`);
+      const modalContent = document.getElementById('historyModalContent');
+
+      modalContent.innerHTML = '<p>Cargando historial...</p>';
+      document.getElementById('historyModal').style.display = 'flex';
+
+      onValue(historyRef, (snapshot) => {
+        const historyData = snapshot.val();
+
+        if (!historyData) {
+          modalContent.innerHTML = '<p>No hay historial de cambios para este radar.</p>';
+          return;
+        }
+
+        let historyHTML = '<table class="history-table"><thead><tr><th>Fecha</th><th>Campo</th><th>Valor Anterior</th><th>Valor Nuevo</th><th>Usuario</th></tr></thead><tbody>';
+
+        Object.entries(historyData)
+          .sort((a, b) => b[0] - a[0]) // Ordenar por timestamp descendente
+          .forEach(([timestamp, change]) => {
+            historyHTML += `
+              <tr>
+                <td>${formatDate(parseInt(timestamp))}</td>
+                <td>${change.field}</td>
+                <td>${change.oldValue || 'N/A'}</td>
+                <td>${change.newValue || 'N/A'}</td>
+                <td>${change.changedBy}</td>
+              </tr>
+            `;
+          });
+
+        historyHTML += '</tbody></table>';
+        modalContent.innerHTML = historyHTML;
+      });
+    }
+
     const renderRadares = (radares = allRadares) => {
       const filteredRadares = filterRadares(radares);
       const sortedRadares = sortRadares(filteredRadares);
@@ -97,7 +178,7 @@
       radaresTableBody.innerHTML = '';
 
       if (paginatedRadares.length === 0) {
-        radaresTableBody.innerHTML = '<tr><td colspan="9">No se encontraron radares con los filtros aplicados</td></tr>';
+        radaresTableBody.innerHTML = '<tr><td colspan="10">No se encontraron radares con los filtros aplicados</td></tr>';
         return;
       }
 
@@ -132,6 +213,7 @@
             <select data-field="status" data-id="${radar.id}" class="status-select">
               <option value="active" ${radar.status === 'active' ? 'selected' : ''}>Activo</option>
               <option value="inactive" ${radar.status === 'inactive' ? 'selected' : ''}>Inactivo</option>
+              <option value="hidden" ${radar.status === 'hidden' ? 'selected' : ''}>Oculto</option>
               <option value="pending_review" ${radar.status === 'pending_review' ? 'selected' : ''}>Pendiente</option>
             </select>
             <button class="confirm-btn" data-field="status" data-id="${radar.id}">✓</button>
@@ -154,6 +236,7 @@
             ${radar.status === 'pending_review' ? `<button class="complete-btn" data-id="${radar.id}">✔️ Completar</button>` : ''}
             <button class="edit-location-btn" data-id="${radar.id}" data-lat="${radar.lat}" data-lng="${radar.lng}">📍 Editar ubicación</button>
             <button class="view-map-btn" data-id="${radar.id}" data-lat="${radar.lat}" data-lng="${radar.lng}">🗺️ Ver en mapa</button>
+            <button class="history-btn" data-id="${radar.id}">📜 Historial</button>
             <button class="edit-all-btn" data-id="${radar.id}">✏️ Editar todo</button>
             <button class="delete-btn" data-id="${radar.id}">🗑️ Eliminar</button>
           </td>
@@ -168,6 +251,8 @@
 
     // Función para obtener el icono según el tipo de radar
     function getIconByRadar(radar) {
+      if (radar.status === "hidden") return null; // No mostrar icono si está oculto
+
       if (radar.status === "pending_review") {
         return L.icon({
           iconUrl: 'https://ahorraunamulta.com/velocidades/default/pendiente.png',
@@ -189,6 +274,28 @@
         iconSize: radar.status === "active" ? [30, 30] : [25, 25],
         iconAnchor: [15, 15]
       });
+    }
+
+    // Actualizar las opciones de estado en todos los select
+    function updateStatusOptions() {
+      // En la tabla principal
+      document.querySelectorAll('.status-select').forEach(select => {
+        if (!select.querySelector('option[value="hidden"]')) {
+          const option = document.createElement('option');
+          option.value = 'hidden';
+          option.textContent = 'Oculto';
+          select.appendChild(option);
+        }
+      });
+
+      // En el modal de edición completa
+      const editStatusSelect = document.getElementById('editStatus');
+      if (!editStatusSelect.querySelector('option[value="hidden"]')) {
+        const option = document.createElement('option');
+        option.value = 'hidden';
+        option.textContent = 'Oculto';
+        editStatusSelect.appendChild(option);
+      }
     }
 
     // Inicializar el mapa Leaflet para edición con capas de satélite
@@ -231,7 +338,7 @@
         adminMap.removeLayer(editableMarker);
       }
 
-      // Cargar todos los radares en el mapa
+      // Cargar todos los radares en el mapa excepto los ocultos
       const radaresRef = ref(database, 'radares');
       onValue(radaresRef, (snapshot) => {
         const data = snapshot.val();
@@ -243,12 +350,12 @@
             }
           });
 
-          // Añadir todos los radares al mapa
+          // Añadir todos los radares al mapa excepto los ocultos
           Object.entries(data).forEach(([id, radar]) => {
-            if (radar.lat && radar.lng) {
+            if (radar.lat && radar.lng && radar.status !== 'hidden') {
               const marker = L.marker([radar.lat, radar.lng], {
                 icon: getIconByRadar(radar),
-                draggable: true,  // <-- Añade esta línea
+                draggable: true,
                 zIndexOffset: radar.status === 'active' ? 1000 : 0
               }).addTo(adminMap);
 
@@ -259,7 +366,7 @@
                 ${radar.pk ? `PK: ${radar.pk}<br>` : ''}
                 Dirección: ${radar.direction || "No especificada"}<br>
                 Velocidad: ${radar.speed || "N/A"} km/h<br>
-                Estado: <b>${radar.status === "active" ? "Activo" : radar.status === "pending_review" ? "Pendiente" : "Inactivo"}</b><br>
+                Estado: <b>${radar.status === "active" ? "Activo" : radar.status === "pending_review" ? "Pendiente" : radar.status === "hidden" ? "Oculto" : "Inactivo"}</b><br>
                 ID: ${id}
               `;
 
@@ -269,7 +376,7 @@
         }
       });
 
-      // Crear nuevo marcador editable - SIEMPRE ARRASTRABLE
+      // Crear nuevo marcador editable
       editableMarker = L.marker([lat, lng], {
         draggable: true,
         icon: L.icon({
@@ -283,7 +390,7 @@
       adminMap.setView([lat, lng], 15);
     }
 
-    // Mostrar modal de edición de ubicación - CORRECCIÓN APLICADA AQUÍ
+    // Mostrar modal de edición de ubicación
     function showMapModal(radarId, lat, lng) {
       currentEditingRadarId = radarId;
       document.getElementById('mapModal').style.display = 'flex';
@@ -326,21 +433,31 @@
 
       const newLatLng = editableMarker.getLatLng();
       const radarRef = ref(database, `radares/${currentEditingRadarId}`);
+      const userEmail = document.getElementById('userEmail').textContent;
 
-      update(radarRef, {
-        lat: newLatLng.lat,
-        lng: newLatLng.lng,
-        last_updated: Date.now(),
-        updated_by: document.getElementById('userEmail').textContent
-      })
-        .then(() => {
-          showNotification('Ubicación del radar actualizada correctamente.', 'success');
-          closeMapModal();
-          fetchRadares(); // Recargar la lista para mostrar los cambios
+      // Obtener valores actuales antes de actualizar
+      get(radarRef).then((snapshot) => {
+        const currentData = snapshot.val();
+
+        update(radarRef, {
+          lat: newLatLng.lat,
+          lng: newLatLng.lng,
+          last_updated: Date.now(),
+          updated_by: userEmail
         })
-        .catch((error) => {
-          showNotification(`Error al actualizar ubicación: ${error.message}`, 'error');
-        });
+          .then(() => {
+            // Registrar cambio en el historial
+            logChange(currentEditingRadarId, 'lat', currentData.lat, newLatLng.lat, userEmail);
+            logChange(currentEditingRadarId, 'lng', currentData.lng, newLatLng.lng, userEmail);
+
+            showNotification('Ubicación del radar actualizada correctamente.', 'success');
+            closeMapModal();
+            fetchRadares(); // Recargar la lista para mostrar los cambios
+          })
+          .catch((error) => {
+            showNotification(`Error al actualizar ubicación: ${error.message}`, 'error');
+          });
+      });
     }
 
     // Guardar todos los cambios del formulario completo
@@ -348,6 +465,7 @@
       if (!currentEditingRadarId) return;
 
       const radarRef = ref(database, `radares/${currentEditingRadarId}`);
+      const userEmail = document.getElementById('userEmail').textContent;
 
       const updateData = {
         direction: document.getElementById('editDirection').value,
@@ -357,7 +475,7 @@
         pk: document.getElementById('editPk').value,
         radarType: document.getElementById('editRadarType').value,
         last_updated: Date.now(),
-        updated_by: document.getElementById('userEmail').textContent
+        updated_by: userEmail
       };
 
       if (isNaN(updateData.speed)) {
@@ -365,15 +483,27 @@
         return;
       }
 
-      update(radarRef, updateData)
-        .then(() => {
-          showNotification('Datos del radar actualizados correctamente.', 'success');
-          closeEditAllModal();
-          fetchRadares(); // Recargar la lista para mostrar los cambios
-        })
-        .catch((error) => {
-          showNotification(`Error al actualizar datos: ${error.message}`, 'error');
-        });
+      // Obtener valores actuales antes de actualizar
+      get(radarRef).then((snapshot) => {
+        const currentData = snapshot.val();
+
+        update(radarRef, updateData)
+          .then(() => {
+            // Registrar cambios en el historial para cada campo modificado
+            Object.keys(updateData).forEach(key => {
+              if (key !== 'last_updated' && key !== 'updated_by' && currentData[key] !== updateData[key]) {
+                logChange(currentEditingRadarId, key, currentData[key], updateData[key], userEmail);
+              }
+            });
+
+            showNotification('Datos del radar actualizados correctamente.', 'success');
+            closeEditAllModal();
+            fetchRadares(); // Recargar la lista para mostrar los cambios
+          })
+          .catch((error) => {
+            showNotification(`Error al actualizar datos: ${error.message}`, 'error');
+          });
+      });
     }
 
     const filterRadares = (radares) => {
@@ -420,12 +550,14 @@
         total: allRadares.length,
         active: allRadares.filter(r => r.status === 'active').length,
         inactive: allRadares.filter(r => r.status === 'inactive').length,
+        hidden: allRadares.filter(r => r.status === 'hidden').length,
         pending: allRadares.filter(r => r.status === 'pending_review').length
       };
 
       document.getElementById('totalRadars').textContent = stats.total;
       document.getElementById('activeRadars').textContent = stats.active;
       document.getElementById('inactiveRadars').textContent = stats.inactive;
+      document.getElementById('hiddenRadars').textContent = stats.hidden;
       document.getElementById('pendingRadars').textContent = stats.pending;
     };
 
@@ -477,16 +609,12 @@
           }
 
           if (confirm(`¿Confirmas que deseas actualizar el campo ${field} a "${newValue}"?`)) {
-            const radarRef = ref(database, `radares/${id}`);
-            const updateData = {
-              [field]: field === 'speed' ? parseInt(newValue) : newValue,
-              last_updated: Date.now(),
-              updated_by: document.getElementById('userEmail').textContent
-            };
-
-            update(radarRef, updateData)
-              .then(() => showNotification(`Campo ${field} actualizado correctamente.`, 'success'))
-              .catch((error) => showNotification(`Error: ${error.message}`, 'error'));
+            updateRadarField(id, field, newValue)
+              .then(success => {
+                if (success) {
+                  showNotification(`Campo ${field} actualizado correctamente.`, 'success');
+                }
+              });
           }
         });
       });
@@ -543,6 +671,13 @@
         });
       });
 
+      document.querySelectorAll('.history-btn').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          const radarId = btn.dataset.id;
+          showHistoryModal(radarId);
+        });
+      });
+
       document.querySelectorAll('.delete-btn').forEach((btn) => {
         btn.addEventListener('click', (e) => {
           const id = btn.dataset.id;
@@ -561,13 +696,27 @@
 
     const updateRadarStatus = (id, status) => {
       const radarRef = ref(database, `radares/${id}`);
-      update(radarRef, {
-        status: status,
-        last_updated: Date.now(),
-        updated_by: document.getElementById('userEmail').textContent
-      })
-        .then(() => showNotification(`Radar ${id} actualizado a ${status}.`, 'success'))
-        .catch((error) => showNotification(`Error: ${error.message}`, 'error'));
+      const userEmail = document.getElementById('userEmail').textContent;
+
+      // Obtener estado actual antes de actualizar
+      get(radarRef).then((snapshot) => {
+        const currentStatus = snapshot.val().status;
+
+        update(radarRef, {
+          status: status,
+          last_updated: Date.now(),
+          updated_by: userEmail
+        })
+          .then(() => {
+            // Registrar cambio de estado en el historial
+            logChange(id, 'status', currentStatus, status, userEmail);
+            showNotification(`Radar ${id} actualizado a ${status}.`, 'success');
+            fetchRadares();
+          })
+          .catch((error) => {
+            showNotification(`Error: ${error.message}`, 'error');
+          });
+      });
     };
 
     const deleteRadar = (id) => {
@@ -640,6 +789,14 @@
     document.getElementById('cancelEditAllBtn').addEventListener('click', closeEditAllModal);
     document.getElementById('saveAllBtn').addEventListener('click', saveAllRadarData);
 
+    document.getElementById('closeHistoryModal').addEventListener('click', () => {
+      document.getElementById('historyModal').style.display = 'none';
+    });
+
+    document.getElementById('closeHistoryBtn').addEventListener('click', () => {
+      document.getElementById('historyModal').style.display = 'none';
+    });
+
     // Cerrar modales al hacer clic fuera del contenido
     document.getElementById('mapModal').addEventListener('click', (e) => {
       if (e.target === document.getElementById('mapModal')) {
@@ -650,6 +807,12 @@
     document.getElementById('editAllModal').addEventListener('click', (e) => {
       if (e.target === document.getElementById('editAllModal')) {
         closeEditAllModal();
+      }
+    });
+
+    document.getElementById('historyModal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('historyModal')) {
+        document.getElementById('historyModal').style.display = 'none';
       }
     });
 
@@ -803,6 +966,11 @@
       background-color: #ffebee !important;
     }
 
+    .status-hidden {
+      background-color: #f5f5f5 !important;
+      color: #999;
+    }
+
     .status-pending_review {
       background-color: #fff8e1 !important;
     }
@@ -877,6 +1045,14 @@
 
     .edit-all-btn:hover {
       background-color: #27ae60;
+    }
+
+    .history-btn {
+      background-color: #3498db;
+    }
+
+    .history-btn:hover {
+      background-color: #2980b9;
     }
 
     #notification {
@@ -1021,6 +1197,17 @@
       overflow-y: auto;
     }
 
+    .history-modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      position: relative;
+      width: 90%;
+      max-width: 900px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
     .close-modal {
       position: absolute;
       top: 10px;
@@ -1088,6 +1275,28 @@
       margin-top: 20px;
     }
 
+    /* Estilos para la tabla de historial */
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    .history-table th, .history-table td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+
+    .history-table th {
+      background-color: #3498db;
+      color: white;
+    }
+
+    .history-table tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+
     @media (max-width: 768px) {
       table {
         display: block;
@@ -1119,6 +1328,11 @@
 
       .form-buttons {
         grid-column: span 1;
+      }
+
+      .history-table {
+        display: block;
+        overflow-x: auto;
       }
     }
 
@@ -1160,6 +1374,10 @@
       <p id="inactiveRadars">0</p>
     </div>
     <div class="stat-card">
+      <h3>Ocultos</h3>
+      <p id="hiddenRadars">0</p>
+    </div>
+    <div class="stat-card">
       <h3>Pendientes</h3>
       <p id="pendingRadars">0</p>
     </div>
@@ -1171,6 +1389,7 @@
       <option value="all">Todos los estados</option>
       <option value="active">Activos</option>
       <option value="inactive">Inactivos</option>
+      <option value="hidden">Ocultos</option>
       <option value="pending_review">Pendientes</option>
     </select>
     <select id="typeFilter">
@@ -1243,6 +1462,7 @@
           <select id="editStatus">
             <option value="active">Activo</option>
             <option value="inactive">Inactivo</option>
+            <option value="hidden">Oculto</option>
             <option value="pending_review">Pendiente</option>
           </select>
         </div>
@@ -1267,6 +1487,18 @@
           <button id="cancelEditAllBtn" class="cancel-btn">Cancelar</button>
           <button id="saveAllBtn" class="confirm-btn">Guardar todos los cambios</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para historial de cambios -->
+  <div id="historyModal" class="modal">
+    <div class="history-modal-content">
+      <button class="close-modal" id="closeHistoryModal">&times;</button>
+      <h2>Historial de Cambios</h2>
+      <div id="historyModalContent"></div>
+      <div style="margin-top: 15px; text-align: center;">
+        <button id="closeHistoryBtn" class="cancel-btn">Cerrar</button>
       </div>
     </div>
   </div>
