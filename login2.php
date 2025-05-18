@@ -4,13 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="robots" content="noindex, nofollow" />
   <title>LOGIN - AHORRA UNA MULTA</title>
-  
+
   <!-- Firebase SDK en la versión 8.x.x -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-  
+
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="https://ahorraunamulta.com/favicon.png" />
 
