@@ -263,8 +263,18 @@
   }
 
   /* Botón de admin */
-  .buttonLogin {
+  .buttonAdmin {
     background-color: #6c757d;
+    color: white;
+    width: 50px;
+    height: 50px;
+    font-size: 14px;
+    text-decoration: none;
+  }
+
+  /* Botón de login */
+  .buttonLogin {
+    background-color: #17a2b8;
     color: white;
     width: 50px;
     height: 50px;
@@ -1134,6 +1144,30 @@
     background-color: #e6f2ff;
   }
 
+  /* Estilos para el modal de login */
+  #loginForm {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  #loginForm label {
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+
+  #loginForm input {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+  }
+
+  #loginStatus {
+    min-height: 20px;
+    text-align: center;
+    font-size: 14px;
+  }
+
   @media (max-width: 768px) {
     #drive-mode-container {
       bottom: 80px;
@@ -1173,13 +1207,13 @@
       gap: 8px;
     }
 
-    .action-button, .buttonLogin {
+    .action-button, .buttonAdmin, .buttonLogin {
       width: 45px;
       height: 45px;
       font-size: 18px;
     }
 
-    .buttonLogin {
+    .buttonAdmin, .buttonLogin {
       font-size: 12px;
     }
 
@@ -1372,6 +1406,26 @@
     </div>
   </div>
 
+  <!-- Modal de Login -->
+  <div class="modal" id="loginModal">
+    <div class="modal-content">
+      <button class="close" id="closeLoginModal">&times;</button>
+      <h2>Iniciar Sesión</h2>
+      <div id="loginForm">
+        <label for="loginEmail">Email:</label>
+        <input type="email" id="loginEmail" placeholder="tu@email.com" required>
+
+        <label for="loginPassword">Contraseña:</label>
+        <input type="password" id="loginPassword" placeholder="Tu contraseña" required>
+
+        <button id="loginButton" class="save">Iniciar Sesión</button>
+        <button id="loginCancel" class="cancel">Cancelar</button>
+
+        <div id="loginStatus" style="margin-top: 10px;"></div>
+      </div>
+    </div>
+  </div>
+
   <div class="popup-overlay" id="popup-overlay" style="display: none;">
     <div class="popup">
       <h2>Descargo de responsabilidad</h2>
@@ -1391,7 +1445,8 @@
 
   <!-- Botones de acción agrupados -->
   <div class="action-buttons">
-    <a href="/login" class="action-button buttonLogin" title="Admin">ADMIN</a>
+    <a href="/login" class="action-button buttonAdmin" title="Panel de administración">ADMIN</a>
+    <button id="toggleLoginButton" class="action-button buttonLogin" title="Iniciar sesión">🔑</button>
     <button id="statsButton" class="action-button" title="Estadísticas">📊</button>
     <button id="toggle-button" class="action-button" title="Mostrar listado">📋</button>
     <button id="driveModeButton" class="action-button" title="Modo conducción (BETA)">🚗<span>BETA</span></button>
@@ -1421,6 +1476,12 @@
     <input type="text" id="direction" placeholder="Ej. Sentido Tarragona" />
     <label for="speed">Velocidad (km/h)</label>
     <input type="number" id="speed" placeholder="Ej. 120" />
+    <label for="status">Estado</label>
+    <select id="status">
+      <option value="active">Activo</option>
+      <option value="inactive">Inactivo</option>
+      <option value="pending_review">Pendiente</option>
+    </select>
     <button id="saveRadarButton" class="save">Guardar Radar</button>
     <button id="cancelRadarButton" class="cancel">Cancelar</button>
   </div>
@@ -1432,7 +1493,7 @@
       <h2>Ayuda</h2>
       <p>AhorraUnaMulta.com es una herramienta intuitiva que te ayuda a identificar radares de tráfico en tu zona y conocer las velocidades permitidas, permitiéndote evitar multas de tránsito de manera eficaz.</p>
       <p>Presionando el botón +, puedes añadir nuevos radares manualmente.</p>
-      <p>Presionando el botón ⚠️, puedes añadir un radar en tu ubicación actual (un administrador lo revisará).</p>
+      <p>Presionando el botón ⚠️, puedes añadir un radar en tu ubicación actual (un administrador lo revisará y completará los detalles).</p>
       <p>Presionando el botón 🚗, puedes activar el modo conducción (BETA) para una experiencia más segura al volante.</p>
       <p>Presionando sobre los radares, tienes la opción de votarlos.</p>
       <p>Si permites la ubicación, el mapa se irá actualizando en tiempo real según conduces.</p>
@@ -1449,9 +1510,10 @@
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
 
   <script>
-    // Configuración de Firebase
+    // Configuración de Firebase principal
     const firebaseConfig = {
       apiKey: "AIzaSyDNCBnqAAcdV3kqx8hN-uMyqSkzIzV4DXc",
       authDomain: "radares-bcn.firebaseapp.com",
@@ -1463,9 +1525,24 @@
       measurementId: "G-C1GT8Q96ZJ"
     };
 
-    // Inicializar Firebase
-    firebase.initializeApp(firebaseConfig);
+    // Configuración de Firebase para autenticación
+    const firebaseConfigLogin = {
+      apiKey: "AIzaSyAX4uy3ON91cwK3Tt9r5Eqpucyf4sfv0No",
+      authDomain: "login-radares.firebaseapp.com",
+      projectId: "login-radares",
+      storageBucket: "login-radares.firebasestorage.app",
+      messagingSenderId: "661760692554",
+      appId: "1:661760692554:web:2da6e767592800380eb1b3",
+      measurementId: "G-S2ZCB85HX1"
+    };
+
+    // Inicializar Firebase principal
+    const app = firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+
+    // Inicializar Firebase para autenticación
+    const authApp = firebase.initializeApp(firebaseConfigLogin, "authApp");
+    const auth = firebase.auth(authApp);
 
     // Variables globales
     let map;
@@ -1473,7 +1550,7 @@
     let accuracyCircle;
     let tempMarker = null;
     let showInactiveRadars = false;
-    let centrarMapa = false; // Cambiado a false por defecto
+    let centrarMapa = false;
     let radaresMarkers = {};
     let isDriveModeActive = false;
     let driveModeCheckInterval;
@@ -1481,6 +1558,7 @@
     let lastAlertedRadar = null;
     let lastRadarCheckTime = 0;
     let currentVoice = null;
+    let currentUser = null;
 
     // Variables para los filtros
     let currentFilters = {
@@ -1678,6 +1756,72 @@
       // Evento para salir del modo conducción
       document.getElementById('exit-drive-mode').addEventListener('click', disableDriveMode);
 
+      // Configurar botón de login
+      document.getElementById('toggleLoginButton').addEventListener('click', (e) => {
+        e.preventDefault();
+        if (currentUser) {
+          // Si ya está logueado, mostrar opción de logout
+          if (confirm('¿Deseas cerrar sesión?')) {
+            auth.signOut();
+          }
+        } else {
+          openModal('loginModal');
+        }
+      });
+
+      // Configurar formulario de login
+      document.getElementById('loginButton').addEventListener('click', () => {
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        const status = document.getElementById('loginStatus');
+
+        status.textContent = "Iniciando sesión...";
+        status.style.color = "#007bff";
+
+        auth.signInWithEmailAndPassword(email, password)
+          .then((userCredential) => {
+            status.textContent = "Sesión iniciada correctamente";
+            status.style.color = "#28a745";
+            setTimeout(() => {
+              closeModal('loginModal');
+              // Actualizar todos los popups para mostrar botón de edición
+              Object.values(radaresMarkers).forEach(marker => {
+                if (marker.isPopupOpen()) {
+                  const radarId = marker.radarData.key;
+                  marker.setPopupContent(createPopupContent(marker.radarData, radarId));
+                }
+              });
+            }, 1000);
+          })
+          .catch((error) => {
+            status.textContent = "Error: " + error.message;
+            status.style.color = "#dc3545";
+          });
+      });
+
+      document.getElementById('loginCancel').addEventListener('click', () => {
+        closeModal('loginModal');
+      });
+
+      document.getElementById('closeLoginModal').addEventListener('click', () => {
+        closeModal('loginModal');
+      });
+
+      // Observador de estado de autenticación
+      auth.onAuthStateChanged((user) => {
+        currentUser = user;
+        const loginButton = document.getElementById('toggleLoginButton');
+        if (user) {
+          loginButton.textContent = '🔓';
+          loginButton.title = 'Cerrar sesión';
+          loginButton.style.backgroundColor = '#28a745';
+        } else {
+          loginButton.textContent = '🔑';
+          loginButton.title = 'Iniciar sesión';
+          loginButton.style.backgroundColor = '#17a2b8';
+        }
+      });
+
       // Mejorar accesibilidad de botones
       document.querySelectorAll('button').forEach(button => {
         button.addEventListener('keydown', function(e) {
@@ -1742,7 +1886,7 @@
       var toggleButton = L.control({ position: 'topleft' });
       toggleButton.onAdd = function(map) {
         var container = L.DomUtil.create("div", "leaflet-bar");
-        var button = L.DomUtil.create("a", "boton-centrado off"); // Cambiado a 'off' por defecto
+        var button = L.DomUtil.create("a", "boton-centrado off");
         button.innerHTML = '📍';
         button.href = '#';
         button.title = 'Centrar en mi ubicación';
@@ -1954,7 +2098,7 @@
       lastAlertedRadar = null;
     }
 
-    // Comprobar radares cercanos y actualizar UI - FUNCIÓN MEJORADA
+    // Comprobar radares cercanos y actualizar UI
     function checkNearbyRadars() {
       if (!userMarker || !userMarker.getLatLng() || !isDriveModeActive) return;
 
@@ -2138,7 +2282,7 @@
         radarType: "Pendiente de completar",
         road: "Por determinar",
         direction: "Por determinar",
-        speed: currentSpeed || 0, // Incluir velocidad GPS si está disponible
+        speed: currentSpeed || 0,
         lat: userPos.lat,
         lng: userPos.lng,
         votos_positivos: 0,
@@ -2146,7 +2290,7 @@
         status: "pending_review",
         last_updated: new Date().toISOString(),
         is_temp: true,
-        detected_speed: currentSpeed || null // Guardar velocidad detectada por separado
+        detected_speed: currentSpeed || null
       };
 
       // Mostrar feedback de carga
@@ -2389,7 +2533,7 @@
         }
 
         updateRadarList(radares);
-        applyFilters(); // Aplicar filtros después de cargar
+        applyFilters();
       });
     }
 
@@ -2415,7 +2559,7 @@
       });
 
       marker.radarData = radar;
-      marker.radarData.key = radarId; // Añadir ID para referencia
+      marker.radarData.key = radarId;
       radaresMarkers[radarId] = marker;
 
       const popupContent = createPopupContent(radar, radarId);
@@ -2442,6 +2586,10 @@
                 style="margin-top: 5px; padding: 2px 5px; font-size: 10px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 3px; cursor: pointer;">
           Copiar ID
         </button>
+        ${currentUser ? `<button onclick="editRadar('${radarId}')"
+                style="margin-top: 5px; padding: 2px 5px; font-size: 10px; background: #007bff; color: white; border: 1px solid #007bff; border-radius: 3px; cursor: pointer;">
+          Editar
+        </button>` : ''}
         <div style="margin-top: 10px; display: flex; justify-content: center; gap: 10px;">
           <button id="boton_positivo_${radarId}" class="button-voto button-voto-positivo"
             onclick="votar('${radarId}', 'positivo')" ${userVoted ? 'disabled' : ''}>
@@ -2455,6 +2603,112 @@
       `;
 
       return popup;
+    }
+
+    // Función para editar radar
+    window.editRadar = function(radarId) {
+      const radar = radaresMarkers[radarId]?.radarData;
+      if (!radar) return;
+
+      // Mostrar formulario de edición con los datos actuales
+      document.getElementById('radarType').value = radar.radarType || '';
+      document.getElementById('road').value = radar.road || '';
+      document.getElementById('pk').value = radar.pk || '';
+      document.getElementById('direction').value = radar.direction || '';
+      document.getElementById('speed').value = radar.speed || '';
+      document.getElementById('status').value = radar.status || 'active';
+
+      // Posicionar marcador temporal en la ubicación actual
+      if (tempMarker) map.removeLayer(tempMarker);
+      tempMarker = L.marker([radar.lat, radar.lng]).addTo(map);
+
+      // Mostrar formulario
+      document.getElementById('radarForm').style.display = 'block';
+      document.getElementById('addRadarButton').classList.add('active');
+      document.getElementById('addRadarButton').textContent = '🚨';
+
+      // Modificar el botón de guardar para actualizar en lugar de crear nuevo
+      const saveButton = document.getElementById('saveRadarButton');
+      saveButton.textContent = 'Actualizar Radar';
+      saveButton.onclick = function() {
+        updateRadar(radarId);
+      };
+    }
+
+    // Función para actualizar radar
+    function updateRadar(radarId) {
+      const radarType = document.getElementById('radarType').value;
+      const road = document.getElementById('road').value;
+      const pk = document.getElementById('pk').value;
+      const direction = document.getElementById('direction').value;
+      const speed = document.getElementById('speed').value;
+      const status = document.getElementById('status').value;
+
+      // Validación de campos
+      const requiredFields = ['radarType', 'road', 'direction', 'speed'];
+      let isValid = true;
+
+      requiredFields.forEach(field => {
+        const element = document.getElementById(field);
+        if (!element.value) {
+          element.style.borderColor = 'red';
+          isValid = false;
+        } else {
+          element.style.borderColor = '';
+        }
+      });
+
+      if (!isValid || !tempMarker) {
+        if (!tempMarker) {
+          alert('Por favor, selecciona una ubicación en el mapa haciendo clic');
+        }
+        return;
+      }
+
+      const { lat, lng } = tempMarker.getLatLng();
+      const updatedRadar = {
+        radarType,
+        road,
+        pk: pk || null,
+        direction,
+        speed,
+        status,
+        lat,
+        lng,
+        last_updated: new Date().toISOString()
+      };
+
+      // Mostrar feedback de carga
+      const saveButton = document.getElementById('saveRadarButton');
+      const originalText = saveButton.textContent;
+      saveButton.textContent = 'Guardando...';
+      saveButton.disabled = true;
+
+      db.ref(`radares/${radarId}`).update(updatedRadar)
+        .then(() => {
+          alert('Radar actualizado con éxito');
+          resetRadarForm();
+          // Actualizar el marcador en el mapa
+          if (radaresMarkers[radarId]) {
+            radaresMarkers[radarId].setIcon(getIconByRadar(updatedRadar));
+            radaresMarkers[radarId].radarData = updatedRadar;
+            if (radaresMarkers[radarId].isPopupOpen()) {
+              radaresMarkers[radarId].setPopupContent(createPopupContent(updatedRadar, radarId));
+            }
+          }
+        })
+        .catch(error => {
+          console.error("Error al actualizar radar:", error);
+          alert('Error al actualizar el radar');
+        })
+        .finally(() => {
+          saveButton.textContent = originalText;
+          saveButton.disabled = false;
+          // Restaurar función original del botón
+          saveButton.onclick = function() {
+            saveNewRadar();
+          };
+        });
     }
 
     // Función para copiar ID al portapapeles
@@ -2732,7 +2986,7 @@
     // Votar radar
     window.votar = function(radarId, tipo) {
       const today = new Date().toISOString().split('T')[0];
-      const votoKey = `voto_${radarId}_${today}`; // Ahora almacena por día
+      const votoKey = `voto_${radarId}_${today}`;
 
       if (localStorage.getItem(votoKey)) {
         alert('Ya has votado en este radar hoy.');
@@ -2797,71 +3051,75 @@
         }
       });
 
-      document.getElementById('saveRadarButton').addEventListener('click', () => {
-        const radarType = document.getElementById('radarType').value;
-        const road = document.getElementById('road').value;
-        const pk = document.getElementById('pk').value;
-        const direction = document.getElementById('direction').value;
-        const speed = document.getElementById('speed').value;
-
-        // Validación de campos
-        const requiredFields = ['radarType', 'road', 'direction', 'speed'];
-        let isValid = true;
-
-        requiredFields.forEach(field => {
-          const element = document.getElementById(field);
-          if (!element.value) {
-            element.style.borderColor = 'red';
-            isValid = false;
-          } else {
-            element.style.borderColor = '';
-          }
-        });
-
-        if (!isValid || !tempMarker) {
-          if (!tempMarker) {
-            alert('Por favor, selecciona una ubicación en el mapa haciendo clic');
-          }
-          return;
-        }
-
-        // Mostrar feedback de carga
-        const saveButton = document.getElementById('saveRadarButton');
-        const originalText = saveButton.textContent;
-        saveButton.textContent = 'Guardando...';
-        saveButton.disabled = true;
-
-        const { lat, lng } = tempMarker.getLatLng();
-        const newRadar = {
-          radarType,
-          road,
-          pk: pk || null,
-          direction,
-          speed,
-          lat,
-          lng,
-          votos_positivos: 0,
-          votos_negativos: 0,
-          status: "active",
-          last_updated: new Date().toISOString()
-        };
-
-        db.ref("radares").push(newRadar)
-          .then(() => {
-            alert('Radar guardado con éxito');
-            resetRadarForm();
-          })
-          .catch(error => {
-            console.error("Error al guardar radar:", error);
-            alert('Error al guardar el radar');
-          })
-          .finally(() => {
-            saveButton.textContent = originalText;
-            saveButton.disabled = false;
-          });
-      });
+      document.getElementById('saveRadarButton').addEventListener('click', saveNewRadar);
 
       document.getElementById('cancelRadarButton').addEventListener('click', resetRadarForm);
+    }
+
+    // Función para guardar nuevo radar
+    function saveNewRadar() {
+      const radarType = document.getElementById('radarType').value;
+      const road = document.getElementById('road').value;
+      const pk = document.getElementById('pk').value;
+      const direction = document.getElementById('direction').value;
+      const speed = document.getElementById('speed').value;
+      const status = document.getElementById('status').value;
+
+      // Validación de campos
+      const requiredFields = ['radarType', 'road', 'direction', 'speed'];
+      let isValid = true;
+
+      requiredFields.forEach(field => {
+        const element = document.getElementById(field);
+        if (!element.value) {
+          element.style.borderColor = 'red';
+          isValid = false;
+        } else {
+          element.style.borderColor = '';
+        }
+      });
+
+      if (!isValid || !tempMarker) {
+        if (!tempMarker) {
+          alert('Por favor, selecciona una ubicación en el mapa haciendo clic');
+        }
+        return;
+      }
+
+      // Mostrar feedback de carga
+      const saveButton = document.getElementById('saveRadarButton');
+      const originalText = saveButton.textContent;
+      saveButton.textContent = 'Guardando...';
+      saveButton.disabled = true;
+
+      const { lat, lng } = tempMarker.getLatLng();
+      const newRadar = {
+        radarType,
+        road,
+        pk: pk || null,
+        direction,
+        speed,
+        status,
+        lat,
+        lng,
+        votos_positivos: 0,
+        votos_negativos: 0,
+        last_updated: new Date().toISOString()
+      };
+
+      db.ref("radares").push(newRadar)
+        .then(() => {
+          alert('Radar guardado con éxito');
+          resetRadarForm();
+        })
+        .catch(error => {
+          console.error("Error al guardar radar:", error);
+          alert('Error al guardar el radar');
+        })
+        .finally(() => {
+          saveButton.textContent = originalText;
+          saveButton.disabled = false;
+        });
     }
 
     // Resetear formulario de radar
@@ -2880,10 +3138,15 @@
       document.getElementById('pk').value = '';
       document.getElementById('direction').value = '';
       document.getElementById('speed').value = '';
+      document.getElementById('status').value = 'active';
 
       document.querySelectorAll('#radarForm input, #radarForm select').forEach(el => {
         el.style.borderColor = '';
       });
+
+      // Restaurar función original del botón de guardar
+      document.getElementById('saveRadarButton').textContent = 'Guardar Radar';
+      document.getElementById('saveRadarButton').onclick = saveNewRadar;
     }
 
     // Cerrar popup de descargo
