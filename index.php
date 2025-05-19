@@ -1530,7 +1530,7 @@
       apiKey: "AIzaSyAX4uy3ON91cwK3Tt9r5Eqpucyf4sfv0No",
       authDomain: "login-radares.firebaseapp.com",
       projectId: "login-radares",
-      storageBucket: "login-radares.firebasestorage.app",
+      storageBucket: "login-radares.appspot.com",
       messagingSenderId: "661760692554",
       appId: "1:661760692554:web:2da6e767592800380eb1b3",
       measurementId: "G-S2ZCB85HX1"
@@ -1784,13 +1784,8 @@
             status.style.color = "#28a745";
             setTimeout(() => {
               closeModal('loginModal');
-              // Actualizar todos los popups para mostrar botón de edición
-              Object.values(radaresMarkers).forEach(marker => {
-                if (marker.isPopupOpen()) {
-                  const radarId = marker.radarData.key;
-                  marker.setPopupContent(createPopupContent(marker.radarData, radarId));
-                }
-              });
+              // Actualizar todos los popups abiertos para mostrar botón de edición
+              updateAllOpenPopups();
             }, 1000);
           })
           .catch((error) => {
@@ -1815,10 +1810,14 @@
           loginButton.textContent = '🔓';
           loginButton.title = 'Cerrar sesión';
           loginButton.style.backgroundColor = '#28a745';
+          // Actualizar todos los popups abiertos para mostrar botón de edición
+          updateAllOpenPopups();
         } else {
           loginButton.textContent = '🔑';
           loginButton.title = 'Iniciar sesión';
           loginButton.style.backgroundColor = '#17a2b8';
+          // Actualizar todos los popups abiertos para ocultar botón de edición
+          updateAllOpenPopups();
         }
       });
 
@@ -1829,6 +1828,16 @@
             this.click();
           }
         });
+      });
+    }
+
+    // Función para actualizar todos los popups abiertos
+    function updateAllOpenPopups() {
+      Object.values(radaresMarkers).forEach(marker => {
+        if (marker.isPopupOpen()) {
+          const radarId = marker.radarData.key;
+          marker.setPopupContent(createPopupContent(marker.radarData, radarId));
+        }
       });
     }
 
