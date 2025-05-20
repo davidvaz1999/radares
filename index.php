@@ -1413,10 +1413,10 @@
       <h2>Iniciar Sesión</h2>
       <div id="loginForm">
         <label for="loginEmail">Email:</label>
-        <input type="email" id="loginEmail" placeholder="tu@email.com" required>
+        <input type="email" id="loginEmail" placeholder="tu@email.com" required autocomplete="username">
 
         <label for="loginPassword">Contraseña:</label>
-        <input type="password" id="loginPassword" placeholder="Tu contraseña" required>
+        <input type="password" id="loginPassword" placeholder="Tu contraseña" required autocomplete="current-password">
 
         <button id="loginButton" class="save">Iniciar Sesión</button>
         <button id="loginCancel" class="cancel">Cancelar</button>
@@ -1765,6 +1765,9 @@
             auth.signOut();
           }
         } else {
+          document.getElementById('loginEmail').value = '';
+          document.getElementById('loginPassword').value = '';
+          document.getElementById('loginStatus').textContent = '';
           openModal('loginModal');
         }
       });
@@ -1836,7 +1839,8 @@
       Object.values(radaresMarkers).forEach(marker => {
         if (marker.isPopupOpen()) {
           const radarId = marker.radarData.key;
-          marker.setPopupContent(createPopupContent(marker.radarData, radarId));
+          const popupContent = createPopupContent(marker.radarData, radarId);
+          marker.setPopupContent(popupContent);
         }
       });
     }
