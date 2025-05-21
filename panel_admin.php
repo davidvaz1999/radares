@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="icon" type="image/png" href="https://ahorraunamulta.com/favicon.png" />
   <title>PANEL DE ADMINISTRACIÓN - AHORRA UNA MULTA</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
@@ -10,13 +10,13 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-auth.js";
-    import { getDatabase, ref, onValue, update, remove, get } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js";
+    import { getDatabase, ref, onValue, update, remove, get, push, set } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js";
 
     const firebaseConfigLogin = {
       apiKey: "AIzaSyAX4uy3ON91cwK3Tt9r5Eqpucyf4sfv0No",
       authDomain: "login-radares.firebaseapp.com",
       projectId: "login-radares",
-      storageBucket: "login-radares.firebasestorage.app",
+      storageBucket: "login-radares.appspot.com",
       messagingSenderId: "661760692554",
       appId: "1:661760692554:web:2da6e767592800380eb1b3",
       measurementId: "G-S2ZCB85HX1"
@@ -41,12 +41,16 @@
 
     let allRadares = [];
     let currentPage = 1;
-    const itemsPerPage = 20;
+    const itemsPerPage = 10; // Reducido para móviles
 
-    // Variables para el mapa de edición
+    // Variables para el mapa
     let adminMap;
     let editableMarker;
+    let newRadarMarker;
     let currentEditingRadarId;
+    let addingNewRadar = false;
+    let touchStartX = 0;
+    let touchEndX = 0;
 
     onAuthStateChanged(auth, (user) => {
       if (!user) {
@@ -54,9 +58,157 @@
       } else {
         document.getElementById('userInfo').innerText = `Bienvenido, ${user.email}`;
         document.getElementById('userEmail').textContent = user.email;
+        showBetaWarning();
         fetchRadares();
+        addNewRadarButton();
+        setupTouchEvents();
       }
     });
+
+    function setupTouchEvents() {
+      const tableContainer = document.getElementById('table-container');
+
+      tableContainer.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+      }, false);
+
+      tableContainer.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+      }, false);
+    }
+
+    function handleSwipe() {
+      const minSwipeDistance = 50;
+      const distance = touchStartX - touchEndX;
+
+      if (Math.abs(distance) < minSwipeDistance) return;
+
+      if (distance > 0) {
+        // Swipe izquierda - siguiente página
+        navigatePage('next');
+      } else {
+        // Swipe derecha - página anterior
+        navigatePage('prev');
+      }
+    }
+
+    function navigatePage(direction) {
+      const totalPages = Math.ceil(filterRadares(allRadares).length / itemsPerPage);
+
+      if (direction === 'next' && currentPage < totalPages) {
+        currentPage++;
+        renderRadares();
+      } else if (direction === 'prev' && currentPage > 1) {
+        currentPage--;
+        renderRadares();
+      }
+    }
+
+    // Función para mostrar aviso beta
+    function showBetaWarning() {
+      if (!document.getElementById('betaWarningModal')) {
+        const modalHTML = `
+        <div id="betaWarningModal" class="modal">
+          <div class="edit-all-modal-content">
+            <h2>AVISO: Versión Beta</h2>
+            <p>Esta versión del panel de administración está en fase beta. Algunas funciones pueden no funcionar correctamente.</p>
+            <p>Por favor, reporta cualquier problema que encuentres.</p>
+            <div style="text-align: center; margin-top: 20px;">
+              <button id="acceptBetaBtn" class="confirm-btn">Entendido</button>
+            </div>
+          </div>
+        </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+        document.getElementById('acceptBetaBtn').addEventListener('click', () => {
+          document.getElementById('betaWarningModal').style.display = 'none';
+        });
+      }
+
+      document.getElementById('betaWarningModal').style.display = 'flex';
+    }
+
+    // Función para añadir botón de nuevo radar
+    function addNewRadarButton() {
+      const controlsDiv = document.querySelector('.controls');
+      if (document.getElementById('newRadarBtn')) return;
+
+      const newRadarBtn = document.createElement('button');
+      newRadarBtn.id = 'newRadarBtn';
+      newRadarBtn.className = 'confirm-btn floating-action-btn';
+      newRadarBtn.innerHTML = '<span class="btn-icon">+</span><span class="btn-text">Nuevo Radar</span>';
+      newRadarBtn.addEventListener('click', showLocationInputModal);
+      document.body.appendChild(newRadarBtn);
+    }
+
+    // Modal para entrada de ubicación
+    function showLocationInputModal() {
+      if (!document.getElementById('locationInputModal')) {
+        const modalHTML = `
+        <div id="locationInputModal" class="modal">
+          <div class="edit-all-modal-content">
+            <button class="close-modal" id="closeLocationInputModal">&times;</button>
+            <h2>Añadir Nuevo Radar - Paso 1</h2>
+            <div class="form-group">
+              <label for="initialLocationInput">Introduce las coordenadas:</label>
+              <input type="text" id="initialLocationInput" placeholder="Ejemplo: 41.3851, 2.1734">
+              <p style="font-size: 12px; color: #666; margin-top: 5px;">
+                Formato: latitud,longitud<br>
+                Ejemplo: 41.3851, 2.1734
+              </p>
+            </div>
+            <div class="form-buttons">
+              <button id="cancelLocationInputBtn" class="cancel-btn">Cancelar</button>
+              <button id="confirmLocationBtn" class="confirm-btn">Continuar</button>
+            </div>
+          </div>
+        </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+        document.getElementById('closeLocationInputModal').addEventListener('click', () => {
+          document.getElementById('locationInputModal').style.display = 'none';
+        });
+
+        document.getElementById('cancelLocationInputBtn').addEventListener('click', () => {
+          document.getElementById('locationInputModal').style.display = 'none';
+        });
+
+        document.getElementById('confirmLocationBtn').addEventListener('click', processLocationInput);
+      }
+
+      document.getElementById('initialLocationInput').value = '';
+      document.getElementById('locationInputModal').style.display = 'flex';
+      document.getElementById('initialLocationInput').focus();
+    }
+
+    // Función para procesar la entrada de ubicación
+    function processLocationInput() {
+      const input = document.getElementById('initialLocationInput').value.trim();
+      if (!input) {
+        showNotification('Por favor ingresa las coordenadas', 'warning');
+        return;
+      }
+
+      const coords = input.split(/[, ]+/);
+      if (coords.length < 2) {
+        showNotification('Formato incorrecto. Usa "latitud,longitud"', 'error');
+        return;
+      }
+
+      const lat = parseFloat(coords[0]);
+      const lng = parseFloat(coords[1]);
+
+      if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        showNotification('Coordenadas inválidas. La latitud debe estar entre -90 y 90, y la longitud entre -180 y 180', 'error');
+        return;
+      }
+
+      document.getElementById('locationInputModal').style.display = 'none';
+      initAdminMap(lat, lng, true);
+    }
 
     const fetchRadares = () => {
       showLoading(true);
@@ -89,7 +241,6 @@
       });
     };
 
-    // Función para registrar cambios en el historial
     function logChange(radarId, fieldChanged, oldValue, newValue, changedBy) {
       const changeRef = ref(database, `historial/${radarId}/${Date.now()}`);
       const changeData = {
@@ -103,24 +254,20 @@
       return update(changeRef, changeData);
     }
 
-    // Función para actualizar campos con registro de historial
     async function updateRadarField(id, field, value) {
       const radarRef = ref(database, `radares/${id}`);
       const userEmail = document.getElementById('userEmail').textContent;
 
       try {
-        // Obtener valor actual antes de actualizar
         const snapshot = await get(radarRef);
         const oldValue = snapshot.val()[field];
 
-        // Actualizar radar
         await update(radarRef, {
           [field]: field === 'speed' ? parseInt(value) : value,
           last_updated: Date.now(),
           updated_by: userEmail
         });
 
-        // Registrar cambio en el historial si el valor es diferente
         if (oldValue !== value) {
           await logChange(id, field, oldValue, value, userEmail);
         }
@@ -132,7 +279,6 @@
       }
     }
 
-    // Función para mostrar el historial de cambios
     function showHistoryModal(radarId) {
       const historyRef = ref(database, `historial/${radarId}`);
       const modalContent = document.getElementById('historyModalContent');
@@ -151,7 +297,7 @@
         let historyHTML = '<table class="history-table"><thead><tr><th>Fecha</th><th>Campo</th><th>Valor Anterior</th><th>Valor Nuevo</th><th>Usuario</th></tr></thead><tbody>';
 
         Object.entries(historyData)
-          .sort((a, b) => b[0] - a[0]) // Ordenar por timestamp descendente
+          .sort((a, b) => b[0] - a[0])
           .forEach(([timestamp, change]) => {
             historyHTML += `
               <tr>
@@ -167,6 +313,227 @@
         historyHTML += '</tbody></table>';
         modalContent.innerHTML = historyHTML;
       });
+    }
+
+    // Función para inicializar/actualizar el mapa
+    function initAdminMap(lat, lng, isNewRadar = false) {
+      if (!adminMap) {
+        adminMap = L.map('adminMap').setView([lat, lng], 15);
+
+        const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        });
+
+        const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+          attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+        });
+
+        const topoLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+          attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+        });
+
+        osmLayer.addTo(adminMap);
+        L.control.layers({
+          "Mapa Callejero": osmLayer,
+          "Mapa Topográfico": topoLayer,
+          "Vista Satélite": satelliteLayer
+        }).addTo(adminMap);
+
+        // Añadir botón de ubicación actual
+        L.control.locate({
+          position: 'topright',
+          drawCircle: true,
+          follow: true,
+          setView: 'always',
+          keepCurrentZoomLevel: true,
+          markerStyle: {
+            weight: 1,
+            opacity: 0.8,
+            fillOpacity: 0.8
+          },
+          circleStyle: {
+            weight: 1,
+            clickable: false
+          },
+          icon: 'fa fa-map-marker',
+          metric: true,
+          strings: {
+            title: "Mi ubicación",
+            popup: "Estás dentro de {distance} {unit} de este punto",
+            outsideMapBoundsMsg: "Parece que estás fuera de los límites del mapa"
+          },
+          locateOptions: {
+            maxZoom: 15,
+            watch: true,
+            enableHighAccuracy: true,
+            maximumAge: 10000,
+            timeout: 10000
+          }
+        }).addTo(adminMap);
+      } else {
+        adminMap.setView([lat, lng], 15);
+      }
+
+      if (editableMarker) adminMap.removeLayer(editableMarker);
+      if (newRadarMarker) adminMap.removeLayer(newRadarMarker);
+
+      if (isNewRadar) {
+        addingNewRadar = true;
+        document.getElementById('mapModal').style.display = 'none';
+        showNewRadarForm(lat, lng);
+
+        newRadarMarker = L.marker([lat, lng], {
+          draggable: true,
+          icon: L.icon({
+            iconUrl: 'https://ahorraunamulta.com/velocidades/default/pendiente.png',
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+          })
+        }).addTo(adminMap);
+
+        newRadarMarker.on('dragend', function() {
+          updateNewRadarCoords();
+        });
+      } else {
+        addingNewRadar = false;
+        editableMarker = L.marker([lat, lng], {
+          draggable: true,
+          icon: L.icon({
+            iconUrl: 'https://ahorraunamulta.com/velocidades/default/pendiente.png',
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+          })
+        }).addTo(adminMap);
+      }
+
+      enhanceMapModal(isNewRadar);
+    }
+
+    // Función para mostrar formulario de nuevo radar
+    function showNewRadarForm(lat, lng) {
+      if (!document.getElementById('newRadarModal')) {
+        const modalHTML = `
+        <div id="newRadarModal" class="modal">
+          <div class="edit-all-modal-content">
+            <button class="close-modal" id="closeNewRadarModal">&times;</button>
+            <h2>Añadir Nuevo Radar</h2>
+            <div class="edit-form">
+              <div class="form-group">
+                <label for="newRadarLat">Latitud:</label>
+                <input type="text" id="newRadarLat" readonly>
+              </div>
+              <div class="form-group">
+                <label for="newRadarLng">Longitud:</label>
+                <input type="text" id="newRadarLng" readonly>
+              </div>
+              <div class="form-group">
+                <label for="newRadarDirection">Dirección:</label>
+                <input type="text" id="newRadarDirection">
+              </div>
+              <div class="form-group">
+                <label for="newRadarSpeed">Velocidad (km/h):</label>
+                <input type="number" id="newRadarSpeed" min="0" step="1">
+              </div>
+              <div class="form-group">
+                <label for="newRadarStatus">Estado:</label>
+                <select id="newRadarStatus">
+                  <option value="active">Activo</option>
+                  <option value="inactive">Inactivo</option>
+                  <option value="hidden">Oculto</option>
+                  <option value="pending_review" selected>Pendiente</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="newRadarRoad">Vía:</label>
+                <input type="text" id="newRadarRoad">
+              </div>
+              <div class="form-group">
+                <label for="newRadarPk">PK:</label>
+                <input type="text" id="newRadarPk">
+              </div>
+              <div class="form-group">
+                <label for="newRadarType">Tipo de radar:</label>
+                <select id="newRadarType">
+                  <option value="Fijo">Fijo</option>
+                  <option value="Móvil">Móvil</option>
+                  <option value="Tramo">Tramo</option>
+                  <option value="Remolque">Remolque</option>
+                </select>
+              </div>
+              <div class="form-buttons">
+                <button id="cancelNewRadarBtn" class="cancel-btn">Cancelar</button>
+                <button id="saveNewRadarBtn" class="confirm-btn">Guardar Radar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+        document.getElementById('closeNewRadarModal').addEventListener('click', closeNewRadarModal);
+        document.getElementById('cancelNewRadarBtn').addEventListener('click', closeNewRadarModal);
+        document.getElementById('saveNewRadarBtn').addEventListener('click', saveNewRadar);
+      }
+
+      document.getElementById('newRadarLat').value = lat.toFixed(6);
+      document.getElementById('newRadarLng').value = lng.toFixed(6);
+      document.getElementById('newRadarModal').style.display = 'flex';
+    }
+
+    function updateNewRadarCoords() {
+      if (newRadarMarker) {
+        const latLng = newRadarMarker.getLatLng();
+        document.getElementById('newRadarLat').value = latLng.lat.toFixed(6);
+        document.getElementById('newRadarLng').value = latLng.lng.toFixed(6);
+      }
+    }
+
+    function saveNewRadar() {
+      const newRadar = {
+        lat: parseFloat(document.getElementById('newRadarLat').value),
+        lng: parseFloat(document.getElementById('newRadarLng').value),
+        direction: document.getElementById('newRadarDirection').value.trim() || 'Sin especificar',
+        speed: parseInt(document.getElementById('newRadarSpeed').value) || 0,
+        status: document.getElementById('newRadarStatus').value,
+        road: document.getElementById('newRadarRoad').value.trim() || 'Sin especificar',
+        pk: document.getElementById('newRadarPk').value.trim() || '',
+        radarType: document.getElementById('newRadarType').value,
+        last_updated: Date.now(),
+        updated_by: document.getElementById('userEmail').textContent
+      };
+
+      // Validación mínima
+      if (isNaN(newRadar.speed)) {
+        showNotification('La velocidad debe ser un número válido', 'error');
+        return;
+      }
+
+      showLoading(true);
+      const radaresRef = ref(database, 'radares');
+      const newRadarRef = push(radaresRef);
+
+      set(newRadarRef, newRadar)
+        .then(() => {
+          showNotification('Nuevo radar añadido correctamente', 'success');
+          vibrate(200);
+          closeNewRadarModal();
+          fetchRadares();
+        })
+        .catch(error => {
+          showNotification(`Error al guardar radar: ${error.message}`, 'error');
+        })
+        .finally(() => {
+          showLoading(false);
+        });
+    }
+
+    function closeNewRadarModal() {
+      document.getElementById('newRadarModal').style.display = 'none';
+      addingNewRadar = false;
+      if (newRadarMarker) {
+        adminMap.removeLayer(newRadarMarker);
+        newRadarMarker = null;
+      }
     }
 
     const renderRadares = (radares = allRadares) => {
@@ -220,7 +587,7 @@
           </td>
           ${createEditableCell(roadValue, 'road')}
           ${createEditableCell(radar.pk, 'pk')}
-          <td>${lastUpdated}</td>
+          <td class="hidden-mobile">${lastUpdated}</td>
           <td>
             <select data-field="radarType" data-id="${radar.id}">
               <option value="Fijo" ${radar.radarType === 'Fijo' ? 'selected' : ''}>Fijo</option>
@@ -231,14 +598,19 @@
             <button class="confirm-btn" data-field="radarType" data-id="${radar.id}">✓</button>
           </td>
           <td class="actions">
-            ${radar.status !== 'active' ? `<button class="approve-btn" data-id="${radar.id}">✅ Activar</button>` : ''}
-            ${radar.status !== 'inactive' ? `<button class="reject-btn" data-id="${radar.id}">❌ Desactivar</button>` : ''}
-            ${radar.status === 'pending_review' ? `<button class="complete-btn" data-id="${radar.id}">✔️ Completar</button>` : ''}
-            <button class="edit-location-btn" data-id="${radar.id}" data-lat="${radar.lat}" data-lng="${radar.lng}">📍 Editar ubicación</button>
-            <button class="view-map-btn" data-id="${radar.id}" data-lat="${radar.lat}" data-lng="${radar.lng}">🗺️ Ver en mapa</button>
-            <button class="history-btn" data-id="${radar.id}">📜 Historial</button>
-            <button class="edit-all-btn" data-id="${radar.id}">✏️ Editar todo</button>
-            <button class="delete-btn" data-id="${radar.id}">🗑️ Eliminar</button>
+            <div class="dropdown">
+              <button class="dropdown-btn">⋮</button>
+              <div class="dropdown-content">
+                ${radar.status !== 'active' ? `<button class="approve-btn" data-id="${radar.id}">✅ Activar</button>` : ''}
+                ${radar.status !== 'inactive' ? `<button class="reject-btn" data-id="${radar.id}">❌ Desactivar</button>` : ''}
+                ${radar.status === 'pending_review' ? `<button class="complete-btn" data-id="${radar.id}">✔️ Completar</button>` : ''}
+                <button class="edit-location-btn" data-id="${radar.id}" data-lat="${radar.lat}" data-lng="${radar.lng}">📍 Editar ubicación</button>
+                <button class="view-map-btn" data-id="${radar.id}" data-lat="${radar.lat}" data-lng="${radar.lng}">🗺️ Ver en mapa</button>
+                <button class="history-btn" data-id="${radar.id}">📜 Historial</button>
+                <button class="edit-all-btn" data-id="${radar.id}">✏️ Editar todo</button>
+                <button class="delete-btn" data-id="${radar.id}">🗑️ Eliminar</button>
+              </div>
+            </div>
           </td>
         `;
 
@@ -249,9 +621,8 @@
       updatePaginationControls(sortedRadares.length);
     };
 
-    // Función para obtener el icono según el tipo de radar
     function getIconByRadar(radar) {
-      if (radar.status === "hidden") return null; // No mostrar icono si está oculto
+      if (radar.status === "hidden") return null;
 
       if (radar.status === "pending_review") {
         return L.icon({
@@ -276,9 +647,7 @@
       });
     }
 
-    // Actualizar las opciones de estado en todos los select
     function updateStatusOptions() {
-      // En la tabla principal
       document.querySelectorAll('.status-select').forEach(select => {
         if (!select.querySelector('option[value="hidden"]')) {
           const option = document.createElement('option');
@@ -288,9 +657,8 @@
         }
       });
 
-      // En el modal de edición completa
       const editStatusSelect = document.getElementById('editStatus');
-      if (!editStatusSelect.querySelector('option[value="hidden"]')) {
+      if (editStatusSelect && !editStatusSelect.querySelector('option[value="hidden"]')) {
         const option = document.createElement('option');
         option.value = 'hidden';
         option.textContent = 'Oculto';
@@ -298,113 +666,17 @@
       }
     }
 
-    // Inicializar el mapa Leaflet para edición con capas de satélite
-    function initAdminMap(lat, lng) {
-      if (!adminMap) {
-        adminMap = L.map('adminMap').setView([lat, lng], 15);
-
-        // Capa base (OpenStreetMap)
-        const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        });
-
-        // Capa satelital (Esri World Imagery)
-        const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-          attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-        });
-
-        // Capa topográfica (OpenTopoMap)
-        const topoLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-          attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
-        });
-
-        // Añadir capa base por defecto
-        osmLayer.addTo(adminMap);
-
-        // Añadir control de capas
-        const baseLayers = {
-          "Mapa Callejero": osmLayer,
-          "Mapa Topográfico": topoLayer,
-          "Vista Satélite": satelliteLayer
-        };
-
-        L.control.layers(baseLayers).addTo(adminMap);
-      } else {
-        adminMap.setView([lat, lng], 15);
-      }
-
-      // Eliminar marcador existente si lo hay
-      if (editableMarker) {
-        adminMap.removeLayer(editableMarker);
-      }
-
-      // Cargar todos los radares en el mapa excepto los ocultos
-      const radaresRef = ref(database, 'radares');
-      onValue(radaresRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          // Limpiar marcadores existentes
-          adminMap.eachLayer(layer => {
-            if (layer instanceof L.Marker && layer !== editableMarker) {
-              adminMap.removeLayer(layer);
-            }
-          });
-
-          // Añadir todos los radares al mapa excepto los ocultos
-          Object.entries(data).forEach(([id, radar]) => {
-            if (radar.lat && radar.lng && radar.status !== 'hidden') {
-              const marker = L.marker([radar.lat, radar.lng], {
-                icon: getIconByRadar(radar),
-                draggable: true,
-                zIndexOffset: radar.status === 'active' ? 1000 : 0
-              }).addTo(adminMap);
-
-              // Crear contenido del popup
-              const popupContent = `
-                <b>${radar.radarType || "Radar"}</b><br>
-                <small>${radar.road || "Carretera no especificada"}</small><br>
-                ${radar.pk ? `PK: ${radar.pk}<br>` : ''}
-                Dirección: ${radar.direction || "No especificada"}<br>
-                Velocidad: ${radar.speed || "N/A"} km/h<br>
-                Estado: <b>${radar.status === "active" ? "Activo" : radar.status === "pending_review" ? "Pendiente" : radar.status === "hidden" ? "Oculto" : "Inactivo"}</b><br>
-                ID: ${id}
-              `;
-
-              marker.bindPopup(popupContent);
-            }
-          });
-        }
-      });
-
-      // Crear nuevo marcador editable
-      editableMarker = L.marker([lat, lng], {
-        draggable: true,
-        icon: L.icon({
-          iconUrl: 'https://ahorraunamulta.com/velocidades/default/pendiente.png',
-          iconSize: [30, 30],
-          iconAnchor: [15, 15]
-        })
-      }).addTo(adminMap);
-
-      // Centrar el mapa en el marcador
-      adminMap.setView([lat, lng], 15);
-    }
-
-    // Mostrar modal de edición de ubicación
     function showMapModal(radarId, lat, lng) {
       currentEditingRadarId = radarId;
       document.getElementById('mapModal').style.display = 'flex';
       initAdminMap(parseFloat(lat), parseFloat(lng));
     }
 
-    // Mostrar modal de edición completa
     function showEditAllModal(radarId) {
       const radar = allRadares.find(r => r.id === radarId);
       if (!radar) return;
 
       currentEditingRadarId = radarId;
-
-      // Llenar el formulario con los datos actuales del radar
       document.getElementById('editDirection').value = radar.direction || '';
       document.getElementById('editSpeed').value = radar.speed || '';
       document.getElementById('editStatus').value = radar.status || 'pending_review';
@@ -415,19 +687,16 @@
       document.getElementById('editAllModal').style.display = 'flex';
     }
 
-    // Cerrar modal de edición de ubicación
     function closeMapModal() {
       document.getElementById('mapModal').style.display = 'none';
       currentEditingRadarId = null;
     }
 
-    // Cerrar modal de edición completa
     function closeEditAllModal() {
       document.getElementById('editAllModal').style.display = 'none';
       currentEditingRadarId = null;
     }
 
-    // Guardar nueva ubicación
     function saveRadarLocation() {
       if (!currentEditingRadarId || !editableMarker) return;
 
@@ -435,7 +704,6 @@
       const radarRef = ref(database, `radares/${currentEditingRadarId}`);
       const userEmail = document.getElementById('userEmail').textContent;
 
-      // Obtener valores actuales antes de actualizar
       get(radarRef).then((snapshot) => {
         const currentData = snapshot.val();
 
@@ -446,13 +714,12 @@
           updated_by: userEmail
         })
           .then(() => {
-            // Registrar cambio en el historial
             logChange(currentEditingRadarId, 'lat', currentData.lat, newLatLng.lat, userEmail);
             logChange(currentEditingRadarId, 'lng', currentData.lng, newLatLng.lng, userEmail);
-
             showNotification('Ubicación del radar actualizada correctamente.', 'success');
+            vibrate(200);
             closeMapModal();
-            fetchRadares(); // Recargar la lista para mostrar los cambios
+            fetchRadares();
           })
           .catch((error) => {
             showNotification(`Error al actualizar ubicación: ${error.message}`, 'error');
@@ -460,7 +727,6 @@
       });
     }
 
-    // Guardar todos los cambios del formulario completo
     function saveAllRadarData() {
       if (!currentEditingRadarId) return;
 
@@ -483,13 +749,11 @@
         return;
       }
 
-      // Obtener valores actuales antes de actualizar
       get(radarRef).then((snapshot) => {
         const currentData = snapshot.val();
 
         update(radarRef, updateData)
           .then(() => {
-            // Registrar cambios en el historial para cada campo modificado
             Object.keys(updateData).forEach(key => {
               if (key !== 'last_updated' && key !== 'updated_by' && currentData[key] !== updateData[key]) {
                 logChange(currentEditingRadarId, key, currentData[key], updateData[key], userEmail);
@@ -497,8 +761,9 @@
             });
 
             showNotification('Datos del radar actualizados correctamente.', 'success');
+            vibrate(200);
             closeEditAllModal();
-            fetchRadares(); // Recargar la lista para mostrar los cambios
+            fetchRadares();
           })
           .catch((error) => {
             showNotification(`Error al actualizar datos: ${error.message}`, 'error');
@@ -566,11 +831,11 @@
       const paginationDiv = document.getElementById('paginationControls');
 
       paginationDiv.innerHTML = `
-        <button class="page-btn" data-page="first" ${currentPage === 1 ? 'disabled' : ''}>⏮️ Primera</button>
-        <button class="page-btn" data-page="prev" ${currentPage === 1 ? 'disabled' : ''}>◀️ Anterior</button>
-        <span>Página ${currentPage} de ${totalPages}</span>
-        <button class="page-btn" data-page="next" ${currentPage >= totalPages ? 'disabled' : ''}>Siguiente ▶️</button>
-        <button class="page-btn" data-page="last" ${currentPage >= totalPages ? 'disabled' : ''}>Última ⏭️</button>
+        <button class="page-btn" data-page="first" ${currentPage === 1 ? 'disabled' : ''}>⏮️</button>
+        <button class="page-btn" data-page="prev" ${currentPage === 1 ? 'disabled' : ''}>◀️</button>
+        <span class="page-info">Página ${currentPage} de ${totalPages}</span>
+        <button class="page-btn" data-page="next" ${currentPage >= totalPages ? 'disabled' : ''}>▶️</button>
+        <button class="page-btn" data-page="last" ${currentPage >= totalPages ? 'disabled' : ''}>⏭️</button>
       `;
     };
 
@@ -594,10 +859,11 @@
           const field = e.target.dataset.field;
           const id = e.target.dataset.id;
 
+          if (!field || !id) return;
+
           let inputElement = e.target.parentElement.querySelector('input, select');
 
           if (!inputElement) {
-            showNotification('No se pudo encontrar el elemento de entrada', 'error');
             return;
           }
 
@@ -613,14 +879,31 @@
               .then(success => {
                 if (success) {
                   showNotification(`Campo ${field} actualizado correctamente.`, 'success');
+                  vibrate(100);
                 }
               });
           }
         });
       });
 
+      document.querySelectorAll('.dropdown-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const dropdown = e.target.nextElementSibling;
+          dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+        });
+      });
+
+      // Cerrar dropdowns al hacer clic fuera
+      document.addEventListener('click', () => {
+        document.querySelectorAll('.dropdown-content').forEach(dropdown => {
+          dropdown.style.display = 'none';
+        });
+      });
+
       document.querySelectorAll('.approve-btn').forEach((btn) => {
         btn.addEventListener('click', (e) => {
+          e.stopPropagation();
           if (confirm('¿Confirmas que deseas activar este radar?')) {
             const id = btn.dataset.id;
             updateRadarStatus(id, 'active');
@@ -630,6 +913,7 @@
 
       document.querySelectorAll('.reject-btn').forEach((btn) => {
         btn.addEventListener('click', (e) => {
+          e.stopPropagation();
           if (confirm('¿Confirmas que deseas desactivar este radar?')) {
             const id = btn.dataset.id;
             updateRadarStatus(id, 'inactive');
@@ -639,6 +923,7 @@
 
       document.querySelectorAll('.complete-btn').forEach((btn) => {
         btn.addEventListener('click', (e) => {
+          e.stopPropagation();
           if (confirm('¿Confirmas que deseas marcar este radar como completado y activo?')) {
             const id = btn.dataset.id;
             updateRadarStatus(id, 'active');
@@ -648,6 +933,7 @@
 
       document.querySelectorAll('.edit-location-btn').forEach((btn) => {
         btn.addEventListener('click', (e) => {
+          e.stopPropagation();
           const radarId = btn.dataset.id;
           const lat = btn.dataset.lat;
           const lng = btn.dataset.lng;
@@ -657,6 +943,7 @@
 
       document.querySelectorAll('.edit-all-btn').forEach((btn) => {
         btn.addEventListener('click', (e) => {
+          e.stopPropagation();
           const radarId = btn.dataset.id;
           showEditAllModal(radarId);
         });
@@ -664,6 +951,7 @@
 
       document.querySelectorAll('.view-map-btn').forEach((btn) => {
         btn.addEventListener('click', (e) => {
+          e.stopPropagation();
           const id = btn.dataset.id;
           const lat = btn.dataset.lat;
           const lng = btn.dataset.lng;
@@ -673,6 +961,7 @@
 
       document.querySelectorAll('.history-btn').forEach((btn) => {
         btn.addEventListener('click', (e) => {
+          e.stopPropagation();
           const radarId = btn.dataset.id;
           showHistoryModal(radarId);
         });
@@ -680,6 +969,7 @@
 
       document.querySelectorAll('.delete-btn').forEach((btn) => {
         btn.addEventListener('click', (e) => {
+          e.stopPropagation();
           const id = btn.dataset.id;
           if (confirm('¿Estás seguro de que deseas eliminar permanentemente este radar? Esta acción no se puede deshacer.')) {
             deleteRadar(id);
@@ -689,7 +979,6 @@
     };
 
     const viewRadarOnMap = (id, lat, lng) => {
-      // Abrir el mapa en una nueva pestaña con parámetros de ubicación
       const url = `index.php?radar=${id}&lat=${lat}&lng=${lng}`;
       window.open(url, '_blank');
     };
@@ -698,7 +987,6 @@
       const radarRef = ref(database, `radares/${id}`);
       const userEmail = document.getElementById('userEmail').textContent;
 
-      // Obtener estado actual antes de actualizar
       get(radarRef).then((snapshot) => {
         const currentStatus = snapshot.val().status;
 
@@ -708,9 +996,9 @@
           updated_by: userEmail
         })
           .then(() => {
-            // Registrar cambio de estado en el historial
             logChange(id, 'status', currentStatus, status, userEmail);
             showNotification(`Radar ${id} actualizado a ${status}.`, 'success');
+            vibrate(200);
             fetchRadares();
           })
           .catch((error) => {
@@ -725,13 +1013,20 @@
       remove(radarRef)
         .then(() => {
           showNotification(`Radar ${id} eliminado correctamente.`, 'success');
-          fetchRadares(); // Recargar la lista de radares
+          vibrate(200);
+          fetchRadares();
         })
         .catch((error) => {
           showLoading(false);
           showNotification(`Error al eliminar radar: ${error.message}`, 'error');
         });
     };
+
+    function vibrate(duration) {
+      if ('vibrate' in navigator) {
+        navigator.vibrate(duration);
+      }
+    }
 
     document.getElementById('searchInput').addEventListener('input', () => {
       currentPage = 1;
@@ -797,7 +1092,6 @@
       document.getElementById('historyModal').style.display = 'none';
     });
 
-    // Cerrar modales al hacer clic fuera del contenido
     document.getElementById('mapModal').addEventListener('click', (e) => {
       if (e.target === document.getElementById('mapModal')) {
         closeMapModal();
@@ -858,96 +1152,132 @@
     window.goToMainSite = goToMainSite;
   </script>
   <style>
+    :root {
+      --primary-color: #3498db;
+      --secondary-color: #2980b9;
+      --success-color: #27ae60;
+      --danger-color: #e74c3c;
+      --warning-color: #f39c12;
+      --info-color: #9b59b6;
+      --light-color: #ecf0f1;
+      --dark-color: #2c3e50;
+      --text-color: #333;
+      --border-radius: 8px;
+      --box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      --transition: all 0.3s ease;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      color: #333;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      margin: 0;
+      padding: 10px;
+      color: var(--text-color);
+      line-height: 1.5;
+      -webkit-text-size-adjust: 100%;
+      -webkit-font-smoothing: antialiased;
     }
 
     h1 {
-      color: #2c3e50;
-      border-bottom: 2px solid #3498db;
+      color: var(--dark-color);
+      border-bottom: 2px solid var(--primary-color);
       padding-bottom: 10px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      font-size: 1.5rem;
+      margin: 0 0 15px 0;
     }
 
     h2 {
-      color: #34495e;
+      color: var(--dark-color);
+      font-size: 1.3rem;
+      margin: 15px 0;
     }
 
     .dashboard-stats {
       display: flex;
-      justify-content: space-between;
-      margin: 20px 0;
-      flex-wrap: wrap;
+      flex-direction: column;
       gap: 10px;
+      margin: 15px 0;
     }
 
     .stat-card {
       background: white;
-      border-radius: 8px;
+      border-radius: var(--border-radius);
       padding: 15px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      flex: 1;
-      min-width: 150px;
+      box-shadow: var(--box-shadow);
       text-align: center;
+      flex: 1;
     }
 
     .stat-card h3 {
-      margin-top: 0;
+      margin: 0;
       color: #7f8c8d;
-      font-size: 14px;
+      font-size: 0.9rem;
     }
 
     .stat-card p {
-      font-size: 24px;
+      font-size: 1.5rem;
       font-weight: bold;
-      margin: 10px 0 0;
+      margin: 5px 0 0;
     }
 
     .controls {
-      margin: 20px 0;
+      margin: 15px 0;
       display: flex;
+      flex-direction: column;
       gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
       background: #f8f9fa;
       padding: 15px;
-      border-radius: 8px;
+      border-radius: var(--border-radius);
     }
 
-    .controls input, .controls select {
-      padding: 8px 12px;
+    .controls input,
+    .controls select {
+      padding: 12px;
       border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 14px;
+      border-radius: var(--border-radius);
+      font-size: 1rem;
+      width: 100%;
     }
 
     #searchInput {
       flex: 2;
-      min-width: 200px;
+    }
+
+    #table-container {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      position: relative;
+      margin: 15px 0;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin: 20px 0;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      box-shadow: var(--box-shadow);
+      min-width: 600px;
     }
 
     th, td {
       border: 1px solid #ddd;
-      padding: 12px;
+      padding: 10px;
       text-align: center;
+      font-size: 0.9rem;
     }
 
     th {
-      background-color: #3498db;
+      background-color: var(--primary-color);
       color: white;
       position: sticky;
       top: 0;
+      font-weight: 500;
     }
 
     tr:nth-child(even) {
@@ -976,14 +1306,16 @@
     }
 
     button {
-      padding: 6px 12px;
-      margin: 0 2px;
+      padding: 10px 12px;
+      margin: 2px;
       border: none;
       color: white;
-      border-radius: 4px;
+      border-radius: var(--border-radius);
       cursor: pointer;
-      font-size: 14px;
-      transition: all 0.3s;
+      font-size: 0.9rem;
+      transition: var(--transition);
+      min-height: 44px;
+      min-width: 44px;
     }
 
     button:disabled {
@@ -992,7 +1324,7 @@
     }
 
     .approve-btn {
-      background-color: #27ae60;
+      background-color: var(--success-color);
     }
 
     .approve-btn:hover {
@@ -1000,7 +1332,7 @@
     }
 
     .reject-btn {
-      background-color: #e74c3c;
+      background-color: var(--danger-color);
     }
 
     .reject-btn:hover {
@@ -1008,7 +1340,7 @@
     }
 
     .complete-btn {
-      background-color: #f39c12;
+      background-color: var(--warning-color);
     }
 
     .complete-btn:hover {
@@ -1016,7 +1348,7 @@
     }
 
     .delete-btn {
-      background-color: #e74c3c;
+      background-color: var(--danger-color);
     }
 
     .delete-btn:hover {
@@ -1024,15 +1356,15 @@
     }
 
     .view-map-btn {
-      background-color: #3498db;
+      background-color: var(--primary-color);
     }
 
     .view-map-btn:hover {
-      background-color: #2980b9;
+      background-color: var(--secondary-color);
     }
 
     .edit-location-btn {
-      background-color: #9b59b6;
+      background-color: var(--info-color);
     }
 
     .edit-location-btn:hover {
@@ -1040,7 +1372,7 @@
     }
 
     .edit-all-btn {
-      background-color: #2ecc71;
+      background-color: var(--success-color);
     }
 
     .edit-all-btn:hover {
@@ -1048,55 +1380,59 @@
     }
 
     .history-btn {
-      background-color: #3498db;
+      background-color: var(--primary-color);
     }
 
     .history-btn:hover {
-      background-color: #2980b9;
+      background-color: var(--secondary-color);
     }
 
     #notification {
       display: none;
-      margin: 20px 0;
+      margin: 15px 0;
       padding: 15px;
-      border-radius: 4px;
+      border-radius: var(--border-radius);
       color: white;
+      font-size: 1rem;
     }
 
     #notification.success {
-      background-color: #27ae60;
+      background-color: var(--success-color);
     }
 
     #notification.error {
-      background-color: #e74c3c;
+      background-color: var(--danger-color);
     }
 
     #notification.warning {
-      background-color: #f39c12;
+      background-color: var(--warning-color);
     }
 
     .logout-btn {
       display: block;
-      margin: 30px auto;
-      padding: 10px 20px;
-      font-size: 16px;
+      margin: 20px auto;
+      padding: 12px 20px;
+      font-size: 1rem;
       color: white;
-      background-color: #3498db;
+      background-color: var(--primary-color);
       border: none;
-      border-radius: 5px;
+      border-radius: var(--border-radius);
       cursor: pointer;
       text-align: center;
-      transition: background-color 0.3s;
+      transition: var(--transition);
+      width: 100%;
+      max-width: 300px;
     }
 
     .logout-btn:hover {
-      background-color: #2980b9;
+      background-color: var(--secondary-color);
     }
 
     .main-site-btn {
-      background-color: #f39c12;
-      padding: 8px 15px;
-      font-size: 14px;
+      background-color: var(--warning-color);
+      padding: 10px 15px;
+      font-size: 0.9rem;
+      white-space: nowrap;
     }
 
     .main-site-btn:hover {
@@ -1104,15 +1440,17 @@
     }
 
     .confirm-btn {
-      background-color: #3498db;
+      background-color: var(--primary-color);
     }
 
     .confirm-btn:hover {
-      background-color: #2980b9;
+      background-color: var(--secondary-color);
     }
 
     .toggle-id-btn {
-      background-color: #9b59b6;
+      background-color: var(--info-color);
+      min-width: 44px;
+      min-height: 44px;
     }
 
     .toggle-id-btn:hover {
@@ -1120,46 +1458,86 @@
     }
 
     select, input {
-      padding: 8px;
-      border-radius: 4px;
+      padding: 10px;
+      border-radius: var(--border-radius);
       border: 1px solid #ddd;
-      font-size: 14px;
+      font-size: 1rem;
     }
 
     input {
-      width: 80%;
+      width: 100%;
     }
 
     .actions {
       display: flex;
-      gap: 5px;
-      flex-wrap: wrap;
       justify-content: center;
+    }
+
+    .dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .dropdown-btn {
+      background-color: #7f8c8d;
+      min-width: 44px;
+      min-height: 44px;
+    }
+
+    .dropdown-btn:hover {
+      background-color: #95a5a6;
+    }
+
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      background-color: white;
+      min-width: 200px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      z-index: 1;
+      border-radius: var(--border-radius);
+      padding: 5px;
+      flex-direction: column;
+    }
+
+    .dropdown-content button {
+      width: 100%;
+      margin: 2px 0;
+      text-align: left;
+      justify-content: flex-start;
     }
 
     #loadingIndicator {
       display: none;
       text-align: center;
       margin: 20px 0;
-      font-size: 18px;
-      color: #3498db;
+      font-size: 1.1rem;
+      color: var(--primary-color);
     }
 
     .pagination-controls {
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 10px;
+      gap: 5px;
       margin: 20px 0;
+      flex-wrap: wrap;
     }
 
     .page-btn {
-      background-color: #3498db;
-      padding: 8px 12px;
+      background-color: var(--primary-color);
+      padding: 10px;
+      min-width: 44px;
     }
 
     .page-btn:hover {
-      background-color: #2980b9;
+      background-color: var(--secondary-color);
+    }
+
+    .page-info {
+      padding: 0 10px;
+      font-size: 0.9rem;
     }
 
     /* Estilos para los modales */
@@ -1174,24 +1552,27 @@
       z-index: 1000;
       justify-content: center;
       align-items: center;
+      overflow-y: auto;
+      padding: 20px;
     }
 
     .modal-content {
       background: white;
       padding: 20px;
-      border-radius: 10px;
+      border-radius: var(--border-radius);
       position: relative;
-      width: 90%;
+      width: 100%;
       max-width: 800px;
-      height: 80vh;
+      max-height: 90vh;
+      overflow-y: auto;
     }
 
     .edit-all-modal-content {
       background: white;
       padding: 20px;
-      border-radius: 10px;
+      border-radius: var(--border-radius);
       position: relative;
-      width: 90%;
+      width: 100%;
       max-width: 600px;
       max-height: 90vh;
       overflow-y: auto;
@@ -1200,11 +1581,11 @@
     .history-modal-content {
       background: white;
       padding: 20px;
-      border-radius: 10px;
+      border-radius: var(--border-radius);
       position: relative;
-      width: 90%;
+      width: 100%;
       max-width: 900px;
-      max-height: 80vh;
+      max-height: 90vh;
       overflow-y: auto;
     }
 
@@ -1216,10 +1597,11 @@
       border: none;
       font-size: 24px;
       cursor: pointer;
+      color: var(--text-color);
     }
 
     .cancel-btn {
-      background-color: #e74c3c;
+      background-color: var(--danger-color);
     }
 
     .cancel-btn:hover {
@@ -1238,14 +1620,16 @@
 
     /* Asegurar que el mapa tenga un tamaño adecuado */
     #adminMap {
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      height: 70vh;
+      width: 100%;
     }
 
     /* Estilos para el formulario de edición completa */
     .edit-form {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr;
       gap: 15px;
     }
 
@@ -1262,13 +1646,13 @@
     .form-group input,
     .form-group select {
       width: 100%;
-      padding: 8px;
+      padding: 10px;
       border: 1px solid #ddd;
-      border-radius: 4px;
+      border-radius: var(--border-radius);
+      font-size: 1rem;
     }
 
     .form-buttons {
-      grid-column: span 2;
       display: flex;
       justify-content: flex-end;
       gap: 10px;
@@ -1286,10 +1670,11 @@
       border: 1px solid #ddd;
       padding: 8px;
       text-align: left;
+      font-size: 0.9rem;
     }
 
     .history-table th {
-      background-color: #3498db;
+      background-color: var(--primary-color);
       color: white;
     }
 
@@ -1297,62 +1682,210 @@
       background-color: #f2f2f2;
     }
 
-    @media (max-width: 768px) {
-      table {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
+    /* Estilos para nuevo radar */
+    #newRadarModal .edit-all-modal-content {
+      border: 2px solid var(--success-color);
+    }
+
+    #newRadarLat, #newRadarLng {
+      background-color: #f8f9fa;
+      cursor: not-allowed;
+    }
+
+    .leaflet-marker-draggable {
+      cursor: move !important;
+    }
+
+    /* Botón flotante para nuevo radar */
+    .floating-action-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background-color: var(--success-color);
+      color: white;
+      border: none;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      transition: var(--transition);
+    }
+
+    .floating-action-btn:hover {
+      background-color: #2ecc71;
+      transform: scale(1.1);
+    }
+
+    .floating-action-btn .btn-icon {
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+
+    .floating-action-btn .btn-text {
+      font-size: 0.7rem;
+      display: none;
+    }
+
+    .floating-action-btn:hover .btn-text {
+      display: block;
+    }
+
+    .floating-action-btn:hover .btn-icon {
+      display: none;
+    }
+
+    /* Clase para ocultar elementos en móvil */
+    .hidden-mobile {
+      display: none;
+    }
+
+    /* Efecto ripple para botones */
+    .ripple {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ripple:after {
+      content: "";
+      display: block;
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
+      background-repeat: no-repeat;
+      background-position: 50%;
+      transform: scale(10, 10);
+      opacity: 0;
+      transition: transform .5s, opacity 1s;
+    }
+
+    .ripple:active:after {
+      transform: scale(0, 0);
+      opacity: 0.3;
+      transition: 0s;
+    }
+
+    /* Scroll personalizado */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+
+    /* Indicador de scroll horizontal */
+    .scroll-indicator {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      height: 5px;
+      background-color: var(--primary-color);
+      z-index: 1000;
+      transition: width 0.2s;
+    }
+
+    /* Media queries para tablets y pantallas más grandes */
+    @media (min-width: 768px) {
+      body {
+        padding: 20px;
       }
 
-      .controls {
-        flex-direction: column;
-        align-items: stretch;
+      h1 {
+        font-size: 1.8rem;
+      }
+
+      .dashboard-stats {
+        flex-direction: row;
+        flex-wrap: wrap;
       }
 
       .stat-card {
-        min-width: 100%;
+        min-width: calc(20% - 10px);
       }
 
-      .actions {
-        flex-direction: column;
+      .controls {
+        flex-direction: row;
+        flex-wrap: wrap;
       }
 
-      .actions button {
-        width: 100%;
-        margin: 2px 0;
+      .controls input,
+      .controls select {
+        width: auto;
+        flex: 1;
+      }
+
+      #searchInput {
+        flex: 2;
       }
 
       .edit-form {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
       }
 
       .form-buttons {
-        grid-column: span 1;
+        grid-column: span 2;
       }
 
-      .history-table {
-        display: block;
-        overflow-x: auto;
+      .hidden-mobile {
+        display: table-cell;
+      }
+
+      .floating-action-btn {
+        width: auto;
+        height: auto;
+        padding: 15px;
+        border-radius: var(--border-radius);
+        flex-direction: row;
+        gap: 10px;
+      }
+
+      .floating-action-btn .btn-icon {
+        font-size: 1rem;
+      }
+
+      .floating-action-btn .btn-text {
+        font-size: 1rem;
+        display: inline;
+      }
+
+      .floating-action-btn:hover .btn-icon {
+        display: inline;
       }
     }
 
-    .radar-id {
-      font-family: monospace;
-      background: #f8f9fa;
-      padding: 2px 5px;
-      border-radius: 3px;
-      margin-left: 5px;
-    }
-
-    .status-select {
-      min-width: 120px;
+    @media (min-width: 992px) {
+      .stat-card {
+        min-width: auto;
+      }
     }
   </style>
 </head>
 <body>
+  <div class="scroll-indicator" id="scrollIndicator"></div>
+
   <h1>
     PANEL DE ADMINISTRACIÓN DE RADARES
-    <button class="main-site-btn" onclick="goToMainSite()">Ir a ahorraunamulta.com</button>
+    <button class="main-site-btn ripple" onclick="goToMainSite()">Ir a ahorraunamulta.com</button>
   </h1>
   <h2 id="userInfo">Cargando...</h2>
   <span id="userEmail" style="display:none;"></span>
@@ -1411,22 +1944,24 @@
     </select>
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>DIRECCIÓN</th>
-        <th>VELOCIDAD (km/h)</th>
-        <th>ESTADO</th>
-        <th>VÍA</th>
-        <th>PK</th>
-        <th>ÚLTIMA MODIFICACIÓN</th>
-        <th>TIPO RADAR</th>
-        <th>ACCIONES</th>
-      </tr>
-    </thead>
-    <tbody id="radares-table-body"></tbody>
-  </table>
+  <div id="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>DIRECCIÓN</th>
+          <th>VELOCIDAD (km/h)</th>
+          <th>ESTADO</th>
+          <th>VÍA</th>
+          <th class="hidden-mobile">PK</th>
+          <th class="hidden-mobile">ÚLTIMA MODIFICACIÓN</th>
+          <th>TIPO RADAR</th>
+          <th>ACCIONES</th>
+        </tr>
+      </thead>
+      <tbody id="radares-table-body"></tbody>
+    </table>
+  </div>
 
   <div id="paginationControls" class="pagination-controls"></div>
 
@@ -1435,10 +1970,10 @@
     <div class="modal-content">
       <button class="close-modal" id="closeMapModal">&times;</button>
       <h2>Editar ubicación del radar</h2>
-      <div id="adminMap" style="width: 100%; height: calc(100% - 60px);"></div>
-      <div style="margin-top: 10px; text-align: center;">
-        <button id="saveLocationBtn" class="confirm-btn">Guardar ubicación</button>
-        <button id="cancelLocationBtn" class="cancel-btn">Cancelar</button>
+      <div id="adminMap"></div>
+      <div class="form-buttons">
+        <button id="saveLocationBtn" class="confirm-btn ripple">Guardar ubicación</button>
+        <button id="cancelLocationBtn" class="cancel-btn ripple">Cancelar</button>
       </div>
     </div>
   </div>
@@ -1484,8 +2019,8 @@
           </select>
         </div>
         <div class="form-buttons">
-          <button id="cancelEditAllBtn" class="cancel-btn">Cancelar</button>
-          <button id="saveAllBtn" class="confirm-btn">Guardar todos los cambios</button>
+          <button id="cancelEditAllBtn" class="cancel-btn ripple">Cancelar</button>
+          <button id="saveAllBtn" class="confirm-btn ripple">Guardar todos los cambios</button>
         </div>
       </div>
     </div>
@@ -1497,12 +2032,29 @@
       <button class="close-modal" id="closeHistoryModal">&times;</button>
       <h2>Historial de Cambios</h2>
       <div id="historyModalContent"></div>
-      <div style="margin-top: 15px; text-align: center;">
-        <button id="closeHistoryBtn" class="cancel-btn">Cerrar</button>
+      <div class="form-buttons">
+        <button id="closeHistoryBtn" class="cancel-btn ripple">Cerrar</button>
       </div>
     </div>
   </div>
 
-  <button class="logout-btn" onclick="logout()">CERRAR SESIÓN</button>
+  <button class="logout-btn ripple" onclick="logout()">CERRAR SESIÓN</button>
+
+  <script>
+    // Actualizar indicador de scroll
+    window.addEventListener('scroll', function() {
+      const scrollIndicator = document.getElementById('scrollIndicator');
+      const scrollableWidth = document.documentElement.scrollWidth - window.innerWidth;
+      const scrollPercentage = (window.scrollX / scrollableWidth) * 100;
+      scrollIndicator.style.width = scrollPercentage + '%';
+    });
+
+    // Forzar el redimensionamiento del mapa cuando se muestra el modal
+    document.getElementById('mapModal').addEventListener('shown.bs.modal', function() {
+      if (adminMap) {
+        adminMap.invalidateSize();
+      }
+    });
+  </script>
 </body>
 </html>
