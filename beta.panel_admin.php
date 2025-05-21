@@ -777,10 +777,11 @@
           const field = e.target.dataset.field;
           const id = e.target.dataset.id;
 
+          if (!field || !id) return;
+
           let inputElement = e.target.parentElement.querySelector('input, select');
 
           if (!inputElement) {
-            showNotification('No se pudo encontrar el elemento de entrada', 'error');
             return;
           }
 
