@@ -5,14 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Radares de tráfico en España | Localizador para evitar multas | AHORRA UNA MULTA</title>
 
+  <!-- Favicon y meta tags -->
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="https://ahorraunamulta.com/favicon.png">
 
+  <!-- Meta tags SEO -->
   <meta name="description" content="Ubicación de radares de tráfico en Cataluña: evita multas con información actualizada sobre radares fijos, móviles y de tramo en un mapa interactivo.">
-
   <meta name="keywords" content="radares Cataluña, radares Barcelona, radares Tarragona, radares Girona, radares Lleida, localizador radares tráfico, radares fijos móviles, radares de tramo, radares remolque, evitar multas Cataluña, mapa radares tiempo real">
-
   <link rel="canonical" href="https://ahorraunamulta.com/">
 
+  <!-- Open Graph / Facebook -->
   <meta property="og:title" content="Localizador de Radares en Cataluña | Ahorra Multas de Tráfico">
   <meta property="og:description" content="Consulta en tiempo real los radares de tráfico en Cataluña y evita multas innecesarias.">
   <meta property="og:image" content="https://ahorraunamulta.com/imagen-radares-cataluna.jpg">
@@ -20,13 +22,13 @@
   <meta property="og:type" content="website">
   <meta property="og:locale" content="es_ES">
 
+  <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Localizador de Radares en Cataluña">
   <meta name="twitter:description" content="Descubre dónde están los radares en Cataluña y ahorra en multas. Información actualizada de radares fijos, móviles y de tramo.">
   <meta name="twitter:image" content="https://ahorraunamulta.com/imagen-radares-cataluna.jpg">
 
-  <link rel="icon" type="image/png" href="https://ahorraunamulta.com/favicon.png" />
-
+  <!-- Schema.org markup -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -49,69 +51,94 @@
   }
   </script>
 
+  <!-- Hojas de estilo -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
   :root {
-    --primary-color: #2563eb;
-    --secondary-color: #1e40af;
-    --accent-color: #3b82f6;
-    --danger-color: #ef4444;
-    --warning-color: #f59e0b;
-    --success-color: #10b981;
-    --info-color: #06b6d4;
-    --dark-color: #1f2937;
-    --light-color: #f9fafb;
-    --gray-color: #6b7280;
+    /* Nueva paleta de colores accesible */
+    --primary-color: #3a86ff;
+    --primary-dark: #2667cc;
+    --primary-light: #ebf3ff;
+    --secondary-color: #8338ec;
+    --accent-color: #ff006e;
+    --danger-color: #ff5a5f;
+    --danger-dark: #e04a4f;
+    --warning-color: #ffbe0b;
+    --success-color: #06d6a0;
+    --success-dark: #05b78a;
+    --info-color: #118ab2;
+    --dark-color: #1a1a2e;
+    --dark-light: #2a2a3a;
+    --light-color: #f8f9fa;
+    --gray-color: #6c757d;
+    --gray-light: #e9ecef;
     --border-radius: 12px;
+    --border-radius-sm: 8px;
     --box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --box-shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --box-shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.15s ease-in-out;
   }
 
+  /* Tipografía mejorada */
   body {
       margin: 0;
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       overflow: hidden;
       color: var(--dark-color);
-      background-color: #f5f7fa;
+      background-color: var(--light-color);
+      line-height: 1.6;
   }
 
   body.modal-open {
     overflow: hidden;
   }
 
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    line-height: 1.3;
+    margin-top: 0;
+  }
+
+  /* Preloader mejorado */
   #preloader {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 3000;
     flex-direction: column;
-    transition: opacity 0.5s ease, visibility 0.5s ease;
+    transition: var(--transition);
   }
 
   #preloader img {
     width: 100px;
     height: auto;
-    margin-bottom: 20px;
+    margin-bottom: 1.5rem;
     animation: fadeIn 1.5s infinite ease-in-out;
   }
 
   #preloader h1 {
     color: white;
-    font-size: 24px;
+    font-size: 1.75rem;
     margin: 0;
     animation: pulse 1.5s infinite;
     font-weight: 600;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
   }
 
   @keyframes fadeIn {
-    0%, 100% { opacity: 0.3; }
-    50% { opacity: 1; }
+    0%, 100% { opacity: 0.7; transform: scale(0.95); }
+    50% { opacity: 1; transform: scale(1.05); }
   }
 
   @keyframes pulse {
@@ -124,74 +151,56 @@
     visibility: hidden;
   }
 
+  /* Mapa - Estilos mejorados */
   .leaflet-container {
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
     image-rendering: -webkit-optimize-contrast;
     image-rendering: crisp-edges;
     font-family: inherit;
+    background-color: #e9ecef;
   }
 
   #map {
     width: 100%;
     height: 100vh;
-    background-color: #e5e7eb;
+    background-color: var(--gray-light);
   }
 
-  /* Grupo de botones de acción - Escritorio */
-  @media (min-width: 769px) {
-    .action-buttons {
-      position: fixed;
-      left: 50%;
-      bottom: 30px;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      z-index: 1000;
-      background-color: rgba(255, 255, 255, 0.95);
-      padding: 12px 24px;
-      border-radius: 50px;
-      box-shadow: var(--box-shadow);
-      border: 1px solid rgba(209, 213, 219, 0.5);
-      transition: var(--transition);
-    }
-
-    .action-buttons.list-visible {
-      left: calc(50% - 150px);
-    }
+  /* Grupo de botones de acción - Diseño mejorado */
+  .action-buttons {
+    position: fixed;
+    left: 50%;
+    bottom: 2rem;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    z-index: 1000;
+    background-color: rgba(255, 255, 255, 0.98);
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    box-shadow: var(--box-shadow-lg);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: var(--transition);
+    backdrop-filter: blur(8px);
   }
 
-  /* Grupo de botones de acción - Móvil */
-  @media (max-width: 768px) {
-    .action-buttons {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      z-index: 1000;
-      flex-direction: column;
-      background-color: rgba(255, 255, 255, 0.95);
-      padding: 10px;
-      border-radius: 24px;
-      box-shadow: var(--box-shadow);
-      border: 1px solid rgba(209, 213, 219, 0.5);
-    }
+  .action-buttons.list-visible {
+    left: calc(50% - 150px);
   }
 
-  /* Estilo común para todos los botones de acción */
+  /* Estilo para todos los botones de acción */
   .action-button {
-    width: 56px;
-    height: 56px;
+    width: 3.5rem;
+    height: 3.5rem;
     border-radius: 50%;
     border: none;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 22px;
+    font-size: 1.4rem;
     box-shadow: var(--box-shadow);
     transition: var(--transition);
     position: relative;
@@ -202,7 +211,7 @@
 
   .action-button:hover {
     transform: translateY(-3px) scale(1.05);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--box-shadow-md);
   }
 
   .action-button:active {
@@ -224,7 +233,7 @@
   }
 
   .action-button:focus:not(:active)::after {
-    animation: ripple 1s ease-out;
+    animation: ripple 0.6s ease-out;
   }
 
   @keyframes ripple {
@@ -246,9 +255,9 @@
     transform: translateX(-50%);
     background: var(--dark-color);
     color: white;
-    padding: 6px 12px;
-    border-radius: var(--border-radius);
-    font-size: 14px;
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius-sm);
+    font-size: 0.875rem;
     opacity: 0;
     transition: var(--transition);
     pointer-events: none;
@@ -261,25 +270,12 @@
     opacity: 1;
   }
 
-  /* Botón de listado */
+  /* Estilos específicos para botones */
   #toggle-button {
     background-color: var(--primary-color);
     color: white;
   }
 
-  #toggle-button::after {
-    content: '';
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    width: 12px;
-    height: 12px;
-    background-color: var(--danger-color);
-    border-radius: 50%;
-    display: none;
-  }
-
-  /* Botón de añadir radar */
   #addRadarButton {
     background-color: var(--warning-color);
     color: white;
@@ -289,42 +285,42 @@
     background-color: var(--success-color);
   }
 
-  /* Botón de ayuda */
   #helpButton2 {
     background-color: var(--danger-color);
     color: white;
   }
 
-  /* Botón de admin */
   .buttonAdmin {
-    background-color: var(--gray-color);
+    background-color: var(--dark-light);
     color: white;
-    font-size: 12px;
+    font-size: 0.75rem;
     font-weight: 600;
+    padding: 0 0.5rem;
+    width: auto;
+    border-radius: 1.75rem;
   }
 
-  /* Botón de login */
   .buttonLogin {
     background-color: var(--info-color);
     color: white;
-    font-size: 12px;
+    font-size: 0.75rem;
     font-weight: 600;
+    padding: 0 0.5rem;
+    width: auto;
+    border-radius: 1.75rem;
   }
 
-  /* Botón de estadísticas */
   #statsButton {
-    background-color: #7c3aed;
+    background-color: var(--secondary-color);
     color: white;
     display: none;
   }
 
-  /* Botón de añadir en ubicación actual */
   #addCurrentLocationButton {
     background-color: var(--warning-color);
     color: white;
   }
 
-  /* Botón de modo conducción */
   #driveModeButton {
     background-color: var(--info-color);
     color: white;
@@ -332,19 +328,19 @@
   }
 
   #driveModeButton.active {
-    background-color: #0e7490;
+    background-color: var(--info-color);
     animation: pulse 2s infinite;
   }
 
   #driveModeButton span {
-    font-size: 10px;
+    font-size: 0.625rem;
     position: absolute;
     top: -5px;
     right: -5px;
     background-color: var(--warning-color);
     color: white;
     border-radius: 10px;
-    padding: 2px 5px;
+    padding: 0.125rem 0.375rem;
     pointer-events: none;
     z-index: 1001;
     box-shadow: 0 1px 3px rgba(0,0,0,0.2);
@@ -352,74 +348,60 @@
     text-transform: uppercase;
   }
 
-  @media (max-width: 768px) {
-    #driveModeButton span {
-      font-size: 8px;
-      padding: 1px 3px;
-      top: -3px;
-      right: -3px;
-    }
-  }
-
-  @keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(19, 132, 150, 0.7); }
-    70% { box-shadow: 0 0 0 10px rgba(19, 132, 150, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(19, 132, 150, 0); }
-  }
-
+  /* Formulario de radar - Diseño mejorado */
   #radarForm {
     position: absolute;
     top: 10%;
     left: 50%;
     transform: translateX(-50%);
     background-color: #ffffff;
-    padding: 24px;
+    padding: 1.5rem;
     border-radius: var(--border-radius);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--box-shadow-lg);
     z-index: 2002;
     width: 90%;
-    max-width: 420px;
-    font-size: 16px;
+    max-width: 28rem;
+    font-size: 1rem;
     display: none;
     border: 2px solid var(--primary-color);
   }
 
   #radarForm label {
-    font-weight: 600;
-    margin-bottom: 8px;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
     display: block;
     color: var(--dark-color);
-    font-size: 14px;
+    font-size: 0.875rem;
   }
 
   #radarForm input,
   #radarForm select {
     width: 100%;
-    padding: 12px;
-    margin-bottom: 16px;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--gray-light);
+    border-radius: var(--border-radius-sm);
     transition: var(--transition);
-    font-size: 14px;
-    background-color: #f9fafb;
+    font-size: 0.875rem;
+    background-color: var(--light-color);
   }
 
   #radarForm input:focus,
   #radarForm select:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    box-shadow: 0 0 0 3px rgba(58, 134, 255, 0.15);
     outline: none;
     background-color: white;
   }
 
   #radarForm button {
     width: 100%;
-    padding: 14px;
-    font-size: 16px;
+    padding: 0.875rem;
+    font-size: 1rem;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--border-radius-sm);
     cursor: pointer;
-    margin-top: 10px;
+    margin-top: 0.625rem;
     transition: var(--transition);
     font-weight: 600;
   }
@@ -430,7 +412,7 @@
   }
 
   #radarForm .cancel:hover {
-    background-color: #dc2626;
+    background-color: var(--danger-dark);
   }
 
   #radarForm .save {
@@ -439,31 +421,10 @@
   }
 
   #radarForm .save:hover {
-    background-color: var(--secondary-color);
+    background-color: var(--primary-dark);
   }
 
-  .popup-button {
-    margin-top: 10px;
-    padding: 8px 16px;
-    font-size: 14px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: var(--transition);
-  }
-
-  .popup-button.active {
-    background-color: var(--success-color);
-    color: white;
-  }
-
-  .popup-button.inactive {
-    background-color: var(--danger-color);
-    color: white;
-  }
-
-  /* Modales - Estilos actualizados */
+  /* Modales - Diseño mejorado */
   .modal {
     display: none;
     position: fixed;
@@ -480,11 +441,11 @@
 
   .modal-content {
     background: white;
-    padding: 28px;
+    padding: 1.75rem;
     border-radius: var(--border-radius);
     width: 90%;
-    max-width: 640px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    max-width: 40rem;
+    box-shadow: var(--box-shadow-lg);
     text-align: left;
     border: 2px solid var(--primary-color);
     position: relative;
@@ -494,16 +455,16 @@
   }
 
   .modal-content h2 {
-    margin: 0 0 16px;
+    margin: 0 0 1rem;
     color: var(--primary-color);
-    font-size: 24px;
+    font-size: 1.5rem;
     font-weight: 700;
-    padding-bottom: 8px;
-    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--gray-light);
   }
 
   .modal-content p {
-    margin: 12px 0;
+    margin: 0.75rem 0;
     line-height: 1.6;
     color: var(--dark-color);
   }
@@ -512,36 +473,37 @@
     background: var(--danger-color);
     color: white;
     border: none;
-    padding: 6px 12px;
+    padding: 0.375rem;
     border-radius: 50%;
-    font-size: 18px;
+    font-size: 1.125rem;
     cursor: pointer;
     position: absolute;
-    top: 16px;
-    right: 16px;
+    top: 1rem;
+    right: 1rem;
     z-index: 2002;
     transition: var(--transition);
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 2rem;
+    height: 2rem;
   }
 
   .close:hover {
-    background: #b91c1c;
+    background: var(--danger-dark);
     transform: rotate(90deg);
   }
 
+  /* Listado de radares - Diseño mejorado */
   .list-container {
     position: fixed;
     right: 0;
     top: 0;
-    width: 340px;
+    width: 22rem;
     height: 100vh;
-    background-color: #f9fafb;
-    border-left: 1px solid #e5e7eb;
-    padding: 20px;
+    background-color: var(--light-color);
+    border-left: 1px solid var(--gray-light);
+    padding: 1.25rem;
     overflow-y: auto;
     display: none;
     flex-direction: column;
@@ -559,29 +521,29 @@
     transform: translateX(100%);
   }
 
-  /* Nuevos estilos mejorados para el listado */
+  /* Items del listado - Diseño mejorado */
   .list-item {
-    padding: 16px;
-    margin: 10px 0;
+    padding: 1rem;
+    margin: 0.625rem 0;
     background: white;
-    border-radius: var(--border-radius);
+    border-radius: var(--border-radius-sm);
     box-shadow: var(--box-shadow);
     border-left: 4px solid var(--primary-color);
     transition: var(--transition);
     cursor: pointer;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--gray-light);
   }
 
   .list-item:hover {
     transform: translateY(-3px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    background-color: #f8fafc;
-    border-left-color: var(--secondary-color);
+    box-shadow: var(--box-shadow-md);
+    background-color: var(--primary-light);
+    border-left-color: var(--primary-dark);
   }
 
   .list-item h3 {
-    margin: 0 0 10px 0;
-    font-size: 16px;
+    margin: 0 0 0.625rem 0;
+    font-size: 1rem;
     color: var(--dark-color);
     display: flex;
     align-items: center;
@@ -589,15 +551,15 @@
   }
 
   .list-item p {
-    margin: 8px 0;
-    font-size: 14px;
+    margin: 0.5rem 0;
+    font-size: 0.875rem;
     color: var(--gray-color);
     display: flex;
     align-items: center;
   }
 
   .list-item p strong {
-    min-width: 120px;
+    min-width: 7.5rem;
     display: inline-block;
     color: var(--dark-color);
     font-weight: 500;
@@ -605,11 +567,11 @@
 
   .list-item .status-badge {
     display: inline-block;
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 12px;
+    padding: 0.25rem 0.625rem;
+    border-radius: 0.75rem;
+    font-size: 0.75rem;
     font-weight: 600;
-    margin-left: 8px;
+    margin-left: 0.5rem;
   }
 
   .status-active {
@@ -624,11 +586,11 @@
 
   .status-pending {
     background-color: var(--warning-color);
-    color: #1f2937;
+    color: var(--dark-color);
   }
 
   .radar-section {
-    margin-top: 16px;
+    margin-top: 1rem;
     display: block;
   }
 
@@ -636,11 +598,11 @@
     background-color: var(--primary-color);
     color: white;
     border: none;
-    padding: 14px 20px;
-    border-radius: var(--border-radius);
+    padding: 0.875rem 1.25rem;
+    border-radius: var(--border-radius-sm);
     cursor: pointer;
-    font-size: 16px;
-    margin-bottom: 16px;
+    font-size: 1rem;
+    margin-bottom: 1rem;
     transition: var(--transition);
     width: 100%;
     display: flex;
@@ -650,13 +612,15 @@
   }
 
   .toggle-button-section:hover {
-    background-color: var(--secondary-color);
+    background-color: var(--primary-dark);
     transform: translateY(-2px);
   }
 
   .toggle-button-section:after {
-    content: '▼';
-    font-size: 14px;
+    content: '\f078';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: 0.875rem;
     transition: transform 0.2s;
   }
 
@@ -664,18 +628,7 @@
     transform: rotate(-90deg);
   }
 
-  .list-container h2, .list-modal-content h2 {
-    color: var(--dark-color);
-    margin-top: 0;
-    padding-bottom: 12px;
-    border-bottom: 2px solid #e5e7eb;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 20px;
-    font-weight: 700;
-  }
-
+  /* Popups - Diseño mejorado */
   .popup-overlay {
     position: fixed;
     top: 0;
@@ -692,25 +645,25 @@
   .popup {
     background-color: #fff;
     border-radius: var(--border-radius);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--box-shadow-lg);
     width: 90%;
-    max-width: 420px;
-    padding: 24px;
+    max-width: 28rem;
+    padding: 1.5rem;
     text-align: center;
     z-index: 2001;
     border: 2px solid var(--primary-color);
   }
 
   .popup h2 {
-    font-size: 20px;
-    margin-bottom: 12px;
+    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
     color: var(--primary-color);
     font-weight: 700;
   }
 
   .popup p {
-    font-size: 16px;
-    margin-bottom: 24px;
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
     line-height: 1.6;
   }
 
@@ -718,37 +671,37 @@
     background-color: var(--primary-color);
     color: #fff;
     border: none;
-    padding: 12px 24px;
-    font-size: 16px;
-    border-radius: var(--border-radius);
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    border-radius: var(--border-radius-sm);
     cursor: pointer;
     transition: var(--transition);
     font-weight: 600;
   }
 
   .popup button:hover {
-    background-color: var(--secondary-color);
+    background-color: var(--primary-dark);
   }
 
-  /* Mejoras para el sistema de filtrado */
+  /* Filtros - Diseño mejorado */
   .filter-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 16px;
-    padding: 16px;
-    margin-bottom: 20px;
-    background-color: #f0f5ff;
+    gap: 1rem;
+    padding: 1rem;
+    margin-bottom: 1.25rem;
+    background-color: var(--primary-light);
     border-radius: var(--border-radius);
-    border: 1px solid #e0e7ff;
+    border: 1px solid rgba(58, 134, 255, 0.2);
   }
 
   .filter-group {
     display: flex;
     flex-direction: column;
-    min-width: 220px;
+    min-width: 13.75rem;
     background: white;
-    padding: 16px;
-    border-radius: var(--border-radius);
+    padding: 1rem;
+    border-radius: var(--border-radius-sm);
     box-shadow: var(--box-shadow);
     margin-bottom: 0;
     flex-grow: 1;
@@ -756,31 +709,31 @@
 
   .filter-group label {
     font-weight: 600;
-    margin-bottom: 8px;
+    margin-bottom: 0.5rem;
     color: var(--dark-color);
-    font-size: 14px;
+    font-size: 0.875rem;
   }
 
   .filter-group select, .filter-group input {
-    padding: 10px;
-    border-radius: 6px;
-    border: 1px solid #e5e7eb;
-    background-color: #f9fafb;
+    padding: 0.625rem;
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--gray-light);
+    background-color: var(--light-color);
     transition: var(--transition);
-    font-size: 14px;
+    font-size: 0.875rem;
   }
 
   .filter-group select:focus, .filter-group input:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    box-shadow: 0 0 0 3px rgba(58, 134, 255, 0.15);
     outline: none;
     background-color: white;
   }
 
   .filter-group small {
-    font-size: 12px;
+    font-size: 0.75rem;
     color: var(--gray-color);
-    margin-top: 8px;
+    margin-top: 0.5rem;
     line-height: 1.4;
   }
 
@@ -790,19 +743,19 @@
 
   .filter-message {
     position: fixed;
-    top: 10px;
+    top: 0.625rem;
     left: 50%;
     transform: translateX(-50%);
     background-color: rgba(255, 255, 255, 0.95);
-    padding: 12px 24px;
-    border-radius: 24px;
+    padding: 0.75rem 1.5rem;
+    border-radius: 1.5rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     z-index: 1000;
-    font-size: 14px;
+    font-size: 0.875rem;
     display: none;
     max-width: 90%;
     text-align: center;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--gray-light);
     backdrop-filter: blur(5px);
   }
 
@@ -816,7 +769,7 @@
     border: none;
     color: var(--danger-color);
     cursor: pointer;
-    margin-left: 6px;
+    margin-left: 0.375rem;
     font-weight: 600;
     transition: var(--transition);
   }
@@ -825,54 +778,61 @@
     text-decoration: underline;
   }
 
-  /* Botón de leyenda mejorado */
+  /* Botón de leyenda - Diseño mejorado */
   #legend-button {
     position: fixed;
-    bottom: 20px;
-    left: 20px;
-    padding: 12px 24px;
+    bottom: 1.25rem;
+    left: 1.25rem;
+    padding: 0.75rem 1.5rem;
     background-color: var(--primary-color);
     color: white;
     border: none;
     border-radius: var(--border-radius);
-    font-size: 16px;
+    font-size: 1rem;
     cursor: pointer;
     box-shadow: var(--box-shadow);
     transition: var(--transition);
     z-index: 1000;
     font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
   }
 
   #legend-button:hover {
-    background-color: var(--secondary-color);
+    background-color: var(--primary-dark);
     transform: translateY(-2px);
   }
 
-  /* Control de capas reposicionado */
+  #legend-button i {
+    font-size: 1.1rem;
+  }
+
+  /* Control de capas */
   .leaflet-control-layers {
-    bottom: 180px !important;
-    left: 10px !important;
+    bottom: 11.25rem !important;
+    left: 0.625rem !important;
     right: auto !important;
     z-index: 800 !important;
-    border-radius: var(--border-radius) !important;
+    border-radius: var(--border-radius-sm) !important;
     box-shadow: var(--box-shadow) !important;
   }
 
-  /* Botón de centrado mejorado */
+  /* Botón de centrado - Diseño mejorado */
   .boton-centrado {
     background-color: var(--success-color);
     color: white;
     border: none;
     border-radius: 50%;
-    width: 40px;
-    height: 40px;
+    width: 2.5rem;
+    height: 2.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     box-shadow: var(--box-shadow);
     transition: var(--transition);
-    font-size: 20px;
+    font-size: 1.25rem;
     z-index: 800;
   }
 
@@ -888,44 +848,45 @@
     transform: scale(1.1);
   }
 
-  /* Botón de inactivos */
+  /* Botón de inactivos - Diseño mejorado */
   #toggleInactiveRadarsButton {
     background-color: var(--success-color);
     color: white;
     border: none;
-    border-radius: var(--border-radius);
-    padding: 12px 24px;
-    font-size: 16px;
+    border-radius: var(--border-radius-sm);
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
     cursor: pointer;
     transition: var(--transition);
     width: 100%;
-    margin-top: 16px;
+    margin-top: 1rem;
     font-weight: 600;
   }
 
   #toggleInactiveRadarsButton:hover {
-    background-color: #059669;
+    background-color: var(--success-dark);
   }
 
   #toggleInactiveRadarsButton:active {
     transform: scale(0.98);
   }
 
+  /* Botones de votación - Diseño mejorado */
   .button-voto {
     display: inline-flex;
     justify-content: center;
     align-items: center;
-    padding: 8px 16px;
-    font-size: 14px;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
     font-weight: 600;
-    border-radius: 30px;
+    border-radius: 1.875rem;
     border: 2px solid transparent;
     cursor: pointer;
     transition: var(--transition);
     outline: none;
     text-align: center;
-    margin: 5px;
-    min-width: 80px;
+    margin: 0.3125rem;
+    min-width: 5rem;
   }
 
   .button-voto:disabled {
@@ -939,7 +900,7 @@
   }
 
   .button-voto-positivo:hover:not(:disabled) {
-    background-color: #059669;
+    background-color: var(--success-dark);
     transform: translateY(-2px);
   }
 
@@ -949,10 +910,11 @@
   }
 
   .button-voto-negativo:hover:not(:disabled) {
-    background-color: #dc2626;
+    background-color: var(--danger-dark);
     transform: translateY(-2px);
   }
 
+  /* Marcadores - Diseño mejorado */
   .leaflet-marker-icon {
     z-index: 999 !important;
     transition: transform 0.2s ease;
@@ -963,7 +925,7 @@
     z-index: 1000 !important;
   }
 
-  /* Nuevos estilos para el modal de listado */
+  /* Modal de listado - Diseño mejorado */
   .list-modal {
     display: none;
     position: fixed;
@@ -977,9 +939,9 @@
   }
 
   .list-modal-content {
-    background-color: #f9fafb;
-    margin: 20px;
-    padding: 20px;
+    background-color: var(--light-color);
+    margin: 1.25rem;
+    padding: 1.25rem;
     border-radius: var(--border-radius);
     max-height: 85vh;
     overflow-y: auto;
@@ -989,10 +951,10 @@
 
   .close-list {
     position: absolute;
-    top: 20px;
-    right: 20px;
+    top: 1.25rem;
+    right: 1.25rem;
     color: var(--primary-color);
-    font-size: 36px;
+    font-size: 2.25rem;
     cursor: pointer;
     font-weight: bold;
     background: none;
@@ -1002,17 +964,17 @@
   }
 
   .close-list:hover {
-    color: var(--secondary-color);
+    color: var(--primary-dark);
     transform: rotate(90deg);
   }
 
   /* Indicador de filtros activos */
   .filter-active-indicator {
     position: absolute;
-    top: -5px;
-    right: -5px;
-    width: 15px;
-    height: 15px;
+    top: -0.3125rem;
+    right: -0.3125rem;
+    width: 0.9375rem;
+    height: 0.9375rem;
     background-color: var(--danger-color);
     border-radius: 50%;
     display: none;
@@ -1022,20 +984,20 @@
     display: block;
   }
 
-  /* Estilos para el panel de leyenda dentro del modal */
+  /* Panel de leyenda - Diseño mejorado */
   .legend-panel {
-    padding: 16px;
-    background-color: #f9f9f9;
-    border-radius: var(--border-radius);
-    margin-top: 16px;
-    border: 1px solid #e5e7eb;
+    padding: 1rem;
+    background-color: var(--light-color);
+    border-radius: var(--border-radius-sm);
+    margin-top: 1rem;
+    border: 1px solid var(--gray-light);
   }
 
   .legend-panel h4 {
     margin-top: 0;
-    margin-bottom: 12px;
+    margin-bottom: 0.75rem;
     color: var(--dark-color);
-    font-size: 18px;
+    font-size: 1.125rem;
   }
 
   .legend-panel ul {
@@ -1045,64 +1007,64 @@
   }
 
   .legend-panel li {
-    margin-bottom: 12px;
+    margin-bottom: 0.75rem;
     display: flex;
     align-items: center;
-    padding: 8px;
+    padding: 0.5rem;
     border-bottom: 1px solid #eee;
-    font-size: 15px;
+    font-size: 0.9375rem;
   }
 
   .legend-icon {
     display: inline-block;
-    width: 16px;
-    height: 16px;
+    width: 1rem;
+    height: 1rem;
     border-radius: 50%;
-    margin-right: 12px;
+    margin-right: 0.75rem;
     vertical-align: middle;
     flex-shrink: 0;
   }
 
-  /* Estilos para el campo de búsqueda */
+  /* Barra de búsqueda - Diseño mejorado */
   .search-container {
     position: fixed;
-    top: 20px;
+    top: 1.25rem;
     left: 50%;
     transform: translateX(-50%);
     width: 90%;
-    max-width: 500px;
+    max-width: 31.25rem;
     z-index: 1000;
     background-color: rgba(255, 255, 255, 0.95);
-    padding: 10px 16px;
-    border-radius: 30px;
+    padding: 0.625rem 1rem;
+    border-radius: 1.875rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--gray-light);
     backdrop-filter: blur(5px);
     transition: var(--transition);
   }
 
   .search-container:focus-within {
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+    box-shadow: 0 4px 12px rgba(58, 134, 255, 0.2);
   }
 
   .search-input {
     width: 94%;
-    padding: 10px 16px;
-    border: 1px solid #e5e7eb;
-    border-radius: 20px;
-    font-size: 15px;
+    padding: 0.625rem 1rem;
+    border: 1px solid var(--gray-light);
+    border-radius: 1.25rem;
+    font-size: 0.9375rem;
     outline: none;
-    background-color: #f9fafb;
+    background-color: var(--light-color);
     transition: var(--transition);
   }
 
   .search-input:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    box-shadow: 0 0 0 3px rgba(58, 134, 255, 0.15);
     background-color: white;
   }
 
-  /* Efecto de pulso para el marcador de ubicación */
+  /* Efecto de pulso para marcadores */
   @keyframes pulse {
     0% { transform: scale(1); opacity: 1; }
     50% { transform: scale(1.2); opacity: 0.7; }
@@ -1113,11 +1075,11 @@
     animation: pulse 2s infinite;
   }
 
-  /* Modo conducción - ESTILOS ACTUALIZADOS */
+  /* Modo conducción - Diseño mejorado */
   #drive-mode-container {
     display: none;
     position: fixed;
-    bottom: 80px;
+    bottom: 5rem;
     left: 0;
     width: 100%;
     z-index: 1001;
@@ -1127,22 +1089,22 @@
   #drive-mode-bar {
     background-color: rgba(255, 255, 255, 0.95);
     border-radius: var(--border-radius);
-    padding: 12px 20px;
+    padding: 0.75rem 1.25rem;
     margin: 0 auto;
     width: 95%;
-    max-width: 500px;
+    max-width: 31.25rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     display: flex;
     justify-content: space-between;
     align-items: center;
     pointer-events: auto;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--gray-light);
     backdrop-filter: blur(5px);
   }
 
   .drive-mode-info {
     display: flex;
-    gap: 16px;
+    gap: 1rem;
     align-items: center;
     width: 100%;
   }
@@ -1151,15 +1113,15 @@
     position: relative;
     text-align: center;
     flex: 1;
-    padding: 0 8px;
+    padding: 0 0.5rem;
   }
 
   .speed-progress-container {
     width: 100%;
-    height: 6px;
+    height: 0.375rem;
     background: #f0f0f0;
-    border-radius: 3px;
-    margin-bottom: 4px;
+    border-radius: 0.1875rem;
+    margin-bottom: 0.25rem;
     overflow: hidden;
   }
 
@@ -1168,7 +1130,7 @@
     width: 0%;
     background: var(--success-color);
     transition: width 0.5s ease, background-color 0.5s ease;
-    border-radius: 3px;
+    border-radius: 0.1875rem;
   }
 
   #current-speed, #speed-limit, #next-radar-distance {
@@ -1197,18 +1159,18 @@
   }
 
   #exit-drive-mode {
-    width: 44px;
-    height: 44px;
-    font-size: 18px;
-    margin-left: 12px;
+    width: 2.75rem;
+    height: 2.75rem;
+    font-size: 1.125rem;
+    margin-left: 0.75rem;
     background-color: var(--danger-color);
   }
 
   #exit-drive-mode:hover {
-    background-color: #dc2626;
+    background-color: var(--danger-dark);
   }
 
-  /* Animación de radar */
+  /* Animación de alerta de radar */
   @keyframes radarPulse {
     0% { transform: scale(1); opacity: 1; }
     100% { transform: scale(1.5); opacity: 0; }
@@ -1219,8 +1181,8 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 220px;
-    height: 220px;
+    width: 13.75rem;
+    height: 13.75rem;
     border-radius: 50%;
     background: rgba(239, 68, 68, 0.2);
     display: flex;
@@ -1233,7 +1195,7 @@
 
   .radar-alert span {
     color: white;
-    font-size: 24px;
+    font-size: 1.5rem;
     font-weight: bold;
     text-shadow: 0 0 5px rgba(0,0,0,0.5);
     text-align: center;
@@ -1242,19 +1204,19 @@
 
   /* Ajustes para cuando el listado está visible */
   .list-visible + #drive-mode-container {
-    left: 150px;
+    left: 9.375rem;
   }
 
-  /* Autocompletado de búsqueda */
+  /* Autocompletado de búsqueda - Diseño mejorado */
   .search-suggestions {
     position: absolute;
     top: 100%;
     left: 0;
     right: 0;
     background: white;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--gray-light);
     border-radius: 0 0 var(--border-radius) var(--border-radius);
-    max-height: 240px;
+    max-height: 15rem;
     overflow-y: auto;
     z-index: 1001;
     display: none;
@@ -1262,72 +1224,72 @@
   }
 
   .search-suggestion {
-    padding: 10px 16px;
+    padding: 0.625rem 1rem;
     cursor: pointer;
     transition: var(--transition);
-    font-size: 14px;
+    font-size: 0.875rem;
   }
 
   .search-suggestion:hover {
-    background-color: #f0f5ff;
+    background-color: var(--primary-light);
   }
 
   .search-suggestion.highlighted {
-    background-color: #e0e7ff;
+    background-color: rgba(58, 134, 255, 0.1);
     font-weight: 500;
   }
 
-  /* Estilos para el modal de login */
+  /* Formulario de login - Diseño mejorado */
   #loginForm {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 1rem;
   }
 
   #loginForm label {
     font-weight: 600;
-    margin-bottom: 8px;
-    font-size: 14px;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
   }
 
   #loginForm input {
-    padding: 12px;
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
-    background-color: #f9fafb;
+    padding: 0.75rem;
+    border: 1px solid var(--gray-light);
+    border-radius: var(--border-radius-sm);
+    background-color: var(--light-color);
     transition: var(--transition);
   }
 
   #loginForm input:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    box-shadow: 0 0 0 3px rgba(58, 134, 255, 0.15);
     outline: none;
     background-color: white;
   }
 
   #loginStatus {
-    min-height: 20px;
+    min-height: 1.25rem;
     text-align: center;
-    font-size: 14px;
-    padding: 8px;
-    border-radius: 6px;
+    font-size: 0.875rem;
+    padding: 0.5rem;
+    border-radius: var(--border-radius-sm);
   }
 
-  /* Mejoras para móviles */
-  @media (max-width: 768px) {
+  /* Estilos responsivos */
+  @media (max-width: 48rem) {
     #drive-mode-container {
-      bottom: 100px;
+      bottom: 6.25rem;
     }
 
     #drive-mode-bar {
       flex-direction: row;
-      gap: 8px;
-      padding: 10px 12px;
+      gap: 0.5rem;
+      padding: 0.625rem 0.75rem;
     }
 
     .drive-mode-info {
       flex-direction: row;
-      gap: 8px;
+      gap: 0.5rem;
     }
 
     #current-speed, #speed-limit, #next-radar-distance {
@@ -1335,12 +1297,12 @@
     }
 
     .speed-progress-container {
-      height: 4px;
+      height: 0.25rem;
     }
 
     #exit-drive-mode {
-      width: 40px;
-      height: 40px;
+      width: 2.5rem;
+      height: 2.5rem;
     }
 
     .list-container {
@@ -1348,19 +1310,19 @@
     }
 
     .action-buttons {
-      bottom: 16px;
-      right: 16px;
-      gap: 10px;
+      bottom: 1rem;
+      right: 1rem;
+      gap: 0.625rem;
     }
 
     .action-button, .buttonAdmin, .buttonLogin {
-      width: 50px;
-      height: 50px;
-      font-size: 20px;
+      width: 3.125rem;
+      height: 3.125rem;
+      font-size: 1.25rem;
     }
 
     .buttonAdmin, .buttonLogin {
-      font-size: 12px;
+      font-size: 0.75rem;
     }
 
     .filter-group {
@@ -1368,18 +1330,18 @@
     }
 
     #legend-button {
-      left: 16px;
-      bottom: 16px;
-      padding: 10px 20px;
+      left: 1rem;
+      bottom: 1rem;
+      padding: 0.625rem 1.25rem;
     }
 
     .search-container {
-      top: 16px;
-      width: calc(100% - 32px);
+      top: 1rem;
+      width: calc(100% - 2rem);
     }
 
     .modal-content {
-      padding: 20px;
+      padding: 1.25rem;
     }
   }
 
@@ -1397,28 +1359,28 @@
   }
 
   a:hover {
-    color: var(--secondary-color);
+    color: var(--primary-dark);
     text-decoration: underline;
   }
 
   /* Scrollbar personalizada */
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 0.5rem;
+    height: 0.5rem;
   }
 
   ::-webkit-scrollbar-track {
     background: #f1f1f1;
-    border-radius: 4px;
+    border-radius: 0.25rem;
   }
 
   ::-webkit-scrollbar-thumb {
     background: var(--primary-color);
-    border-radius: 4px;
+    border-radius: 0.25rem;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--secondary-color);
+    background: var(--primary-dark);
   }
 </style>
 </head>
@@ -1430,7 +1392,7 @@
     <div id="search-suggestions" class="search-suggestions"></div>
   </div>
 
-  <!-- Modo conducción - ACTUALIZADO -->
+  <!-- Modo conducción -->
   <div id="drive-mode-container">
     <div id="drive-mode-bar">
       <div class="drive-mode-info">
@@ -1450,7 +1412,7 @@
           <small>Próximo</small>
         </div>
       </div>
-      <button id="exit-drive-mode" class="action-button" title="Salir del modo conducción">🚗</button>
+      <button id="exit-drive-mode" class="action-button" title="Salir del modo conducción"><i class="fas fa-car"></i></button>
     </div>
   </div>
 
@@ -1497,13 +1459,13 @@
         </div>
       </div>
 
-      <button class="toggle-button-section" id="toggle-active">Mostrar/Ocultar Radares Activos</button>
+      <button class="toggle-button-section" id="toggle-active"><span>Mostrar/Ocultar Radares Activos</span></button>
       <div id="active-list" class="radar-section">
         <h3>Radares Activos</h3>
       </div>
     </div>
     <div>
-      <button class="toggle-button-section" id="toggle-inactive">Mostrar/Ocultar Radares Inactivos</button>
+      <button class="toggle-button-section" id="toggle-inactive"><span>Mostrar/Ocultar Radares Inactivos</span></button>
       <div id="inactive-list" class="radar-section" style="display: none;">
         <h3>Radares Inactivos</h3>
       </div>
@@ -1555,13 +1517,13 @@
           </div>
         </div>
 
-        <button class="toggle-button-section" id="toggle-active-mobile">Mostrar/Ocultar Radares Activos</button>
+        <button class="toggle-button-section" id="toggle-active-mobile"><span>Mostrar/Ocultar Radares Activos</span></button>
         <div id="active-list-mobile" class="radar-section">
           <h3>Radares Activos</h3>
         </div>
       </div>
       <div>
-        <button class="toggle-button-section" id="toggle-inactive-mobile">Mostrar/Ocultar Radares Inactivos</button>
+        <button class="toggle-button-section" id="toggle-inactive-mobile"><span>Mostrar/Ocultar Radares Inactivos</span></button>
         <div id="inactive-list-mobile" class="radar-section" style="display: none;">
           <h3>Radares Inactivos</h3>
         </div>
@@ -1573,18 +1535,18 @@
   <div class="modal" id="legendModal">
     <div class="modal-content">
       <button class="close" id="closeLegendModal">&times;</button>
-      <h2>Leyenda de Radares</h2>
+      <h2><i class="fas fa-map-legend"></i> Leyenda de Radares</h2>
       <div class="legend-panel">
         <h4>Tipos de Radares</h4>
         <ul>
-          <li><span class="legend-icon" style="background-color: #12e408;"></span> Radar Fijo</li>
-          <li><span class="legend-icon" style="background-color: #ffb400;"></span> Radar de Tramo</li>
-          <li><span class="legend-icon" style="background-color: #150aec;"></span> Radar Móvil</li>
-          <li><span class="legend-icon" style="background-color: red;"></span> Radar Remolque</li>
-          <li><span class="legend-icon" style="background-color: white; border: 1px solid #000;"></span> Radar Inactivo</li>
-          <li><span class="legend-icon" style="background-color: #ff9800;"></span> Radar Pendiente</li>
+          <li><span class="legend-icon" style="background-color: #12e408;"></span> <i class="fas fa-camera"></i> Radar Fijo</li>
+          <li><span class="legend-icon" style="background-color: #ffb400;"></span> <i class="fas fa-road"></i> Radar de Tramo</li>
+          <li><span class="legend-icon" style="background-color: #150aec;"></span> <i class="fas fa-car"></i> Radar Móvil</li>
+          <li><span class="legend-icon" style="background-color: red;"></span> <i class="fas fa-trailer"></i> Radar Remolque</li>
+          <li><span class="legend-icon" style="background-color: white; border: 1px solid #000;"></span> <i class="fas fa-ban"></i> Radar Inactivo</li>
+          <li><span class="legend-icon" style="background-color: #ff9800;"></span> <i class="fas fa-clock"></i> Radar Pendiente</li>
         </ul>
-        <button id="toggleInactiveRadarsButton" onclick="toggleInactiveRadars()">Mostrar/Ocultar radares inactivos</button>
+        <button id="toggleInactiveRadarsButton" onclick="toggleInactiveRadars()"><i class="fas fa-eye"></i> Mostrar/Ocultar radares inactivos</button>
       </div>
     </div>
   </div>
@@ -1593,7 +1555,7 @@
   <div class="modal" id="loginModal">
     <div class="modal-content">
       <button class="close" id="closeLoginModal">&times;</button>
-      <h2>Iniciar Sesión</h2>
+      <h2><i class="fas fa-sign-in-alt"></i> Iniciar Sesión</h2>
       <div id="loginForm">
         <label for="loginEmail">Email:</label>
         <input type="email" id="loginEmail" placeholder="tu@email.com" required autocomplete="username">
@@ -1601,8 +1563,8 @@
         <label for="loginPassword">Contraseña:</label>
         <input type="password" id="loginPassword" placeholder="Tu contraseña" required autocomplete="current-password">
 
-        <button id="loginButton" class="save">Iniciar Sesión</button>
-        <button id="loginCancel" class="cancel">Cancelar</button>
+        <button id="loginButton" class="save"><i class="fas fa-sign-in-alt"></i> Iniciar Sesión</button>
+        <button id="loginCancel" class="cancel"><i class="fas fa-times"></i> Cancelar</button>
 
         <div id="loginStatus" style="margin-top: 10px;"></div>
       </div>
@@ -1611,9 +1573,9 @@
 
   <div class="popup-overlay" id="popup-overlay" style="display: none;">
     <div class="popup">
-      <h2>Descargo de responsabilidad</h2>
+      <h2><i class="fas fa-exclamation-triangle"></i> Descargo de responsabilidad</h2>
       <p><b>Ahorra una multa</b> no se hace responsable de posibles errores en la información presentada en esta página.</p>
-      <button onclick="closePopup()">Entendido</button>
+      <button onclick="closePopup()"><i class="fas fa-check"></i> Entendido</button>
     </div>
   </div>
 
@@ -1629,17 +1591,17 @@
   <!-- Botones de acción agrupados -->
   <div class="action-buttons">
     <a href="/login" class="action-button buttonAdmin" title="Panel de administración">ADMIN</a>
-    <button id="toggleLoginButton" class="action-button buttonLogin" title="Iniciar sesión">🔑</button>
-    <button id="statsButton" class="action-button" title="Estadísticas">📊</button>
-    <button id="toggle-button" class="action-button" title="Mostrar listado">📋</button>
-    <button id="driveModeButton" class="action-button" title="Modo conducción (BETA)">🚗<span>BETA</span></button>
-    <button id="addCurrentLocationButton" class="action-button" title="Añadir radar en mi ubicación">⚠️</button>
-    <button id="addRadarButton" class="action-button" title="Añadir radar manualmente">➕</button>
-    <button id="helpButton2" class="action-button" title="Ayuda">❔</button>
+    <button id="toggleLoginButton" class="action-button buttonLogin" title="Iniciar sesión"><i class="fas fa-key"></i></button>
+    <button id="statsButton" class="action-button" title="Estadísticas"><i class="fas fa-chart-bar"></i></button>
+    <button id="toggle-button" class="action-button" title="Mostrar listado"><i class="fas fa-list"></i></button>
+    <button id="driveModeButton" class="action-button" title="Modo conducción (BETA)"><i class="fas fa-car"></i><span>BETA</span></button>
+    <button id="addCurrentLocationButton" class="action-button" title="Añadir radar en mi ubicación"><i class="fas fa-exclamation-triangle"></i></button>
+    <button id="addRadarButton" class="action-button" title="Añadir radar manualmente"><i class="fas fa-plus"></i></button>
+    <button id="helpButton2" class="action-button" title="Ayuda"><i class="fas fa-question"></i></button>
   </div>
 
   <!-- Botón de leyenda -->
-  <button id="legend-button">Leyenda</button>
+  <button id="legend-button"><i class="fas fa-map-legend"></i> Leyenda</button>
 
   <!-- Formulario de radar -->
   <div id="radarForm">
@@ -1665,27 +1627,27 @@
       <option value="inactive">Inactivo</option>
       <option value="pending_review">Pendiente</option>
     </select>
-    <button id="saveRadarButton" class="save">Guardar Radar</button>
-    <button id="cancelRadarButton" class="cancel">Cancelar</button>
+    <button id="saveRadarButton" class="save"><i class="fas fa-save"></i> Guardar Radar</button>
+    <button id="cancelRadarButton" class="cancel"><i class="fas fa-times"></i> Cancelar</button>
   </div>
 
   <!-- Modal de ayuda -->
   <div class="modal" id="helpModal">
     <div class="modal-content">
       <button class="close" id="closeModal">&times;</button>
-      <h2>Ayuda</h2>
+      <h2><i class="fas fa-question-circle"></i> Ayuda</h2>
       <p>AhorraUnaMulta.com es una herramienta intuitiva que te ayuda a identificar radares de tráfico en tu zona y conocer las velocidades permitidas, permitiéndote evitar multas de tránsito de manera eficaz.</p>
-      <p>Presionando el botón +, puedes añadir nuevos radares manualmente.</p>
-      <p>Presionando el botón ⚠️, puedes añadir un radar en tu ubicación actual (un administrador lo revisará y completará los detalles).</p>
-      <p>Presionando el botón 🚗, puedes activar el modo conducción (BETA) para una experiencia más segura al volante.</p>
-      <p>Presionando sobre los radares, tienes la opción de votarlos.</p>
-      <p>Si permites la ubicación, el mapa se irá actualizando en tiempo real según conduces.</p>
-      <p>Si no quieres que la ubicación te centre todo el rato el mapa, tienes un botón para desactivarlo arriba a la izquierda.</p>
-      <p>Los radares que no aparecen en el mapa, se encuentran averiados o desplazados de su ubicación. Tienes la opción de mostrarlos dentro del botón "Leyenda".</p>
-      <p>Puedes filtrar los radares por tipo, estado y velocidad límite usando los controles del listado.</p>
-      <p>Si necesitas ayuda, puedes contactarnos en <a href="mailto:soporte@ahorraunamulta.com">soporte@ahorraunamulta.com</a></p>
+      <p><i class="fas fa-plus-circle"></i> Presionando el botón +, puedes añadir nuevos radares manualmente.</p>
+      <p><i class="fas fa-exclamation-triangle"></i> Presionando el botón ⚠️, puedes añadir un radar en tu ubicación actual (un administrador lo revisará y completará los detalles).</p>
+      <p><i class="fas fa-car"></i> Presionando el botón 🚗, puedes activar el modo conducción (BETA) para una experiencia más segura al volante.</p>
+      <p><i class="fas fa-thumbs-up"></i> Presionando sobre los radares, tienes la opción de votarlos.</p>
+      <p><i class="fas fa-map-marker-alt"></i> Si permites la ubicación, el mapa se irá actualizando en tiempo real según conduces.</p>
+      <p><i class="fas fa-location-arrow"></i> Si no quieres que la ubicación te centre todo el rato el mapa, tienes un botón para desactivarlo arriba a la izquierda.</p>
+      <p><i class="fas fa-eye-slash"></i> Los radares que no aparecen en el mapa, se encuentran averiados o desplazados de su ubicación. Tienes la opción de mostrarlos dentro del botón "Leyenda".</p>
+      <p><i class="fas fa-filter"></i> Puedes filtrar los radares por tipo, estado y velocidad límite usando los controles del listado.</p>
+      <p><i class="fas fa-envelope"></i> Si necesitas ayuda, puedes contactarnos en <a href="mailto:soporte@ahorraunamulta.com">soporte@ahorraunamulta.com</a></p>
       <br>
-      <p><strong>Última actualización:</strong>8 de mayo de 2025</p>
+      <p><strong><i class="fas fa-calendar-alt"></i> Última actualización:</strong> 8 de mayo de 2025</p>
     </div>
   </div>
 
@@ -1840,7 +1802,7 @@
           listContainer.style.display = 'none';
         }, 300);
         document.querySelector('.action-buttons').classList.remove('list-visible');
-        toggleButton.textContent = '📋';
+        toggleButton.innerHTML = '<i class="fas fa-list"></i>';
       });
 
       // Añadir indicador de listado visible
@@ -1859,14 +1821,14 @@
             listContainer.style.display = 'flex';
             listContainer.style.transform = 'translateX(0)';
             actionButtons.classList.add('list-visible');
-            toggleButton.textContent = '📋';
+            toggleButton.innerHTML = '<i class="fas fa-list"></i>';
           } else {
             listContainer.style.transform = 'translateX(100%)';
             setTimeout(() => {
               listContainer.style.display = 'none';
             }, 300);
             actionButtons.classList.remove('list-visible');
-            toggleButton.textContent = '📋';
+            toggleButton.innerHTML = '<i class="fas fa-list"></i>';
           }
         }
       });
@@ -1962,12 +1924,12 @@
         const status = document.getElementById('loginStatus');
 
         status.textContent = "Iniciando sesión...";
-        status.style.color = "#2563eb";
+        status.style.color = "var(--primary-color)";
 
         auth.signInWithEmailAndPassword(email, password)
           .then((userCredential) => {
             status.textContent = "Sesión iniciada correctamente";
-            status.style.color = "#10b981";
+            status.style.color = "var(--success-color)";
             setTimeout(() => {
               closeModal('loginModal');
               // Actualizar todos los popups abiertos para mostrar botón de edición
@@ -1976,7 +1938,7 @@
           })
           .catch((error) => {
             status.textContent = "Error: " + error.message;
-            status.style.color = "#ef4444";
+            status.style.color = "var(--danger-color)";
           });
       });
 
@@ -1993,15 +1955,15 @@
         currentUser = user;
         const loginButton = document.getElementById('toggleLoginButton');
         if (user) {
-          loginButton.textContent = '🔓';
+          loginButton.innerHTML = '<i class="fas fa-lock-open"></i>';
           loginButton.title = 'Cerrar sesión';
-          loginButton.style.backgroundColor = '#10b981';
+          loginButton.style.backgroundColor = 'var(--success-color)';
           // Actualizar todos los popups abiertos para mostrar botón de edición
           updateAllOpenPopups();
         } else {
-          loginButton.textContent = '🔑';
+          loginButton.innerHTML = '<i class="fas fa-key"></i>';
           loginButton.title = 'Iniciar sesión';
-          loginButton.style.backgroundColor = '#06b6d4';
+          loginButton.style.backgroundColor = 'var(--info-color)';
           // Actualizar todos los popups abiertos para ocultar botón de edición
           updateAllOpenPopups();
         }
@@ -2058,7 +2020,7 @@
       // Crear marcador de usuario (punto azul al estilo Google Maps)
       userMarker = L.circleMarker([0, 0], {
         radius: 8,
-        fillColor: "#2563eb",
+        fillColor: "var(--primary-color)",
         color: "#FFFFFF",
         weight: 2,
         opacity: 1,
@@ -2069,7 +2031,7 @@
       // Círculo de precisión
       accuracyCircle = L.circle([0, 0], {
         stroke: false,
-        fillColor: "#2563eb",
+        fillColor: "var(--primary-color)",
         fillOpacity: 0.2,
         interactive: false
       }).addTo(map);
@@ -2083,7 +2045,7 @@
       toggleButton.onAdd = function(map) {
         var container = L.DomUtil.create("div", "leaflet-bar");
         var button = L.DomUtil.create("a", "boton-centrado off");
-        button.innerHTML = '📍';
+        button.innerHTML = '<i class="fas fa-location-arrow"></i>';
         button.href = '#';
         button.title = 'Centrar en mi ubicación';
 
@@ -2193,11 +2155,11 @@
       let color;
 
       if (speedRatio < 0.8) {
-        color = '#10b981'; // Verde
+        color = 'var(--success-color)'; // Verde
       } else if (speedRatio < 1.0) {
-        color = '#f59e0b'; // Amarillo
+        color = 'var(--warning-color)'; // Amarillo
       } else {
-        color = '#ef4444'; // Rojo
+        color = 'var(--danger-color)'; // Rojo
       }
 
       progressBar.style.width = `${percentage}%`;
@@ -2212,8 +2174,8 @@
       const betaWarning = L.popup()
         .setLatLng(map.getCenter())
         .setContent(`
-          <div style="padding: 15px; max-width: 280px; text-align: center; background: #fff3cd; border: 2px solid #f59e0b; border-radius: 10px;">
-            <h3 style="margin-top: 0; color: #854d0e;">⚠️ MODO CONDUCCIÓN</h3>
+          <div style="padding: 15px; max-width: 280px; text-align: center; background: #fff3cd; border: 2px solid var(--warning-color); border-radius: 10px;">
+            <h3 style="margin-top: 0; color: #854d0e;"><i class="fas fa-car"></i> MODO CONDUCCIÓN</h3>
             <p style="margin-bottom: 0;">El sistema alertará con voz femenina sobre radares a 600 y 300 metros.</p>
             <p style="font-size: 0.9em; margin-top: 10px;"><b>Mantenga la atención en la carretera.</b></p>
           </div>
@@ -2431,7 +2393,7 @@
         .setLatLng(userMarker.getLatLng())
         .setContent(`
           <div style="padding: 10px; background: #fef3c7; border-radius: 5px; max-width: 250px;">
-            <b>⚠️ Alerta</b><br>
+            <b><i class="fas fa-exclamation-triangle"></i> Alerta</b><br>
             ${message}
           </div>
         `)
@@ -2464,7 +2426,7 @@
 
       // Mostrar confirmación con información adicional
       const confirmMessage = currentSpeed
-        ? `¿Quieres añadir un radar genérico en tu ubicación actual? Velocidad detectada: ${currentSpeed} km/h. Un administrador revisará y completará los detalles.`
+        ? `¿Quieres añadir un radar genérico en tu ubicación actual? Velocidad detectada: ${currentSpeed} km/h. Un administrador lo revisará y completará los detalles.`
         : `¿Quieres añadir un radar genérico en tu ubicación actual? Un administrador lo revisará y completará los detalles.`;
 
       if (!confirm(confirmMessage)) {
@@ -2529,7 +2491,7 @@
 
         const statsHtml = `
           <div style="padding: 10px; min-width: 200px;">
-            <h3 style="margin-top: 0; color: #2563eb;">Estadísticas de Radares</h3>
+            <h3 style="margin-top: 0; color: var(--primary-color);"><i class="fas fa-chart-pie"></i> Estadísticas de Radares</h3>
             <p><strong>Total:</strong> ${totalRadars}</p>
             <p><strong>Activos:</strong> ${activeCount}</p>
             <p><strong>Inactivos:</strong> ${inactiveCount} ${!showInactiveRadars ? '(ocultos)' : ''}</p>
@@ -2771,7 +2733,7 @@
 
       const popup = document.createElement('div');
       popup.innerHTML = `
-        <b>${radar.radarType || "Radar"}</b><br>
+        <b><i class="fas fa-${getRadarIcon(radar.radarType)}"></i> ${radar.radarType || "Radar"}</b><br>
         <small>${radar.road || "Carretera no especificada"}</small><br>
         ${radar.pk ? `PK: ${radar.pk}<br>` : ''}
         Dirección: ${radar.direction || "No especificada"}<br>
@@ -2780,25 +2742,37 @@
         Actualizado: ${lastUpdated}<br>
         <button onclick="copyToClipboard('${radarId}')"
                 style="margin-top: 5px; padding: 2px 5px; font-size: 10px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 3px; cursor: pointer;">
-          Copiar ID
+          <i class="fas fa-copy"></i> Copiar ID
         </button>
         ${currentUser ? `<button onclick="editRadar('${radarId}')"
-                style="margin-top: 5px; padding: 2px 5px; font-size: 10px; background: #2563eb; color: white; border: 1px solid #2563eb; border-radius: 3px; cursor: pointer;">
-          Editar
+                style="margin-top: 5px; padding: 2px 5px; font-size: 10px; background: var(--primary-color); color: white; border: 1px solid var(--primary-color); border-radius: 3px; cursor: pointer;">
+          <i class="fas fa-edit"></i> Editar
         </button>` : ''}
         <div style="margin-top: 10px; display: flex; justify-content: center; gap: 10px;">
           <button id="boton_positivo_${radarId}" class="button-voto button-voto-positivo"
             onclick="votar('${radarId}', 'positivo')" ${userVoted ? 'disabled' : ''}>
-            👍 ${votosPositivos}
+            <i class="fas fa-thumbs-up"></i> ${votosPositivos}
           </button>
           <button id="boton_negativo_${radarId}" class="button-voto button-voto-negativo"
             onclick="votar('${radarId}', 'negativo')" ${userVoted ? 'disabled' : ''}>
-            👎 ${votosNegativos}
+            <i class="fas fa-thumbs-down"></i> ${votosNegativos}
           </button>
         </div>
       `;
 
       return popup;
+    }
+
+    // Función auxiliar para iconos de radar
+    function getRadarIcon(type) {
+      const icons = {
+        'Fijo': 'camera',
+        'Móvil': 'car',
+        'Tramo': 'road',
+        'Remolque': 'trailer',
+        'default': 'camera'
+      };
+      return icons[type] || icons['default'];
     }
 
     // Función para editar radar
@@ -2821,11 +2795,11 @@
       // Mostrar formulario
       document.getElementById('radarForm').style.display = 'block';
       document.getElementById('addRadarButton').classList.add('active');
-      document.getElementById('addRadarButton').textContent = '🚨';
+      document.getElementById('addRadarButton').innerHTML = '<i class="fas fa-radar"></i>';
 
       // Modificar el botón de guardar para actualizar en lugar de crear nuevo
       const saveButton = document.getElementById('saveRadarButton');
-      saveButton.textContent = 'Actualizar Radar';
+      saveButton.innerHTML = '<i class="fas fa-save"></i> Actualizar Radar';
       saveButton.onclick = function() {
         updateRadar(radarId);
       };
@@ -2847,7 +2821,7 @@
       requiredFields.forEach(field => {
         const element = document.getElementById(field);
         if (!element.value) {
-          element.style.borderColor = 'red';
+          element.style.borderColor = 'var(--danger-color)';
           isValid = false;
         } else {
           element.style.borderColor = '';
@@ -2876,8 +2850,8 @@
 
       // Mostrar feedback de carga
       const saveButton = document.getElementById('saveRadarButton');
-      const originalText = saveButton.textContent;
-      saveButton.textContent = 'Guardando...';
+      const originalText = saveButton.innerHTML;
+      saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
       saveButton.disabled = true;
 
       db.ref(`radares/${radarId}`).update(updatedRadar)
@@ -2898,7 +2872,7 @@
           alert('Error al actualizar el radar');
         })
         .finally(() => {
-          saveButton.textContent = originalText;
+          saveButton.innerHTML = originalText;
           saveButton.disabled = false;
           // Restaurar función original del botón
           saveButton.onclick = function() {
@@ -2912,13 +2886,13 @@
       navigator.clipboard.writeText(text).then(() => {
         // Mostrar feedback visual
         const button = event.target;
-        const originalText = button.textContent;
-        button.textContent = "¡Copiado!";
-        button.style.backgroundColor = "#10b981";
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check"></i> ¡Copiado!';
+        button.style.backgroundColor = "var(--success-color)";
         button.style.color = "white";
 
         setTimeout(() => {
-          button.textContent = originalText;
+          button.innerHTML = originalText;
           button.style.backgroundColor = "#f0f0f0";
           button.style.color = "black";
         }, 2000);
@@ -3027,7 +3001,7 @@
                         radar.status === "pending_review" ? "Pendiente" : "Inactivo";
 
       item.innerHTML = `
-        <h3>${radar.radarType || "Radar"} - ${radar.road || ""}
+        <h3><i class="fas fa-${getRadarIcon(radar.radarType)}"></i> ${radar.radarType || "Radar"} - ${radar.road || ""}
           <span class="status-badge ${statusClass}">${statusText}</span>
         </h3>
         <p><strong>Ubicación:</strong> ${radar.lat?.toFixed(4)}, ${radar.lng?.toFixed(4)}</p>
@@ -3036,8 +3010,8 @@
         <p><strong>Velocidad:</strong> ${radar.speed || "N/A"} km/h</p>
         <p><strong>Última modificación:</strong> ${lastUpdated}</p>
         <p><strong>Votos:</strong>
-          <span style="color: #10b981;">👍 ${radar.votos_positivos || 0}</span> |
-          <span style="color: #ef4444;">👎 ${radar.votos_negativos || 0}</span>
+          <span style="color: var(--success-color);"><i class="fas fa-thumbs-up"></i> ${radar.votos_positivos || 0}</span> |
+          <span style="color: var(--danger-color);"><i class="fas fa-thumbs-down"></i> ${radar.votos_negativos || 0}</span>
         </p>
       `;
 
@@ -3101,8 +3075,8 @@
         const title = list.querySelector('h3');
         if (title) {
           title.innerHTML = currentFilters.types.length > 0 || currentFilters.statuses.length > 0 || currentFilters.speed ?
-            `Radares Activos (${visibleItems}/${activeCount})` :
-            `Radares Activos (${activeCount})`;
+            `<i class="fas fa-camera"></i> Radares Activos (${visibleItems}/${activeCount})` :
+            `<i class="fas fa-camera"></i> Radares Activos (${activeCount})`;
         }
       });
 
@@ -3135,8 +3109,8 @@
         const title = list.querySelector('h3');
         if (title) {
           title.innerHTML = currentFilters.types.length > 0 || currentFilters.statuses.length > 0 || currentFilters.speed ?
-            `Radares Inactivos (${visibleItems}/${inactiveCount})` :
-            `Radares Inactivos (${inactiveCount})`;
+            `<i class="fas fa-ban"></i> Radares Inactivos (${visibleItems}/${inactiveCount})` :
+            `<i class="fas fa-ban"></i> Radares Inactivos (${inactiveCount})`;
         }
       });
     }
@@ -3156,7 +3130,7 @@
         // Destacar el elemento en el listado
         const listItems = document.querySelectorAll(`.list-item[data-radar-id="${radarId}"]`);
         listItems.forEach(item => {
-          item.style.backgroundColor = '#e6f2ff';
+          item.style.backgroundColor = 'var(--primary-light)';
           setTimeout(() => {
             item.style.backgroundColor = '';
           }, 2000);
@@ -3176,7 +3150,7 @@
       loadRadars();
 
       const button = document.getElementById('toggleInactiveRadarsButton');
-      button.textContent = showInactiveRadars ? 'Ocultar inactivos' : 'Mostrar inactivos';
+      button.innerHTML = showInactiveRadars ? '<i class="fas fa-eye-slash"></i> Ocultar inactivos' : '<i class="fas fa-eye"></i> Mostrar inactivos';
     }
 
     // Votar radar
@@ -3230,7 +3204,7 @@
       document.getElementById('addRadarButton').addEventListener('click', () => {
         const button = document.getElementById('addRadarButton');
         button.classList.toggle('active');
-        button.textContent = button.classList.contains('active') ? '🚨' : '➕';
+        button.innerHTML = button.classList.contains('active') ? '<i class="fas fa-radar"></i>' : '<i class="fas fa-plus"></i>';
 
         if (!button.classList.contains('active')) {
           document.getElementById('radarForm').style.display = 'none';
@@ -3268,7 +3242,7 @@
       requiredFields.forEach(field => {
         const element = document.getElementById(field);
         if (!element.value) {
-          element.style.borderColor = 'red';
+          element.style.borderColor = 'var(--danger-color)';
           isValid = false;
         } else {
           element.style.borderColor = '';
@@ -3284,8 +3258,8 @@
 
       // Mostrar feedback de carga
       const saveButton = document.getElementById('saveRadarButton');
-      const originalText = saveButton.textContent;
-      saveButton.textContent = 'Guardando...';
+      const originalText = saveButton.innerHTML;
+      saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
       saveButton.disabled = true;
 
       const { lat, lng } = tempMarker.getLatLng();
@@ -3313,7 +3287,7 @@
           alert('Error al guardar el radar');
         })
         .finally(() => {
-          saveButton.textContent = originalText;
+          saveButton.innerHTML = originalText;
           saveButton.disabled = false;
         });
     }
@@ -3326,7 +3300,7 @@
         tempMarker = null;
       }
       document.getElementById('addRadarButton').classList.remove('active');
-      document.getElementById('addRadarButton').textContent = '➕';
+      document.getElementById('addRadarButton').innerHTML = '<i class="fas fa-plus"></i>';
 
       // Limpiar campos y validaciones
       document.getElementById('radarType').value = '';
@@ -3341,7 +3315,7 @@
       });
 
       // Restaurar función original del botón de guardar
-      document.getElementById('saveRadarButton').textContent = 'Guardar Radar';
+      document.getElementById('saveRadarButton').innerHTML = '<i class="fas fa-save"></i> Guardar Radar';
       document.getElementById('saveRadarButton').onclick = saveNewRadar;
     }
 
@@ -3387,7 +3361,7 @@
             currentSuggestions.slice(0, 5).forEach((suggestion, index) => {
               const suggestionElement = document.createElement('div');
               suggestionElement.className = 'search-suggestion';
-              suggestionElement.textContent = suggestion.text;
+              suggestionElement.innerHTML = `<i class="fas fa-search"></i> ${suggestion.text}`;
               suggestionElement.addEventListener('click', () => {
                 centerOnRadar(suggestion.id);
                 searchInput.value = suggestion.text;
