@@ -54,7 +54,7 @@
 
     onAuthStateChanged(auth, (user) => {
       if (!user) {
-        window.location.href = 'login.html';
+        window.location.href = 'login.php';
       } else {
         document.getElementById('userInfo').innerText = `Bienvenido, ${user.email}`;
         document.getElementById('userEmail').textContent = user.email;
