@@ -1010,15 +1010,26 @@
     const deleteRadar = (id) => {
       showLoading(true);
       const radarRef = ref(database, `radares/${id}`);
+
       remove(radarRef)
+        .then(() => {
+          // Eliminar también el historial asociado
+          const historyRef = ref(database, `historial/${id}`);
+          return remove(historyRef);
+        })
         .then(() => {
           showNotification(`Radar ${id} eliminado correctamente.`, 'success');
           vibrate(200);
-          fetchRadares();
+          // Actualizar la lista de radares después de la eliminación
+          allRadares = allRadares.filter(radar => radar.id !== id);
+          renderRadares();
+          updateDashboardStats();
         })
         .catch((error) => {
-          showLoading(false);
           showNotification(`Error al eliminar radar: ${error.message}`, 'error');
+        })
+        .finally(() => {
+          showLoading(false);
         });
     };
 

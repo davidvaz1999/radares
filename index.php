@@ -1647,7 +1647,7 @@
       <p><i class="fas fa-filter"></i> Puedes filtrar los radares por tipo, estado y velocidad límite usando los controles del listado.</p>
       <p><i class="fas fa-envelope"></i> Si necesitas ayuda, puedes contactarnos en <a href="mailto:soporte@ahorraunamulta.com">soporte@ahorraunamulta.com</a></p>
       <br>
-      <p><strong><i class="fas fa-calendar-alt"></i> Última actualización:</strong> 8 de mayo de 2025</p>
+      <p><strong><i class="fas fa-calendar-alt"></i> Última actualización:</strong> 22 de mayo de 2025</p>
     </div>
   </div>
 
