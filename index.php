@@ -711,6 +711,7 @@
   /* Filtros - Diseño mejorado */
   .filter-container {
     display: flex;
+    flex-direction: column;
     gap: 1rem;
     padding: 1rem;
     margin-bottom: 1.25rem;
@@ -722,13 +723,11 @@
   .filter-group {
     display: flex;
     flex-direction: column;
-    min-width: 13.75rem;
     background: white;
     padding: 1rem;
     border-radius: var(--border-radius-sm);
     box-shadow: var(--box-shadow);
     margin-bottom: 0;
-    flex-grow: 1;
   }
 
   .filter-group label {
@@ -804,18 +803,23 @@
 
   /* Control de capas */
   .leaflet-control-layers {
-    bottom: 11.25rem !important;
-    left: 0.625rem !important;
-    right: auto !important;
-    z-index: 800 !important;
-    border-radius: var(--border-radius-sm) !important;
-    box-shadow: var(--box-shadow) !important;
+    display: none; /* Ocultamos el control por defecto, usaremos nuestro grupo personalizado */
   }
 
-  /* Botón de centrado - Diseño mejorado */
-  .boton-centrado {
-    background-color: var(--success-color);
-    color: white;
+  /* Grupo de controles del mapa personalizado */
+  .map-controls-group {
+    position: fixed;
+    bottom: 5rem;
+    left: 0.625rem;
+    z-index: 800;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .map-control-button {
+    background-color: white;
+    color: var(--dark-color);
     border: none;
     border-radius: 50%;
     width: 2.5rem;
@@ -827,19 +831,30 @@
     box-shadow: var(--box-shadow);
     transition: var(--transition);
     font-size: 1.25rem;
-    z-index: 800;
   }
 
-  .boton-centrado.on {
+  .map-control-button:hover {
+    transform: scale(1.1);
+  }
+
+  .map-control-button.active {
+    background-color: var(--primary-color);
+    color: white;
+  }
+
+  /* Botón de centrado - Diseño mejorado */
+  .boton-centrado {
     background-color: var(--success-color);
+    color: white;
   }
 
   .boton-centrado.off {
     background-color: var(--danger-color);
   }
 
-  .boton-centrado:hover {
-    transform: scale(1.1);
+  /* Ocultar controles de zoom de Leaflet */
+  .leaflet-control-zoom {
+    display: none !important;
   }
 
   /* Botón de inactivos - Diseño mejorado */
@@ -1386,6 +1401,12 @@
       height: 2.8rem;
       padding: 0 0.75rem;
     }
+
+    /* Grupo de controles del mapa en móvil */
+    .map-controls-group {
+      bottom: 5.5rem;
+      left: 0.5rem;
+    }
   }
 
   /* Mejoras de accesibilidad */
@@ -1463,11 +1484,65 @@
   <!-- Listado normal (para desktop) -->
   <div class="list-container" id="list-container">
     <h2>LISTADO DE RADARES <button class="minimize-list" id="minimize-list">×</button></h2>
-    <div>
+    <div class="filter-container">
+      <div class="filter-group">
+        <label for="radar-type-filter">Tipo de radar:</label>
+        <select id="radar-type-filter" multiple size="4">
+          <option value="Móvil">Móvil</option>
+          <option value="Fijo">Fijo</option>
+          <option value="Tramo">Tramo</option>
+          <option value="Remolque">Remolque</option>
+        </select>
+        <small>Mantén Ctrl para seleccionar múltiples filtros.<br><b>NUEVO: </b>Activando filtros, solo se mostrarán en el listado y en el mapa los radares que cumplan las condiciones seleccionadas.</small>
+      </div>
+
+      <div class="filter-group">
+        <label for="radar-status-filter">Estado:</label>
+        <select id="radar-status-filter" multiple size="3">
+          <option value="active">Activos</option>
+          <option value="inactive">Inactivos</option>
+          <option value="pending_review">Pendientes</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="radar-speed-filter">Velocidad límite:</label>
+        <select id="radar-speed-filter">
+          <option value="">Todas</option>
+          <option value="30">30 km/h</option>
+          <option value="40">40 km/h</option>
+          <option value="50">50 km/h</option>
+          <option value="60">60 km/h</option>
+          <option value="70">70 km/h</option>
+          <option value="80">80 km/h</option>
+          <option value="90">90 km/h</option>
+          <option value="100">100 km/h</option>
+          <option value="110">110 km/h</option>
+          <option value="120">120 km/h</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="toggle-button-section" id="toggle-active"><span>Mostrar/Ocultar Radares Activos</span></button>
+    <div id="active-list" class="radar-section">
+      <h3>Radares Activos</h3>
+    </div>
+
+    <button class="toggle-button-section" id="toggle-inactive"><span>Mostrar/Ocultar Radares Inactivos</span></button>
+    <div id="inactive-list" class="radar-section" style="display: none;">
+      <h3>Radares Inactivos</h3>
+    </div>
+  </div>
+
+  <!-- Modal para listado en móviles -->
+  <div class="list-modal" id="list-modal">
+    <button class="close-list" id="close-list">&times;</button>
+    <div class="list-modal-content">
+      <h2>LISTADO DE RADARES</h2>
       <div class="filter-container">
         <div class="filter-group">
-          <label for="radar-type-filter">Tipo de radar:</label>
-          <select id="radar-type-filter" multiple size="4">
+          <label for="radar-type-filter-mobile">Tipo de radar:</label>
+          <select id="radar-type-filter-mobile" multiple size="4">
             <option value="Móvil">Móvil</option>
             <option value="Fijo">Fijo</option>
             <option value="Tramo">Tramo</option>
@@ -1477,8 +1552,8 @@
         </div>
 
         <div class="filter-group">
-          <label for="radar-status-filter">Estado:</label>
-          <select id="radar-status-filter" multiple size="3">
+          <label for="radar-status-filter-mobile">Estado:</label>
+          <select id="radar-status-filter-mobile" multiple size="3">
             <option value="active">Activos</option>
             <option value="inactive">Inactivos</option>
             <option value="pending_review">Pendientes</option>
@@ -1486,8 +1561,8 @@
         </div>
 
         <div class="filter-group">
-          <label for="radar-speed-filter">Velocidad límite:</label>
-          <select id="radar-speed-filter">
+          <label for="radar-speed-filter-mobile">Velocidad límite:</label>
+          <select id="radar-speed-filter-mobile">
             <option value="">Todas</option>
             <option value="30">30 km/h</option>
             <option value="40">40 km/h</option>
@@ -1503,74 +1578,14 @@
         </div>
       </div>
 
-      <button class="toggle-button-section" id="toggle-active"><span>Mostrar/Ocultar Radares Activos</span></button>
-      <div id="active-list" class="radar-section">
+      <button class="toggle-button-section" id="toggle-active-mobile"><span>Mostrar/Ocultar Radares Activos</span></button>
+      <div id="active-list-mobile" class="radar-section">
         <h3>Radares Activos</h3>
       </div>
-    </div>
-    <div>
-      <button class="toggle-button-section" id="toggle-inactive"><span>Mostrar/Ocultar Radares Inactivos</span></button>
-      <div id="inactive-list" class="radar-section" style="display: none;">
+
+      <button class="toggle-button-section" id="toggle-inactive-mobile"><span>Mostrar/Ocultar Radares Inactivos</span></button>
+      <div id="inactive-list-mobile" class="radar-section" style="display: none;">
         <h3>Radares Inactivos</h3>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal para listado en móviles -->
-  <div class="list-modal" id="list-modal">
-    <button class="close-list" id="close-list">&times;</button>
-    <div class="list-modal-content">
-      <h2>LISTADO DE RADARES</h2>
-      <div>
-        <div class="filter-container">
-          <div class="filter-group">
-            <label for="radar-type-filter-mobile">Tipo de radar:</label>
-            <select id="radar-type-filter-mobile" multiple size="4">
-              <option value="Móvil">Móvil</option>
-              <option value="Fijo">Fijo</option>
-              <option value="Tramo">Tramo</option>
-              <option value="Remolque">Remolque</option>
-            </select>
-            <small>Mantén Ctrl para seleccionar múltiples filtros.<br><b>NUEVO: </b>Activando filtros, solo se mostrarán en el listado y en el mapa los radares que cumplan las condiciones seleccionadas.</small>
-          </div>
-
-          <div class="filter-group">
-            <label for="radar-status-filter-mobile">Estado:</label>
-            <select id="radar-status-filter-mobile" multiple size="3">
-              <option value="active">Activos</option>
-              <option value="inactive">Inactivos</option>
-              <option value="pending_review">Pendientes</option>
-            </select>
-          </div>
-
-          <div class="filter-group">
-            <label for="radar-speed-filter-mobile">Velocidad límite:</label>
-            <select id="radar-speed-filter-mobile">
-              <option value="">Todas</option>
-              <option value="30">30 km/h</option>
-              <option value="40">40 km/h</option>
-              <option value="50">50 km/h</option>
-              <option value="60">60 km/h</option>
-              <option value="70">70 km/h</option>
-              <option value="80">80 km/h</option>
-              <option value="90">90 km/h</option>
-              <option value="100">100 km/h</option>
-              <option value="110">110 km/h</option>
-              <option value="120">120 km/h</option>
-            </select>
-          </div>
-        </div>
-
-        <button class="toggle-button-section" id="toggle-active-mobile"><span>Mostrar/Ocultar Radares Activos</span></button>
-        <div id="active-list-mobile" class="radar-section">
-          <h3>Radares Activos</h3>
-        </div>
-      </div>
-      <div>
-        <button class="toggle-button-section" id="toggle-inactive-mobile"><span>Mostrar/Ocultar Radares Inactivos</span></button>
-        <div id="inactive-list-mobile" class="radar-section" style="display: none;">
-          <h3>Radares Inactivos</h3>
-        </div>
       </div>
     </div>
   </div>
@@ -1637,6 +1652,14 @@
 
   <!-- Mapa -->
   <div id="map"></div>
+
+  <!-- Grupo de controles del mapa -->
+  <div class="map-controls-group">
+    <button class="map-control-button" id="zoom-in-button" title="Acercar"><i class="fas fa-plus"></i></button>
+    <button class="map-control-button" id="zoom-out-button" title="Alejar"><i class="fas fa-minus"></i></button>
+    <button class="map-control-button boton-centrado off" id="center-button" title="Centrar en mi ubicación"><i class="fas fa-location-arrow"></i></button>
+    <button class="map-control-button" id="layers-button" title="Cambiar capa"><i class="fas fa-layer-group"></i></button>
+  </div>
 
   <!-- Botones de acción agrupados -->
   <div class="action-buttons">
@@ -1752,6 +1775,8 @@
     let currentVoice = null;
     let currentUser = null;
     let editingRadarId = null;
+    let baseLayers = {};
+    let currentLayer = null;
 
     // Variables para los filtros
     let currentFilters = {
@@ -1780,21 +1805,20 @@
       map = L.map('map').setView(initialView, initialZoom);
 
       // Capas base
-      const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: ''
-      });
+      baseLayers = {
+        "Mapa estándar": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: ''
+        }),
+        "Vista satélite": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+          attribution: ''
+        })
+      };
 
-      const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: ''
-      });
+      baseLayers["Mapa estándar"].addTo(map);
+      currentLayer = baseLayers["Mapa estándar"];
 
-      osmLayer.addTo(map);
-
-      // Control de capas
-      L.control.layers({
-        "Mapa estándar": osmLayer,
-        "Vista satélite": satelliteLayer
-      }, {}, { position: 'bottomleft' }).addTo(map);
+      // Configurar controles del mapa
+      setupMapControls();
 
       // Iniciar funcionalidades
       initUI();
@@ -1832,6 +1856,53 @@
           }
         });
       }
+    }
+
+    // Configurar controles del mapa
+    function setupMapControls() {
+      // Botón de zoom in
+      document.getElementById('zoom-in-button').addEventListener('click', () => {
+        map.zoomIn();
+      });
+
+      // Botón de zoom out
+      document.getElementById('zoom-out-button').addEventListener('click', () => {
+        map.zoomOut();
+      });
+
+      // Botón de centrado
+      const centerButton = document.getElementById('center-button');
+      centerButton.addEventListener('click', () => {
+        centrarMapa = !centrarMapa;
+
+        if (centrarMapa) {
+          centerButton.classList.add('on');
+          centerButton.classList.remove('off');
+
+          // Centrar inmediatamente si ya tenemos posición
+          if (userMarker && userMarker.getLatLng().lat !== 0) {
+            map.setView(userMarker.getLatLng(), map.getZoom(), {
+              animate: true,
+              duration: 1
+            });
+          }
+        } else {
+          centerButton.classList.remove('on');
+          centerButton.classList.add('off');
+        }
+      });
+
+      // Botón de capas
+      document.getElementById('layers-button').addEventListener('click', () => {
+        // Alternar entre capas
+        const layerNames = Object.keys(baseLayers);
+        const currentIndex = layerNames.findIndex(name => baseLayers[name] === currentLayer);
+        const nextIndex = (currentIndex + 1) % layerNames.length;
+
+        map.removeLayer(currentLayer);
+        baseLayers[layerNames[nextIndex]].addTo(map);
+        currentLayer = baseLayers[layerNames[nextIndex]];
+      });
     }
 
     // Interfaz de usuario
@@ -2088,42 +2159,6 @@
       // Variables para controlar la posición anterior
       let lastPosition = null;
       let lastUpdateTime = 0;
-
-      // Botón de centrado mejorado
-      var toggleButton = L.control({ position: 'topleft' });
-      toggleButton.onAdd = function(map) {
-        var container = L.DomUtil.create("div", "leaflet-bar");
-        var button = L.DomUtil.create("a", "boton-centrado off");
-        button.innerHTML = '<i class="fas fa-location-arrow"></i>';
-        button.href = '#';
-        button.title = 'Centrar en mi ubicación';
-
-        button.onclick = function(e) {
-          L.DomEvent.stopPropagation(e);
-          L.DomEvent.preventDefault(e);
-          centrarMapa = !centrarMapa;
-
-          if (centrarMapa) {
-            button.classList.add('on');
-            button.classList.remove('off');
-
-            // Centrar inmediatamente si ya tenemos posición
-            if (userMarker.getLatLng().lat !== 0) {
-              map.setView(userMarker.getLatLng(), map.getZoom(), {
-                animate: true,
-                duration: 1
-              });
-            }
-          } else {
-            button.classList.remove('on');
-            button.classList.add('off');
-          }
-        };
-
-        container.appendChild(button);
-        return container;
-      };
-      toggleButton.addTo(map);
 
       // Seguimiento de la posición con mejor control
       navigator.geolocation.watchPosition(
