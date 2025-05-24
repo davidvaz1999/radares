@@ -1019,17 +1019,17 @@
     flex-shrink: 0;
   }
 
-  /* Barra de búsqueda - Diseño mejorado */
+  /* Barra de búsqueda - Diseño mejorado y más pequeña */
   .search-container {
     position: fixed;
     top: 1.25rem;
     left: 50%;
     transform: translateX(-50%);
-    width: 85%;
-    max-width: 28rem;
+    width: 68%; /* Reducido de 85% a 68% (20% menos) */
+    max-width: 22.4rem; /* Reducido de 28rem a 22.4rem (20% menos) */
     z-index: 1000;
     background-color: rgba(255, 255, 255, 0.95);
-    padding: 0.5rem 0.8rem;
+    padding: 0.4rem 0.64rem; /* Reducido proporcionalmente */
     border-radius: 1.875rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     border: 1px solid var(--gray-light);
@@ -1043,10 +1043,10 @@
 
   .search-input {
     width: 94%;
-    padding: 0.5rem 0.8rem;
+    padding: 0.4rem 0.64rem; /* Reducido proporcionalmente */
     border: 1px solid var(--gray-light);
     border-radius: 1.25rem;
-    font-size: 0.9375rem;
+    font-size: 0.875rem; /* Reducido de 0.9375rem */
     outline: none;
     background-color: var(--light-color);
     transition: var(--transition);
@@ -1952,7 +1952,10 @@
         if (currentUser) {
           // Si ya está logueado, mostrar opción de logout
           if (confirm('¿Deseas cerrar sesión?')) {
-            auth.signOut();
+            auth.signOut().then(() => {
+              // Forzar recarga de la página para actualizar la UI
+              location.reload();
+            });
           }
         } else {
           document.getElementById('loginEmail').value = '';
@@ -1978,8 +1981,8 @@
             status.className = "success";
             setTimeout(() => {
               closeModal('loginModal');
-              // Actualizar todos los popups abiertos para mostrar botón de edición
-              updateAllOpenPopups();
+              // Forzar recarga de la página para actualizar la UI
+              location.reload();
             }, 1000);
           })
           .catch((error) => {
