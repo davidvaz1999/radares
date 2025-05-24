@@ -171,47 +171,60 @@
   .action-buttons {
     position: fixed;
     left: 50%;
-    bottom: 2rem;
+    bottom: 1rem;
     transform: translateX(-50%);
     display: flex;
-    gap: 0.75rem;
+    gap: 0.5rem;
     align-items: center;
     z-index: 1000;
     background-color: rgba(255, 255, 255, 0.98);
-    padding: 0.75rem 1.5rem;
+    padding: 0.5rem;
     border-radius: 50px;
     box-shadow: var(--box-shadow-lg);
     border: 1px solid rgba(0, 0, 0, 0.05);
     transition: var(--transition);
     backdrop-filter: blur(8px);
+    max-width: 95%;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none; /* Para Firefox */
+    -ms-overflow-style: none; /* Para IE y Edge */
+  }
+
+  .action-buttons::-webkit-scrollbar {
+    display: none; /* Para Chrome, Safari y Opera */
   }
 
   .action-buttons.list-visible {
-    left: calc(50% - 150px);
+    left: 50%;
+    transform: translateX(-50%);
   }
 
   /* Estilo para todos los botones de acción */
   .action-button {
-    width: 3.5rem;
-    height: 3.5rem;
+    width: 2.8rem;
+    height: 2.8rem;
     border-radius: 50%;
     border: none;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     box-shadow: var(--box-shadow);
     transition: var(--transition);
     position: relative;
     overflow: hidden;
     background-color: white;
     color: var(--dark-color);
+    text-decoration: none !important;
+    flex-shrink: 0;
   }
 
   .action-button:hover {
     transform: translateY(-3px) scale(1.05);
     box-shadow: var(--box-shadow-md);
+    text-decoration: none !important;
   }
 
   .action-button:active {
@@ -285,6 +298,10 @@
     background-color: var(--success-color);
   }
 
+  #addRadarButton.active i::before {
+    content: "\f05b"; /* Icono de radar cuando está activo */
+  }
+
   #helpButton2 {
     background-color: var(--danger-color);
     color: white;
@@ -292,28 +309,31 @@
 
   .buttonAdmin {
     background-color: var(--dark-light);
-    color: white;
-    font-size: 0.75rem;
+    color: white !important;
+    font-size: 0.7rem;
     font-weight: 600;
-    padding: 0 0.5rem;
+    padding: 0 0.75rem;
     width: auto;
     border-radius: 1.75rem;
+    text-decoration: none !important;
+    height: 2.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .buttonLogin {
     background-color: var(--info-color);
     color: white;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 600;
-    padding: 0 0.5rem;
+    padding: 0 0.75rem;
     width: auto;
     border-radius: 1.75rem;
-  }
-
-  #statsButton {
-    background-color: var(--secondary-color);
-    color: white;
-    display: none;
+    height: 2.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   #addCurrentLocationButton {
@@ -346,6 +366,11 @@
     box-shadow: 0 1px 3px rgba(0,0,0,0.2);
     font-weight: bold;
     text-transform: uppercase;
+  }
+
+  #legendButton {
+    background-color: var(--accent-color);
+    color: white;
   }
 
   /* Formulario de radar - Diseño mejorado */
@@ -686,7 +711,6 @@
   /* Filtros - Diseño mejorado */
   .filter-container {
     display: flex;
-    flex-wrap: wrap;
     gap: 1rem;
     padding: 1rem;
     margin-bottom: 1.25rem;
@@ -776,36 +800,6 @@
 
   .clear-filters:hover {
     text-decoration: underline;
-  }
-
-  /* Botón de leyenda - Diseño mejorado */
-  #legend-button {
-    position: fixed;
-    bottom: 1.25rem;
-    left: 1.25rem;
-    padding: 0.75rem 1.5rem;
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: var(--border-radius);
-    font-size: 1rem;
-    cursor: pointer;
-    box-shadow: var(--box-shadow);
-    transition: var(--transition);
-    z-index: 1000;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  #legend-button:hover {
-    background-color: var(--primary-dark);
-    transform: translateY(-2px);
-  }
-
-  #legend-button i {
-    font-size: 1.1rem;
   }
 
   /* Control de capas */
@@ -1031,11 +1025,11 @@
     top: 1.25rem;
     left: 50%;
     transform: translateX(-50%);
-    width: 90%;
-    max-width: 31.25rem;
+    width: 85%;
+    max-width: 28rem;
     z-index: 1000;
     background-color: rgba(255, 255, 255, 0.95);
-    padding: 0.625rem 1rem;
+    padding: 0.5rem 0.8rem;
     border-radius: 1.875rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     border: 1px solid var(--gray-light);
@@ -1049,7 +1043,7 @@
 
   .search-input {
     width: 94%;
-    padding: 0.625rem 1rem;
+    padding: 0.5rem 0.8rem;
     border: 1px solid var(--gray-light);
     border-radius: 1.25rem;
     font-size: 0.9375rem;
@@ -1243,21 +1237,24 @@
   #loginForm {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.5rem;
+    padding: 1rem;
   }
 
   #loginForm label {
     font-weight: 600;
     margin-bottom: 0.5rem;
     font-size: 0.875rem;
+    color: var(--dark-color);
   }
 
   #loginForm input {
-    padding: 0.75rem;
+    padding: 0.75rem 1rem;
     border: 1px solid var(--gray-light);
     border-radius: var(--border-radius-sm);
     background-color: var(--light-color);
     transition: var(--transition);
+    font-size: 1rem;
   }
 
   #loginForm input:focus {
@@ -1267,12 +1264,49 @@
     background-color: white;
   }
 
+  #loginForm .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  #loginForm .buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  #loginForm .buttons button {
+    flex: 1;
+    padding: 0.875rem;
+    border-radius: var(--border-radius-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+
+  #loginForm .buttons button i {
+    margin-right: 0.5rem;
+  }
+
   #loginStatus {
     min-height: 1.25rem;
     text-align: center;
     font-size: 0.875rem;
-    padding: 0.5rem;
+    padding: 0.75rem;
     border-radius: var(--border-radius-sm);
+    margin-top: 0.5rem;
+    background-color: var(--light-color);
+  }
+
+  #loginStatus.success {
+    background-color: var(--success-color);
+    color: white;
+  }
+
+  #loginStatus.error {
+    background-color: var(--danger-color);
+    color: white;
   }
 
   /* Estilos responsivos */
@@ -1311,28 +1345,28 @@
 
     .action-buttons {
       bottom: 1rem;
-      right: 1rem;
-      gap: 0.625rem;
+      left: 50%;
+      transform: translateX(-50%);
+      gap: 0.5rem;
+      padding: 0.5rem;
+      max-width: 95%;
+      justify-content: center;
     }
 
-    .action-button, .buttonAdmin, .buttonLogin {
-      width: 3.125rem;
-      height: 3.125rem;
-      font-size: 1.25rem;
+    .action-button {
+      width: 2.8rem;
+      height: 2.8rem;
+      font-size: 1.1rem;
     }
 
     .buttonAdmin, .buttonLogin {
-      font-size: 0.75rem;
+      font-size: 0.65rem;
+      height: 2.8rem;
+      padding: 0 0.5rem;
     }
 
     .filter-group {
       min-width: 100%;
-    }
-
-    #legend-button {
-      left: 1rem;
-      bottom: 1rem;
-      padding: 0.625rem 1.25rem;
     }
 
     .search-container {
@@ -1342,6 +1376,15 @@
 
     .modal-content {
       padding: 1.25rem;
+    }
+
+    /* Ajustar botones en móvil */
+    .action-buttons .buttonAdmin,
+    .action-buttons .buttonLogin {
+      order: -1;
+      width: auto;
+      height: 2.8rem;
+      padding: 0 0.75rem;
     }
   }
 
@@ -1557,16 +1600,22 @@
       <button class="close" id="closeLoginModal">&times;</button>
       <h2><i class="fas fa-sign-in-alt"></i> Iniciar Sesión</h2>
       <div id="loginForm">
-        <label for="loginEmail">Email:</label>
-        <input type="email" id="loginEmail" placeholder="tu@email.com" required autocomplete="username">
+        <div class="form-group">
+          <label for="loginEmail">Email:</label>
+          <input type="email" id="loginEmail" placeholder="tu@email.com" required autocomplete="username">
+        </div>
 
-        <label for="loginPassword">Contraseña:</label>
-        <input type="password" id="loginPassword" placeholder="Tu contraseña" required autocomplete="current-password">
+        <div class="form-group">
+          <label for="loginPassword">Contraseña:</label>
+          <input type="password" id="loginPassword" placeholder="Tu contraseña" required autocomplete="current-password">
+        </div>
 
-        <button id="loginButton" class="save"><i class="fas fa-sign-in-alt"></i> Iniciar Sesión</button>
-        <button id="loginCancel" class="cancel"><i class="fas fa-times"></i> Cancelar</button>
+        <div id="loginStatus"></div>
 
-        <div id="loginStatus" style="margin-top: 10px;"></div>
+        <div class="buttons">
+          <button id="loginButton" class="save"><i class="fas fa-sign-in-alt"></i> Iniciar Sesión</button>
+          <button id="loginCancel" class="cancel"><i class="fas fa-times"></i> Cancelar</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1592,16 +1641,13 @@
   <div class="action-buttons">
     <a href="/login" class="action-button buttonAdmin" title="Panel de administración">ADMIN</a>
     <button id="toggleLoginButton" class="action-button buttonLogin" title="Iniciar sesión"><i class="fas fa-key"></i></button>
-    <button id="statsButton" class="action-button" title="Estadísticas"><i class="fas fa-chart-bar"></i></button>
     <button id="toggle-button" class="action-button" title="Mostrar listado"><i class="fas fa-list"></i></button>
     <button id="driveModeButton" class="action-button" title="Modo conducción (BETA)"><i class="fas fa-car"></i><span>BETA</span></button>
     <button id="addCurrentLocationButton" class="action-button" title="Añadir radar en mi ubicación"><i class="fas fa-exclamation-triangle"></i></button>
+    <button id="legendButton" class="action-button" title="Leyenda"><i class="fas fa-map-marked-alt"></i></button>
     <button id="addRadarButton" class="action-button" title="Añadir radar manualmente"><i class="fas fa-plus"></i></button>
     <button id="helpButton2" class="action-button" title="Ayuda"><i class="fas fa-question"></i></button>
   </div>
-
-  <!-- Botón de leyenda -->
-  <button id="legend-button"><i class="fas fa-map-legend"></i> Leyenda</button>
 
   <!-- Formulario de radar -->
   <div id="radarForm">
@@ -1704,6 +1750,7 @@
     let lastRadarCheckTime = 0;
     let currentVoice = null;
     let currentUser = null;
+    let editingRadarId = null;
 
     // Variables para los filtros
     let currentFilters = {
@@ -1733,11 +1780,11 @@
 
       // Capas base
       const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
+        attribution: ''
       });
 
       const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles &copy; Esri'
+        attribution: ''
       });
 
       osmLayer.addTo(map);
@@ -1844,7 +1891,7 @@
       });
 
       // Botón de leyenda
-      const legendButton = document.getElementById('legend-button');
+      const legendButton = document.getElementById('legendButton');
       legendButton.addEventListener('click', () => {
         openModal('legendModal');
       });
@@ -1886,9 +1933,6 @@
         closeModal('helpModal');
       });
 
-      // Botón de estadísticas
-      document.getElementById('statsButton').addEventListener('click', showStats);
-
       // Botón de modo conducción
       document.getElementById('driveModeButton').addEventListener('click', () => {
         if (isDriveModeActive) {
@@ -1913,6 +1957,7 @@
           document.getElementById('loginEmail').value = '';
           document.getElementById('loginPassword').value = '';
           document.getElementById('loginStatus').textContent = '';
+          document.getElementById('loginStatus').className = '';
           openModal('loginModal');
         }
       });
@@ -1924,12 +1969,12 @@
         const status = document.getElementById('loginStatus');
 
         status.textContent = "Iniciando sesión...";
-        status.style.color = "var(--primary-color)";
+        status.className = "";
 
         auth.signInWithEmailAndPassword(email, password)
           .then((userCredential) => {
             status.textContent = "Sesión iniciada correctamente";
-            status.style.color = "var(--success-color)";
+            status.className = "success";
             setTimeout(() => {
               closeModal('loginModal');
               // Actualizar todos los popups abiertos para mostrar botón de edición
@@ -1938,7 +1983,7 @@
           })
           .catch((error) => {
             status.textContent = "Error: " + error.message;
-            status.style.color = "var(--danger-color)";
+            status.className = "error";
           });
       });
 
@@ -2472,41 +2517,6 @@
         });
     }
 
-    // Mostrar estadísticas
-    function showStats() {
-      let activeCount = 0, inactiveCount = 0, pendingCount = 0;
-      let totalRadars = 0;
-
-      // Contar todos los radares, incluso los ocultos
-      db.ref("radares").once('value', snapshot => {
-        const radares = snapshot.val();
-        if (radares) {
-          Object.values(radares).forEach(radar => {
-            totalRadars++;
-            if (radar.status === 'active') activeCount++;
-            else if (radar.status === 'inactive') inactiveCount++;
-            else if (radar.status === 'pending_review') pendingCount++;
-          });
-        }
-
-        const statsHtml = `
-          <div style="padding: 10px; min-width: 200px;">
-            <h3 style="margin-top: 0; color: var(--primary-color);"><i class="fas fa-chart-pie"></i> Estadísticas de Radares</h3>
-            <p><strong>Total:</strong> ${totalRadars}</p>
-            <p><strong>Activos:</strong> ${activeCount}</p>
-            <p><strong>Inactivos:</strong> ${inactiveCount} ${!showInactiveRadars ? '(ocultos)' : ''}</p>
-            <p><strong>Pendientes:</strong> ${pendingCount}</p>
-            <p><strong>Última actualización:</strong> ${new Date().toLocaleString()}</p>
-          </div>
-        `;
-
-        L.popup()
-          .setLatLng(map.getCenter())
-          .setContent(statsHtml)
-          .openOn(map);
-      });
-    }
-
     // Inicializar filtros
     function initFilters() {
       const typeFilter = document.getElementById('radar-type-filter');
@@ -2695,7 +2705,7 @@
       });
     }
 
-    // Añadir marcador de radar
+    // Añadir marcadores de radar
     function addRadarMarker(radar, radarId) {
       const icon = getIconByRadar(radar);
       const marker = L.marker([radar.lat, radar.lng], {
@@ -2740,7 +2750,7 @@
         Velocidad: ${radar.speed || "N/A"} km/h<br>
         Estado: <b>${radar.status === "active" ? "Activo" : radar.status === "pending_review" ? "Pendiente" : "Inactivo"}</b><br>
         Actualizado: ${lastUpdated}<br>
-        <button onclick="copyToClipboard('${radarId}')"
+        <button onclick="copyToClipboard('${radarId}', this)"
                 style="margin-top: 5px; padding: 2px 5px; font-size: 10px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 3px; cursor: pointer;">
           <i class="fas fa-copy"></i> Copiar ID
         </button>
@@ -2780,6 +2790,8 @@
       const radar = radaresMarkers[radarId]?.radarData;
       if (!radar) return;
 
+      editingRadarId = radarId;
+
       // Mostrar formulario de edición con los datos actuales
       document.getElementById('radarType').value = radar.radarType || '';
       document.getElementById('road').value = radar.road || '';
@@ -2801,12 +2813,12 @@
       const saveButton = document.getElementById('saveRadarButton');
       saveButton.innerHTML = '<i class="fas fa-save"></i> Actualizar Radar';
       saveButton.onclick = function() {
-        updateRadar(radarId);
+        updateRadar();
       };
     }
 
     // Función para actualizar radar
-    function updateRadar(radarId) {
+    function updateRadar() {
       const radarType = document.getElementById('radarType').value;
       const road = document.getElementById('road').value;
       const pk = document.getElementById('pk').value;
@@ -2854,16 +2866,16 @@
       saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
       saveButton.disabled = true;
 
-      db.ref(`radares/${radarId}`).update(updatedRadar)
+      db.ref(`radares/${editingRadarId}`).update(updatedRadar)
         .then(() => {
           alert('Radar actualizado con éxito');
           resetRadarForm();
           // Actualizar el marcador en el mapa
-          if (radaresMarkers[radarId]) {
-            radaresMarkers[radarId].setIcon(getIconByRadar(updatedRadar));
-            radaresMarkers[radarId].radarData = updatedRadar;
-            if (radaresMarkers[radarId].isPopupOpen()) {
-              radaresMarkers[radarId].setPopupContent(createPopupContent(updatedRadar, radarId));
+          if (radaresMarkers[editingRadarId]) {
+            radaresMarkers[editingRadarId].setIcon(getIconByRadar(updatedRadar));
+            radaresMarkers[editingRadarId].radarData = updatedRadar;
+            if (radaresMarkers[editingRadarId].isPopupOpen()) {
+              radaresMarkers[editingRadarId].setPopupContent(createPopupContent(updatedRadar, editingRadarId));
             }
           }
         })
@@ -2875,17 +2887,15 @@
           saveButton.innerHTML = originalText;
           saveButton.disabled = false;
           // Restaurar función original del botón
-          saveButton.onclick = function() {
-            saveNewRadar();
-          };
+          saveButton.onclick = saveNewRadar;
+          editingRadarId = null;
         });
     }
 
     // Función para copiar ID al portapapeles
-    window.copyToClipboard = function(text) {
+    window.copyToClipboard = function(text, button) {
       navigator.clipboard.writeText(text).then(() => {
         // Mostrar feedback visual
-        const button = event.target;
         const originalText = button.innerHTML;
         button.innerHTML = '<i class="fas fa-check"></i> ¡Copiado!';
         button.style.backgroundColor = "var(--success-color)";
@@ -2898,7 +2908,16 @@
         }, 2000);
       }).catch(err => {
         console.error('Error al copiar: ', err);
-        alert('No se pudo copiar el ID');
+        // Mostrar feedback de error
+        button.innerHTML = '<i class="fas fa-times"></i> Error';
+        button.style.backgroundColor = "var(--danger-color)";
+        button.style.color = "white";
+
+        setTimeout(() => {
+          button.innerHTML = originalText;
+          button.style.backgroundColor = "#f0f0f0";
+          button.style.color = "black";
+        }, 2000);
       });
     };
 
@@ -3210,6 +3229,7 @@
           document.getElementById('radarForm').style.display = 'none';
           if (tempMarker) map.removeLayer(tempMarker);
           tempMarker = null;
+          editingRadarId = null;
         }
       });
 
@@ -3317,6 +3337,7 @@
       // Restaurar función original del botón de guardar
       document.getElementById('saveRadarButton').innerHTML = '<i class="fas fa-save"></i> Guardar Radar';
       document.getElementById('saveRadarButton').onclick = saveNewRadar;
+      editingRadarId = null;
     }
 
     // Cerrar popup de descargo
