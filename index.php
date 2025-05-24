@@ -1456,6 +1456,7 @@
         </div>
       </div>
       <button id="exit-drive-mode" class="action-button" title="Salir del modo conducción"><i class="fas fa-car"></i></button>
+      <button id="addCurrentLocationButton" class="action-button" title="Añadir radar en mi ubicación"><i class="fas fa-exclamation-triangle"></i></button>
     </div>
   </div>
 
@@ -2215,30 +2216,10 @@
     function enableDriveMode() {
       if (isDriveModeActive) return;
 
-      // Mostrar advertencia
-      const betaWarning = L.popup()
-        .setLatLng(map.getCenter())
-        .setContent(`
-          <div style="padding: 15px; max-width: 280px; text-align: center; background: #fff3cd; border: 2px solid var(--warning-color); border-radius: 10px;">
-            <h3 style="margin-top: 0; color: #854d0e;"><i class="fas fa-car"></i> MODO CONDUCCIÓN</h3>
-            <p style="margin-bottom: 0;">El sistema alertará con voz femenina sobre radares a 600 y 300 metros.</p>
-            <p style="font-size: 0.9em; margin-top: 10px;"><b>Mantenga la atención en la carretera.</b></p>
-          </div>
-        `)
-        .openOn(map);
-
-      setTimeout(() => {
-        map.closePopup(betaWarning);
-      }, 8000);
-
       isDriveModeActive = true;
       document.getElementById('drive-mode-container').style.display = 'block';
       document.getElementById('driveModeButton').classList.add('active');
       centrarMapa = true; // Forzar centrado en modo conductor
-
-      // Ocultar elementos no esenciales
-      document.querySelector('.search-container').style.display = 'none';
-      document.getElementById('legend-button').style.display = 'none';
 
       // Ocultar todos los botones excepto los necesarios
       const actionButtons = document.querySelectorAll('.action-button');
@@ -2250,14 +2231,8 @@
       document.getElementById('exit-drive-mode').style.display = 'flex';
       document.getElementById('addCurrentLocationButton').style.display = 'flex';
 
-      // Configurar voz femenina si está disponible
-      if ('speechSynthesis' in window) {
-        const voices = window.speechSynthesis.getVoices();
-        const femaleVoice = voices.find(v => v.name.includes('female') && v.lang.includes('es'));
-        if (femaleVoice) {
-          currentVoice = femaleVoice;
-        }
-      }
+      // Ocultar elementos no esenciales
+      document.querySelector('.search-container').style.display = 'none';
 
       // Ajustar el mapa para modo conducción
       if (userMarker && userMarker.getLatLng().lat !== 0) {
@@ -2277,15 +2252,14 @@
       document.getElementById('driveModeButton').classList.remove('active');
       centrarMapa = false; // Desactivar centrado automático al salir del modo conductor
 
-      // Mostrar elementos nuevamente
-      document.querySelector('.search-container').style.display = 'block';
-      document.getElementById('legend-button').style.display = 'block';
-
-      // Restaurar todos los botones
+      // Mostrar todos los botones nuevamente
       const actionButtons = document.querySelectorAll('.action-button');
       actionButtons.forEach(button => {
         button.style.display = 'flex';
       });
+
+      // Mostrar elementos nuevamente
+      document.querySelector('.search-container').style.display = 'block';
 
       // Detener chequeo de radares
       clearInterval(driveModeCheckInterval);
@@ -2350,23 +2324,28 @@
 
         // Alertar si está muy cerca (solo si velocidad > 30 km/h)
         if (userSpeed > 8.33) { // 8.33 m/s ≈ 30 km/h
-          // Alerta a 600 metros
-          if (distance < 620 && distance > 580 && lastAlertedRadar !== closestRadar.radarData.key) {
-            playRadarAlert(closestRadar, 600);
+          // Alerta a 800 metros
+          if (distance < 820 && distance > 780 && lastAlertedRadar !== closestRadar.radarData.key) {
+            playRadarBeep(800);
+            lastAlertedRadar = closestRadar.radarData.key;
           }
-          // Alerta a 300 metros
-          else if (distance < 320 && distance > 280 && lastAlertedRadar === closestRadar.radarData.key) {
-            playRadarAlert(closestRadar, 300);
+          // Alerta a 500 metros
+          else if (distance < 520 && distance > 480 && lastAlertedRadar === closestRadar.radarData.key) {
+            playRadarBeep(500);
           }
           // Alerta por exceso de velocidad cuando estamos cerca
-          else if (distance < 200 && userSpeedKmh > closestRadar.radarData.speed) {
-            const excess = userSpeedKmh - closestRadar.radarData.speed;
-            playAlert(`¡Exceso de velocidad! Límite: ${closestRadar.radarData.speed} km/h. Tu velocidad: ${userSpeedKmh} km/h. Reduzca ${excess} km/h`);
+          else if (distance < 300 && userSpeedKmh > closestRadar.radarData.speed) {
+            playRadarBeep(300, true);
+          }
+          // Radar superado
+          else if (distance > 300 && lastAlertedRadar === closestRadar.radarData.key) {
+            playRadarPassed();
+            lastAlertedRadar = null;
           }
         }
 
         // Si nos alejamos del radar, resetear la alerta
-        if (distance > 650) {
+        if (distance > 850) {
           lastAlertedRadar = null;
         }
       } else {
@@ -2377,76 +2356,67 @@
       }
     }
 
-    // Función para alertas de radar con voz femenina
-    function playRadarAlert(radar, distance) {
-      const radarType = getRadarTypeDescription(radar.radarData.radarType);
-      const speedLimit = radar.radarData.speed || 'velocidad desconocida';
+    // Función para reproducir pitidos de alerta de radar
+    function playRadarBeep(distance, isExceeding = false) {
+      const context = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = context.createOscillator();
+      const gainNode = context.createGain();
 
-      let alertMessage = `Radar ${radarType} a ${distance} metros. Límite ${speedLimit} km/h.`;
+      oscillator.type = 'sine';
+      oscillator.frequency.value = isExceeding ? 1000 : 800; // Frecuencia más alta si excede velocidad
+      gainNode.gain.value = 0.5;
 
-      // Mostrar alerta visual
-      const alertDiv = document.createElement('div');
-      alertDiv.className = 'radar-alert';
-      alertDiv.innerHTML = `<span>Radar ${radarType}<br>${distance}m<br>Límite: ${speedLimit} km/h</span>`;
-      document.body.appendChild(alertDiv);
+      oscillator.connect(gainNode);
+      gainNode.connect(context.destination);
 
-      setTimeout(() => {
-        alertDiv.remove();
-      }, 3000);
-
-      // Alertar por voz
-      playAlert(alertMessage);
-
-      // Marcar como alertado
-      if (distance === 600) {
-        lastAlertedRadar = radar.radarData.key;
-      }
-    }
-
-    // Función auxiliar para descripciones de tipos de radar
-    function getRadarTypeDescription(type) {
-      const descriptions = {
-        'Fijo': 'fijo',
-        'Móvil': 'móvil',
-        'Tramo': 'de tramo',
-        'Remolque': 'en remolque',
-        'default': ''
-      };
-      return descriptions[type] || descriptions['default'];
-    }
-
-    // Notificación de voz mejorada
-    function playAlert(message) {
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-
-        const utterance = new SpeechSynthesisUtterance(message);
-        utterance.lang = 'es-ES';
-        utterance.rate = 0.9;
-        utterance.volume = 1.5;
-
-        // Usar voz femenina si está configurada
-        if (currentVoice) {
-          utterance.voice = currentVoice;
+      // Patrón de pitidos según distancia
+      if (distance === 800) {
+        // Pitido largo a 800m
+        oscillator.start();
+        gainNode.gain.exponentialRampToValueAtTime(0.5, context.currentTime + 0.5);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 1);
+        oscillator.stop(context.currentTime + 1);
+      } else if (distance === 500) {
+        // Dos pitidos cortos a 500m
+        for (let i = 0; i < 2; i++) {
+          const time = context.currentTime + (i * 0.3);
+          gainNode.gain.setValueAtTime(0.5, time);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, time + 0.2);
         }
-
-        window.speechSynthesis.speak(utterance);
+        oscillator.start();
+        oscillator.stop(context.currentTime + 0.7);
+      } else if (distance === 300 && isExceeding) {
+        // Pitidos rápidos y repetitivos si excede velocidad
+        for (let i = 0; i < 5; i++) {
+          const time = context.currentTime + (i * 0.2);
+          gainNode.gain.setValueAtTime(0.5, time);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, time + 0.1);
+        }
+        oscillator.start();
+        oscillator.stop(context.currentTime + 1.2);
       }
+    }
 
-      // Mostrar notificación visual
-      const notification = L.popup()
-        .setLatLng(userMarker.getLatLng())
-        .setContent(`
-          <div style="padding: 10px; background: #fef3c7; border-radius: 5px; max-width: 250px;">
-            <b><i class="fas fa-exclamation-triangle"></i> Alerta</b><br>
-            ${message}
-          </div>
-        `)
-        .openOn(map);
+    // Función para alerta de radar superado
+    function playRadarPassed() {
+      const context = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = context.createOscillator();
+      const gainNode = context.createGain();
 
-      setTimeout(() => {
-        map.closePopup(notification);
-      }, 5000);
+      oscillator.type = 'sine';
+      oscillator.frequency.value = 600;
+      gainNode.gain.value = 0.5;
+
+      oscillator.connect(gainNode);
+      gainNode.connect(context.destination);
+
+      // Pitido descendente
+      oscillator.frequency.exponentialRampToValueAtTime(300, context.currentTime + 0.5);
+      gainNode.gain.exponentialRampToValueAtTime(0.5, context.currentTime + 0.1);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.5);
+
+      oscillator.start();
+      oscillator.stop(context.currentTime + 0.5);
     }
 
     // Obtener radares cercanos
@@ -3463,17 +3433,6 @@
     // Inicializar la aplicación
     document.addEventListener('DOMContentLoaded', () => {
       initMap();
-
-      // Cargar voces disponibles cuando estén listas
-      if ('speechSynthesis' in window) {
-        speechSynthesis.onvoiceschanged = function() {
-          const voices = window.speechSynthesis.getVoices();
-          const femaleVoice = voices.find(v => v.name.includes('female') && v.lang.includes('es'));
-          if (femaleVoice) {
-            currentVoice = femaleVoice;
-          }
-        };
-      }
 
       if (!localStorage.getItem('popupSeen')) {
         setTimeout(() => {
